@@ -167,6 +167,13 @@ a{color:inherit;text-decoration:none}
 .combo-list button:hover{background:var(--bg);color:var(--text)}
 .combo-list button.sel{background:var(--blue-50);color:var(--primary);font-weight:600}
 .combo-list .p-avatar{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font-size:9.5px;font-weight:700;background:var(--blue-50);color:var(--primary);flex-shrink:0}
+/* multi-select combo */
+.combo.multi .combo-btn{align-items:flex-start;flex-wrap:wrap;gap:6px;min-height:50.5px}
+.combo .ms-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;flex:1;min-width:0}
+.combo .ms-chips .chip{display:inline-flex;align-items:center;gap:6px;background:var(--blue-50);color:var(--primary);font-size:11.5px;font-weight:600;padding:3px 6px 3px 9px;border-radius:99px}
+.combo .ms-chips .chip button{width:15px;height:15px;border-radius:50%;display:grid;place-items:center;color:var(--primary);opacity:.65;font-size:12px;line-height:1}
+.combo .ms-chips .chip button:hover{opacity:1;background:var(--blue-100)}
+.combo-list .ms-check{margin-left:auto;width:15px;height:15px;flex-shrink:0;color:var(--primary)}
 .combo-empty{font-size:12px;color:var(--text-3);text-align:center;padding:12px}
 
 /* pills */
@@ -295,29 +302,24 @@ a{color:inherit;text-decoration:none}
     <div class="nav-label">Sales Pipeline</div>
     <div class="nav-group open">
       <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Leads<span class="nav-count">468</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
-      <div class="nav-sub"><a class="nav-item" href="all-leads.html">All Leads</a><button class="nav-item">Lead Pipeline</button><button class="nav-item">Lead Sources</button><button class="nav-item">Lost Leads</button></div>
+      <div class="nav-sub"><a class="nav-item" href="all-leads.html">All Leads</a><a class="nav-item" href="lead-pipeline.html">Lead Pipeline</a><a class="nav-item" href="lead-sources.html">Lead Sources</a><a class="nav-item" href="lost-leads.html">Lost Leads</a></div>
     </div>
     <div class="nav-group">
       <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>Tasks<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
-      <div class="nav-sub"><button class="nav-item">Today's Tasks</button><button class="nav-item">Upcoming Tasks</button><button class="nav-item">Overdue Tasks</button></div>
+      <div class="nav-sub"><a class="nav-item" href="all-tasks.html">All Tasks</a><a class="nav-item" href="overdue-tasks.html">Overdue Tasks</a></div>
     </div>
-    <div class="nav-group">
-      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 15l2 2 4-4"/></svg>Applications<span class="nav-count">14</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
-      <div class="nav-sub"><button class="nav-item">Pre-Approvals</button><button class="nav-item">Active Applications</button><button class="nav-item">Approved Loans</button><button class="nav-item">Disbursed Loans</button><button class="nav-item">Rejected Applications</button></div>
-    </div>
-
     <div class="nav-label">Network</div>
     <div class="nav-group">
       <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg>Banks<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
-      <div class="nav-sub"><button class="nav-item">All Banks</button><button class="nav-item">Bank Performance</button><button class="nav-item">Approval Ratios</button><button class="nav-item">Commission Setup</button></div>
+      <div class="nav-sub"><a class="nav-item" href="all-banks.html">All Banks</a></div>
     </div>
     <div class="nav-group">
       <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Advisors<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
-      <div class="nav-sub"><button class="nav-item">All Advisors</button><button class="nav-item">Advisor Performance</button><button class="nav-item">Lead Assignments</button><button class="nav-item">Commission Overview</button></div>
+      <div class="nav-sub"><a class="nav-item" href="all-advisors.html">All Advisors</a></div>
     </div>
     <div class="nav-group">
       <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>Referral Partners<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
-      <div class="nav-sub"><button class="nav-item">All Partners</button><button class="nav-item">Referral Tracking</button><button class="nav-item">Commission Tracking</button><button class="nav-item">Partner Performance</button></div>
+      <div class="nav-sub"><a class="nav-item" href="all-referral-partners.html">All Partners</a></div>
     </div>
 
     <div class="nav-label">Operations</div>
@@ -434,6 +436,7 @@ a{color:inherit;text-decoration:none}
             <div class="field"><input type="text" inputmode="numeric" id="fPropVal" data-money data-sum="prop"><label>Property Value (AED) *</label><span class="f-hint" id="dpHint"></span></div>
             <div class="field"><input type="text" inputmode="numeric" id="fDown" data-money><label>Down Payment (AED)</label><span class="f-hint" id="dpPct"></span></div>
             <div class="field"><input type="text" inputmode="numeric" id="fLoan" data-money data-sum="loan"><label>Loan Requirement (AED) *</label><span class="f-hint" id="loanHint">Auto-calculated from value − down payment. Editable.</span></div>
+            <div class="field"><input type="text" id="fLtv" readonly class="filled"><label>LTV (Loan-to-Value)</label><span class="f-hint" id="ltvHint">Auto-calculated from loan ÷ property value.</span></div>
             <div class="combo" id="cPropType" data-label="Property Type"></div>
             <div class="combo full" id="cArea" data-label="Preferred Area"></div>
           </div>
@@ -467,6 +470,9 @@ a{color:inherit;text-decoration:none}
           <div class="fgrid">
             <div class="combo" id="cAdvisor" data-label="Assign Advisor" data-avatars data-sum="advisor"></div>
             <div class="combo" id="cSource" data-label="Lead Source" data-sum="source"></div>
+            <div class="full" id="partnerField" style="display:none">
+              <div class="combo multi" id="cPartners" data-label="Referral Partner(s)"></div>
+            </div>
             <div class="pill-wrap full">
               <label class="t">Priority</label>
               <div class="pill-row" data-single id="prPills">
@@ -530,6 +536,7 @@ a{color:inherit;text-decoration:none}
             <div class="sum-row"><label>Property Value</label><b class="empty-v" id="sumProp">—</b></div>
             <div class="sum-row"><label>Advisor</label><b class="empty-v" id="sumAdvisor">Unassigned</b></div>
             <div class="sum-row"><label>Source</label><b class="empty-v" id="sumSource">—</b></div>
+            <div class="sum-row" id="sumPartnerRow" style="display:none"><label>Referral Partner(s)</label><b id="sumPartner" style="max-width:165px;white-space:normal">—</b></div>
             <div class="sum-row"><label>Priority</label><span class="pr-badge" id="sumPriority" style="background:#FEF3E2;color:#B45309">Medium</span></div>
           </div>
           <div class="prog-wrap">
@@ -624,6 +631,45 @@ buildCombo('cArea',AREAS);
 buildCombo('cBank',BANKS);
 buildCombo('cAdvisor',ADVISORS);
 buildCombo('cSource',SOURCES);
+
+/* ---------- multi-select combo (referral partners) ---------- */
+const PARTNERS=['Provident Real Estate','Betterhomes','Espace Real Estate','Allsopp & Allsopp','Haus & Haus','Driven Properties','fäm Properties','Metropolitan Premium','Wasl Properties','Emaar Sales Desk'];
+const multiState={cPartners:[]};
+function buildMultiCombo(id,opts){
+  const c=document.getElementById(id),label=c.dataset.label;
+  c.innerHTML=`<button type="button" class="combo-btn"><span class="ms-chips"><span class="val ph">·</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></button>
+    <label>${label}</label>
+    <div class="combo-pop"><input type="text" placeholder="Search partners…"><div class="combo-list"></div></div>`;
+  const btn=c.querySelector('.combo-btn'),pop=c.querySelector('.combo-pop'),list=c.querySelector('.combo-list'),si=pop.querySelector('input'),chips=c.querySelector('.ms-chips');
+  function refreshBtn(){
+    const sel=multiState[id];
+    chips.innerHTML=sel.length?sel.map(p=>`<span class="chip">${p}<button type="button" data-rm="${p}" aria-label="Remove ${p}">×</button></span>`).join(''):'<span class="val ph">·</span>';
+    c.classList.toggle('has-val',sel.length>0);
+    chips.querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click',e=>{
+      e.stopPropagation();multiState[id]=multiState[id].filter(x=>x!==b.dataset.rm);refreshBtn();renderList(si.value);update();
+    }));
+  }
+  function renderList(q=''){
+    const sel=multiState[id];
+    const f=opts.filter(o=>o.toLowerCase().includes(q.toLowerCase()));
+    list.innerHTML=f.length?f.map(o=>`<button type="button" data-v="${o}" class="${sel.includes(o)?'sel':''}">${o}${sel.includes(o)?'<svg class="ms-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>':''}</button>`).join(''):`<div class="combo-empty">No results for “${q}”</div>`;
+    list.querySelectorAll('button').forEach(b=>b.addEventListener('click',e=>{
+      e.stopPropagation();const v=b.dataset.v;
+      if(multiState[id].includes(v))multiState[id]=multiState[id].filter(x=>x!==v);else multiState[id].push(v);
+      refreshBtn();renderList(si.value);update();
+    }));
+  }
+  btn.addEventListener('click',e=>{
+    e.stopPropagation();const was=c.classList.contains('open');
+    $$('.combo.open').forEach(o=>o.classList.remove('open'));
+    c.classList.toggle('open',!was);
+    if(!was){si.value='';renderList();setTimeout(()=>si.focus(),60);}
+  });
+  si.addEventListener('input',()=>renderList(si.value));
+  si.addEventListener('click',e=>e.stopPropagation());
+  refreshBtn();renderList();
+}
+buildMultiCombo('cPartners',PARTNERS);
 document.addEventListener('click',()=>$$('.combo.open').forEach(o=>o.classList.remove('open')));
 
 /* ---------- pills ---------- */
@@ -657,9 +703,11 @@ function renderTags(){
 /* ---------- uploads ---------- */
 const DOCS=[
   {k:'passport',t:'Passport',ic:'<rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M9 17h6"/>'},
+  {k:'visa',t:'Visa',ic:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/>'},
   {k:'eid',t:'Emirates ID',ic:'<rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8.5" cy="11" r="2.2"/><path d="M14 9h5M14 13h5M5.5 16.5c.6-1.5 1.7-2.2 3-2.2s2.4.7 3 2.2"/>'},
-  {k:'salary',t:'Salary Certificate',ic:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>'},
-  {k:'bank',t:'Bank Statements',ic:'<path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/>'}
+  {k:'bank',t:'Bank Statement',ic:'<path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/>'},
+  {k:'payslip',t:'Payslip',ic:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4M9 9h1"/>'},
+  {k:'salary',t:'Salary Certificate',ic:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>'}
 ];
 $('#upGrid').innerHTML=DOCS.map(d=>`
   <div class="up-zone" data-k="${d.k}">
@@ -717,6 +765,25 @@ function update(){
   setSum('sumAdvisor',comboState['cAdvisor']||null,'Unassigned');
   setSum('sumSource',comboState['cSource']||null);
 
+  /* show referral partner multi-select only when source = Referral Partner */
+  const isRef=comboState['cSource']==='Referral Partner';
+  const pf=$('#partnerField');
+  if(pf){
+    pf.style.display=isRef?'':'none';
+    if(!isRef&&multiState.cPartners.length){
+      multiState.cPartners=[];
+      const chips=$('#cPartners .ms-chips');
+      if(chips)chips.innerHTML='<span class="val ph">·</span>';
+      $('#cPartners').classList.remove('has-val');
+    }
+  }
+  /* referral partners in summary */
+  const pRow=$('#sumPartnerRow');
+  if(pRow){
+    if(isRef&&multiState.cPartners.length){pRow.style.display='';$('#sumPartner').textContent=multiState.cPartners.join(', ');}
+    else pRow.style.display='none';
+  }
+
   const pr=$('#prPills .on')?.textContent||'Medium';
   const [bg,fg]=PR_COLORS[pr];
   const pb=$('#sumPriority');pb.textContent=pr;pb.style.background=bg;pb.style.color=fg;
@@ -730,6 +797,12 @@ function update(){
     syncFloat($('#fLoan'));
     setSum('sumLoan',fmt(auto));
   }
+
+  /* LTV = loan ÷ property value */
+  const loanNow=moneyVal('#fLoan');
+  if(prop&&loanNow){$('#fLtv').value=Math.round(loanNow/prop*100)+'%';}
+  else $('#fLtv').value='';
+  syncFloat($('#fLtv'));
 
   /* completion: required + key optional fields */
   const checks=[

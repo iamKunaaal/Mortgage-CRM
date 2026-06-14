@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mortgage CRM — All Advisors</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#05448B;--primary-h:#0B5AB3;--blue-2:#2D6CB0;--blue-3:#7FA6CF;
+  --blue-50:#F0F5FB;--blue-100:#DEEAF6;
+  --bg:#F7F9FC;--card:#FFFFFF;
+  --text:#0F172A;--text-2:#64748B;--text-3:#94A3B8;
+  --border:#E2E8F0;--border-soft:#EEF2F7;
+  --success:#16A34A;--warning:#B45309;--danger:#DC2626;
+  --r:14px;
+  --sh-xs:0 1px 2px rgba(15,23,42,.05);
+  --sh-sm:0 1px 3px rgba(15,23,42,.06),0 1px 2px rgba(15,23,42,.04);
+  --sh-md:0 4px 12px -2px rgba(15,23,42,.08);
+  --sh-lg:0 12px 32px -8px rgba(15,23,42,.18);
+  --sb:256px;
+  --font:'Inter',system-ui,-apple-system,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+a{color:inherit;text-decoration:none}
+::selection{background:var(--blue-100)}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+.app{display:flex;min-height:100vh}
+.main{flex:1;min-width:0;margin-left:var(--sb)}
+
+/* sidebar */
+.sidebar{position:fixed;inset:0 auto 0 0;width:var(--sb);background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:60;transition:transform .28s cubic-bezier(.4,0,.2,1)}
+.brand{display:flex;align-items:center;gap:11px;padding:20px 20px 16px}
+.brand-mark{width:36px;height:36px;border-radius:10px;background:var(--primary);display:grid;place-items:center;flex-shrink:0}
+.brand-name{font-weight:700;font-size:15px;letter-spacing:-.015em;color:var(--text)}
+.brand-sub{font-size:11px;color:var(--text-3);font-weight:500}
+.nav{flex:1;overflow-y:auto;padding:6px 12px 16px;scrollbar-width:thin;scrollbar-color:#D7DEE8 transparent}
+.nav::-webkit-scrollbar{width:5px}
+.nav::-webkit-scrollbar-thumb{background:#D7DEE8;border-radius:4px}
+.nav-label{font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--text-3);padding:18px 12px 7px;margin-top:2px}
+.nav-label:first-child{margin-top:0;padding-top:8px}
+.nav-item{display:flex;align-items:center;gap:11px;width:100%;padding:8.5px 11px;border-radius:9px;color:#3F4C61;font-size:13.5px;font-weight:500;text-align:left;transition:background .13s,color .13s;position:relative}
+.nav-item svg{width:17px;height:17px;flex-shrink:0;color:var(--text-2);transition:color .13s}
+.nav-item:hover{background:#F3F6FA;color:var(--text)}
+.nav-item:hover svg{color:var(--text)}
+.nav-item.active{background:var(--blue-50);color:var(--primary);font-weight:600}
+.nav-item.active svg{color:var(--primary)}
+.nav-item.active::before{content:"";position:absolute;left:-12px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--primary)}
+.nav-item .chev{margin-left:auto;width:13px;height:13px;color:var(--text-3);transition:transform .22s cubic-bezier(.4,0,.2,1)}
+.nav-group{margin-bottom:1px}
+.nav-group.open>.nav-item{color:var(--text)}
+.nav-group.open>.nav-item svg{color:var(--text)}
+.nav-group.open .chev{transform:rotate(90deg);color:var(--primary)}
+.nav-sub{overflow:hidden;max-height:0;transition:max-height .3s cubic-bezier(.4,0,.2,1);padding-left:4px;margin-left:18px;border-left:1px solid var(--border-soft)}
+.nav-group.open .nav-sub{max-height:320px}
+.nav-sub .nav-item{padding:6.5px 11px 6.5px 22px;font-size:12.75px;color:var(--text-2);font-weight:500;border-radius:7px;margin:1px 0}
+.nav-sub .nav-item:hover{color:var(--text);background:#F3F6FA}
+.nav-sub .nav-item.active{background:var(--blue-50);color:var(--primary);font-weight:600}
+.nav-sub .nav-item.active::before{display:none}
+.nav-count{margin-left:auto;font-size:11px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--blue-50);color:var(--primary)}
+.sidebar-foot{padding:12px;border-top:1px solid var(--border-soft)}
+.user-card{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;transition:background .13s;width:100%;text-align:left}
+.user-card:hover{background:#F3F6FA}
+.user-card b{display:block;font-size:13px;font-weight:600}
+.user-card span{font-size:11.5px;color:var(--text-3)}
+.avatar{width:32px;height:32px;border-radius:9px;background:var(--primary);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
+
+/* header */
+.header{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;padding:13px 28px;background:rgba(255,255,255,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.hamburger{display:none;width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:#fff;place-items:center}
+.page-title{font-size:15px;font-weight:700;letter-spacing:-.01em;margin-right:6px}
+.search{flex:1;max-width:400px;position:relative}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--text-3)}
+.search input{width:100%;padding:8.5px 64px 8.5px 36px;border-radius:10px;border:1px solid var(--border);background:var(--bg);font:inherit;font-size:13.5px;transition:all .15s}
+.search input::placeholder{color:var(--text-3)}
+.search input:focus{outline:none;background:#fff;border-color:var(--primary);box-shadow:0 0 0 3px rgba(5,68,139,.10)}
+.kbd{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:10.5px;font-weight:600;color:var(--text-3);border:1px solid var(--border);background:#fff;border-radius:5px;padding:1px 6px}
+.h-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+.icon-btn{width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:#fff;display:grid;place-items:center;color:var(--text-2);position:relative;transition:all .14s}
+.icon-btn:hover{color:var(--text);border-color:#CBD5E1;background:var(--bg)}
+.icon-btn svg{width:16px;height:16px}
+.dot{position:absolute;top:8px;right:8px;width:6px;height:6px;border-radius:50%;background:var(--danger);border:1.5px solid #fff}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8.5px 14px;border-radius:9px;font-size:13px;font-weight:600;transition:all .14s;white-space:nowrap}
+.btn svg{width:15px;height:15px}
+.btn-ghost{background:#fff;border:1px solid var(--border);color:var(--text-2)}
+.btn-ghost:hover{color:var(--text);border-color:#CBD5E1;background:var(--bg)}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:var(--sh-xs)}
+.btn-primary:hover{background:var(--primary-h)}
+
+/* content */
+.content{padding:24px 28px 48px;display:flex;flex-direction:column;gap:18px;max-width:1620px;width:100%;margin:0 auto}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.page-head h1{font-size:21px;font-weight:700;letter-spacing:-.02em}
+.page-head p{color:var(--text-2);font-size:13.5px;margin-top:3px;max-width:640px}
+.page-head .actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px 15px 12px;box-shadow:var(--sh-xs);transition:box-shadow .16s,border-color .16s}
+.kpi:hover{box-shadow:var(--sh-md);border-color:#D4DDE8}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.kpi-ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--blue-50);color:var(--primary)}
+.kpi-ic.green{background:#EDFAF1;color:var(--success)}
+.kpi-ic svg{width:14px;height:14px}
+.kpi label{font-size:11.5px;font-weight:600;color:var(--text-2);display:block}
+.kpi .val{font-size:22px;font-weight:700;letter-spacing:-.025em;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi-foot{display:flex;align-items:flex-end;justify-content:space-between;margin-top:6px;gap:6px}
+.delta{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700}
+.delta svg{width:10px;height:10px}
+.delta.pos{color:var(--success)}.delta.neg{color:var(--danger)}.delta.mut{color:var(--text-3)}
+.spark{width:54px;height:22px;flex-shrink:0}
+
+/* filter bar */
+.filter-bar{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-xs);padding:12px 14px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.f-search{position:relative;flex:1;min-width:200px}
+.f-search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-3)}
+.f-search input{width:100%;padding:8px 12px 8px 33px;border-radius:9px;border:1px solid var(--border);background:var(--bg);font:inherit;font-size:13px;transition:all .15s}
+.f-search input:focus{outline:none;background:#fff;border-color:var(--primary);box-shadow:0 0 0 3px rgba(5,68,139,.10)}
+.f-dd{position:relative}
+.f-dd-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:9px;border:1px solid var(--border);background:#fff;font-size:12.5px;font-weight:600;color:var(--text-2);transition:all .14s;white-space:nowrap}
+.f-dd-btn:hover{border-color:#CBD5E1;color:var(--text)}
+.f-dd-btn.on{border-color:var(--primary);color:var(--primary);background:var(--blue-50)}
+.f-dd-btn svg{width:12px;height:12px;color:var(--text-3);transition:transform .18s}
+.f-dd.open .f-dd-btn svg{transform:rotate(180deg)}
+.f-dd-menu{position:absolute;top:calc(100% + 6px);left:0;min-width:190px;background:#fff;border:1px solid var(--border);border-radius:11px;box-shadow:var(--sh-lg);padding:5px;z-index:40;opacity:0;transform:translateY(-4px);pointer-events:none;transition:all .15s;max-height:300px;overflow-y:auto}
+.f-dd.open .f-dd-menu{opacity:1;transform:none;pointer-events:auto}
+.f-dd-menu button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:7.5px 10px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--text-2);transition:background .12s}
+.f-dd-menu button:hover{background:var(--bg);color:var(--text)}
+.f-dd-menu button.sel{background:var(--blue-50);color:var(--primary);font-weight:600}
+.clear-btn{font-size:12.5px;font-weight:600;color:var(--text-3);padding:8px 10px;border-radius:9px;transition:all .14s}
+.clear-btn:hover{color:var(--danger);background:#FEF2F2}
+
+/* cards */
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-xs);min-width:0}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 20px 0}
+.card-h h3{font-size:14px;font-weight:700;letter-spacing:-.008em}
+.card-h .sub{font-size:12px;color:var(--text-2);margin-top:1px}
+.card-body{padding:14px 20px 18px}
+.link-btn{font-size:12px;font-weight:600;color:var(--primary);padding:4px 9px;border-radius:7px;transition:background .14s}
+.link-btn:hover{background:var(--blue-50)}
+
+/* table */
+.tbl-wrap{overflow-x:auto;border-radius:0 0 var(--r) var(--r)}
+.tbl{width:100%;border-collapse:collapse;min-width:1200px}
+.tbl thead th{position:sticky;top:0;background:#FAFCFE;z-index:5;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);text-align:left;padding:11px 13px;border-bottom:1px solid var(--border);white-space:nowrap;user-select:none}
+.tbl thead th.sortable{cursor:pointer}
+.tbl thead th.sortable:hover{color:var(--text)}
+.tbl thead th.r,.tbl td.r{text-align:right}
+.tbl thead th .s-ic{margin-left:4px;font-size:9px;opacity:.6}
+.tbl td{padding:12px 13px;border-bottom:1px solid var(--border-soft);font-size:12.5px;vertical-align:middle;white-space:nowrap}
+.tbl tbody tr{transition:background .12s}
+.tbl tbody tr:hover{background:#FAFCFE}
+.tbl tr:last-child td{border-bottom:none}
+.num{font-variant-numeric:tabular-nums;font-weight:600}
+.adv-cell{display:flex;align-items:center;gap:11px}
+.p-avatar{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;flex-shrink:0;font-size:11.5px;font-weight:700;background:var(--blue-50);color:var(--primary)}
+.p-avatar.deep{background:var(--primary);color:#fff}
+.adv-cell b{display:block;font-size:12.5px;font-weight:600}
+.adv-cell span{font-size:10.5px;color:var(--text-3)}
+.tag{display:inline-flex;font-size:10.5px;font-weight:600;padding:2.5px 9px;border-radius:7px;background:var(--bg);color:var(--text-2);border:1px solid var(--border-soft);white-space:nowrap}
+.conv{display:flex;align-items:center;gap:8px;min-width:118px}
+.conv b{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;width:34px}
+.conv .bar{flex:1;height:6px;border-radius:99px;background:var(--border-soft);overflow:hidden}
+.conv .bar i{display:block;height:100%;border-radius:99px}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:99px}
+.status i{width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block}
+.status.active{background:#EDFAF1;color:var(--success)}
+.status.leave{background:#FEF3E2;color:var(--warning)}
+.status.inactive{background:#F1F5F9;color:var(--text-3)}
+.kebab{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--text-3);transition:all .13s}
+.kebab:hover{background:var(--blue-50);color:var(--primary)}
+.kebab svg{width:15px;height:15px}
+.menu-pop{position:fixed;min-width:184px;background:#fff;border:1px solid var(--border);border-radius:11px;box-shadow:var(--sh-lg);padding:5px;z-index:80;display:none}
+.menu-pop.show{display:block;animation:popIn .14s ease}
+@keyframes popIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.menu-pop button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:7.5px 10px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--text-2);transition:background .12s}
+.menu-pop button:hover{background:var(--bg);color:var(--text)}
+.menu-pop button.primary{color:var(--primary);font-weight:600}
+.menu-pop svg{width:13.5px;height:13.5px}
+.menu-sep{height:1px;background:var(--border-soft);margin:4px 6px}
+
+/* layout rows */
+.row2{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+
+/* leaderboard cards */
+.lead-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.lead-card{border:1px solid var(--border-soft);border-radius:12px;padding:15px;background:var(--bg);transition:all .15s;position:relative;overflow:hidden}
+.lead-card:hover{background:#fff;border-color:var(--border);box-shadow:var(--sh-xs)}
+.lead-card .rank{position:absolute;top:13px;right:14px;font-size:12px;font-weight:800;color:var(--text-3)}
+.lead-card.gold{background:linear-gradient(135deg,#FFFBEB,#fff);border-color:#FCE9B6}
+.lead-card .lc-h{display:flex;align-items:center;gap:10px;margin-bottom:13px}
+.lead-card b.nm{font-size:13.5px;font-weight:700;display:block}
+.lead-card .nm span{font-size:10.5px;color:var(--text-3);font-weight:500}
+.lead-card .lc-stats{display:flex;flex-direction:column;gap:8px}
+.lead-card .ls-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.lead-card .ls-row label{font-size:11px;font-weight:600;color:var(--text-3)}
+.lead-card .ls-row b{font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* workload */
+.wl-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-soft)}
+.wl-item:last-child{border-bottom:none}
+.wl-body{flex:1;min-width:0}
+.wl-body .wl-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px}
+.wl-body b{font-size:12.5px;font-weight:600}
+.wl-body .wl-count{font-size:11.5px;font-weight:700;color:var(--text-2);font-variant-numeric:tabular-nums}
+.wl-bar{height:6px;border-radius:99px;background:var(--border-soft);overflow:hidden}
+.wl-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--primary),var(--blue-2));width:0;transition:width .9s cubic-bezier(.4,0,.2,1)}
+.wl-bar i.hot{background:linear-gradient(90deg,#DC2626,#F87171)}
+
+/* charts */
+canvas{display:block;width:100%}
+.chart-legend{display:flex;gap:14px;flex-wrap:wrap}
+.chart-legend span{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--text-2)}
+.chart-legend i{width:9px;height:9px;border-radius:3px;display:inline-block}
+
+/* activity feed */
+.feed{display:flex;flex-direction:column;max-height:360px;overflow-y:auto;padding-right:4px;scrollbar-width:thin}
+.feed::-webkit-scrollbar{width:5px}
+.feed::-webkit-scrollbar-thumb{background:#D7DEE8;border-radius:4px}
+.feed-item{display:flex;gap:11px;position:relative;padding-bottom:15px}
+.feed-item::before{content:"";position:absolute;left:14px;top:31px;bottom:0;width:1.5px;background:var(--border-soft)}
+.feed-item:last-child{padding-bottom:0}
+.feed-item:last-child::before{display:none}
+.feed-ic{width:29px;height:29px;border-radius:9px;display:grid;place-items:center;flex-shrink:0;z-index:1;background:var(--blue-50);color:var(--primary)}
+.feed-ic.ok{background:#EDFAF1;color:var(--success)}
+.feed-ic svg{width:13px;height:13px}
+.feed-body p{font-size:12.3px;line-height:1.45}
+.feed-body p b{font-weight:600}
+.feed-body time{font-size:10.5px;color:var(--text-3)}
+
+/* modal */
+.modal-scrim{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:85;opacity:0;pointer-events:none;transition:opacity .2s;display:grid;place-items:center;padding:20px;overflow-y:auto}
+.modal-scrim.show{opacity:1;pointer-events:auto}
+.modal{background:#fff;border-radius:16px;box-shadow:var(--sh-lg);width:100%;max-width:520px;transform:translateY(12px) scale(.98);transition:transform .22s cubic-bezier(.4,0,.2,1);margin:auto}
+.modal-scrim.show .modal{transform:none}
+.modal-h{padding:18px 22px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;gap:12px}
+.modal-h .m-ic{width:36px;height:36px;border-radius:10px;background:var(--blue-50);color:var(--primary);display:grid;place-items:center;flex-shrink:0}
+.modal-h .m-ic svg{width:17px;height:17px}
+.modal-h b{font-size:15px;font-weight:700;display:block}
+.modal-h span{font-size:12px;color:var(--text-3)}
+.modal-h .x{margin-left:auto;width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--text-3)}
+.modal-h .x:hover{background:var(--bg);color:var(--text)}
+.modal-body{padding:18px 22px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fld{display:flex;flex-direction:column;gap:6px}
+.fld.full{grid-column:1/-1}
+.fld label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-3)}
+.fld input,.fld select,.fld textarea{padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:#fff;font:inherit;font-size:13px;color:var(--text);transition:all .15s}
+.fld textarea{resize:vertical;min-height:64px}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(5,68,139,.10)}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--border-soft);display:flex;gap:9px;justify-content:flex-end}
+
+/* toast / scrim / responsive */
+.toast{position:fixed;bottom:26px;right:26px;background:#0F172A;color:#fff;font-size:12.5px;font-weight:600;padding:11px 16px;border-radius:11px;box-shadow:var(--sh-lg);z-index:95;opacity:0;transform:translateY(10px);transition:all .25s;display:flex;align-items:center;gap:9px}
+.toast.show{opacity:1;transform:none}
+.toast svg{width:15px;height:15px;color:#4ADE80}
+.scrim{position:fixed;inset:0;background:rgba(15,23,42,.35);z-index:55;opacity:0;pointer-events:none;transition:opacity .25s}
+.scrim.show{opacity:1;pointer-events:auto}
+@media (max-width:1400px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:1100px){.row2{grid-template-columns:1fr}.lead-grid{grid-template-columns:1fr}}
+@media (max-width:960px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0);box-shadow:20px 0 50px rgba(15,23,42,.2)}
+  .main{margin-left:0}.hamburger{display:grid}.hide-md{display:none}
+}
+@media (max-width:660px){
+  .content{padding:16px 14px 40px}.header{padding:10px 14px}
+  .kpi-grid{grid-template-columns:1fr 1fr}.hide-sm{display:none}
+  .modal-body{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar" id="sidebar" aria-label="Primary navigation">
+  <div class="brand">
+    <div class="brand-mark"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M3 11.5 12 4l9 7.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10.5V20h4.5v-5h3v5H18v-9.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div><div class="brand-name">Mortgage CRM</div><div class="brand-sub">Operations Console</div></div>
+  </div>
+  <nav class="nav" id="nav">
+    <div class="nav-label">Overview</div>
+    <a class="nav-item" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</a>
+
+    <div class="nav-label">Sales Pipeline</div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Leads<span class="nav-count">468</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><a class="nav-item" href="all-leads.html">All Leads</a><a class="nav-item" href="lead-pipeline.html">Lead Pipeline</a><a class="nav-item" href="lead-sources.html">Lead Sources</a><a class="nav-item" href="lost-leads.html">Lost Leads</a></div>
+    </div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>Tasks<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><a class="nav-item" href="all-tasks.html">All Tasks</a><a class="nav-item" href="overdue-tasks.html">Overdue Tasks</a></div>
+    </div>
+
+    <div class="nav-label">Network</div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg>Banks<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><a class="nav-item" href="all-banks.html">All Banks</a></div>
+    </div>
+    <div class="nav-group open">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Advisors<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><a class="nav-item active" href="all-advisors.html">All Advisors</a></div>
+    </div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>Referral Partners<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><a class="nav-item" href="all-referral-partners.html">All Partners</a></div>
+    </div>
+
+    <div class="nav-label">Operations</div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>Documents<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><button class="nav-item">Pending Documents</button><button class="nav-item">Verified Documents</button><button class="nav-item">Templates</button></div>
+    </div>
+    <button class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.8-.9L3 21l2-5.2a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 8.4-8.5 8.38 8.38 0 0 1 8.5 8z"/></svg>WhatsApp Center<span class="nav-count">26</span></button>
+
+    <div class="nav-label">Finance &amp; Insights</div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 12h.01M18 12h.01"/></svg>Finance<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><button class="nav-item">Revenue</button><button class="nav-item">Advisor Commissions</button><button class="nav-item">Referral Commissions</button><button class="nav-item">VAT</button><button class="nav-item">Net Profit</button></div>
+    </div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 3 5-6"/></svg>Reports &amp; Analytics<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><button class="nav-item">Revenue Reports</button><button class="nav-item">Lead Reports</button><button class="nav-item">Advisor Reports</button><button class="nav-item">Bank Reports</button><button class="nav-item">Referral Reports</button></div>
+    </div>
+
+    <div class="nav-label">Administration</div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>User Management<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><button class="nav-item">Users</button><button class="nav-item">Roles</button><button class="nav-item">Permissions</button></div>
+    </div>
+    <button class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</button>
+  </nav>
+  <div class="sidebar-foot">
+    <button class="user-card"><span class="avatar">KP</span><span><b>Kunal Darji</b><span>Super Admin</span></span></button>
+  </div>
+</aside>
+<div class="scrim" id="scrim"></div>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+  <header class="header">
+    <button class="hamburger" id="hamburger" aria-label="Open navigation"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0F172A" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+    <span class="page-title hide-sm">All Advisors</span>
+    <div class="search hide-sm">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="globalSearch" type="text" placeholder="Search leads, applications, banks…" aria-label="Global search">
+      <span class="kbd">⌘K</span>
+    </div>
+    <div class="h-actions">
+      <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot"></span></button>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <!-- PAGE HEAD -->
+    <div class="page-head">
+      <div>
+        <h1>All Advisors</h1>
+        <p>Manage advisors, monitor performance and track mortgage business activity.</p>
+      </div>
+      <div class="actions">
+        <button class="btn btn-ghost" id="refreshBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>Refresh</button>
+        <button class="btn btn-ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export Advisors</button>
+        <button class="btn btn-primary" id="addBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Add Advisor</button>
+      </div>
+    </div>
+
+    <!-- KPI -->
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar" id="filterBar">
+      <div class="f-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="advSearch" placeholder="Search advisor name…">
+      </div>
+      <div class="f-dd" data-filter="status"></div>
+      <div class="f-dd" data-filter="role"></div>
+      <div class="f-dd" data-filter="leads"></div>
+      <div class="f-dd" data-filter="revenue"></div>
+      <div class="f-dd" data-filter="perf"></div>
+      <div class="f-dd" data-filter="sort"></div>
+      <button class="clear-btn" id="clearFilters">✕&nbsp; Clear Filters</button>
+    </div>
+
+    <!-- ADVISORS TABLE -->
+    <div class="card">
+      <div class="card-h"><div><h3>Advisor Directory</h3><div class="sub">The single source of truth for advisor management</div></div><span class="tag" id="tblCount"></span></div>
+      <div class="tbl-wrap">
+        <table class="tbl" id="advTable">
+          <thead><tr>
+            <th class="sortable" data-k="name">Advisor<span class="s-ic"></span></th>
+            <th>Role</th>
+            <th class="sortable r" data-k="assigned">Assigned<span class="s-ic"></span></th>
+            <th class="sortable r" data-k="active">Active<span class="s-ic"></span></th>
+            <th class="sortable r" data-k="approved">Approved<span class="s-ic"></span></th>
+            <th class="sortable r" data-k="disbursed">Disbursed<span class="s-ic"></span></th>
+            <th class="sortable r" data-k="conv">Conversion<span class="s-ic"></span></th>
+            <th class="sortable r" data-k="revenue">Revenue<span class="s-ic"></span></th>
+            <th class="r">Commission</th>
+            <th>Status</th>
+            <th style="width:44px"></th>
+          </tr></thead>
+          <tbody id="advBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TOP PERFORMERS -->
+    <div class="card">
+      <div class="card-h"><div><h3>Top Performing Advisors</h3><div class="sub">Ranked by revenue, disbursements and conversion</div></div></div>
+      <div class="card-body"><div class="lead-grid" id="leadGrid"></div></div>
+    </div>
+
+    <!-- COMPARISON + WORKLOAD -->
+    <div class="row2">
+      <div class="card">
+        <div class="card-h"><div><h3>Performance Comparison</h3><div class="sub">Assigned, approvals, disbursements &amp; revenue across top advisors</div></div>
+          <div class="chart-legend hide-sm">
+            <span><i style="background:#05448B"></i>Assigned</span>
+            <span><i style="background:#2D6CB0"></i>Approvals</span>
+            <span><i style="background:#7FA6CF"></i>Disbursed</span>
+            <span><i style="background:#16A34A"></i>Revenue (AED K)</span>
+          </div>
+        </div>
+        <div class="card-body"><canvas id="cmpChart" width="1100" height="300" style="height:300px"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><div><h3>Advisor Workload</h3><div class="sub">Identify overloaded advisors</div></div></div>
+        <div class="card-body" id="workload"></div>
+      </div>
+    </div>
+
+    <!-- REVENUE LEADERBOARD -->
+    <div class="card">
+      <div class="card-h"><div><h3>Revenue Leaderboard</h3><div class="sub">Revenue, commission and loan output per advisor</div></div></div>
+      <div class="tbl-wrap">
+        <table class="tbl" style="min-width:680px">
+          <thead><tr><th>Advisor</th><th class="r">Revenue Generated</th><th class="r">Commission Earned</th><th class="r">Approved Loans</th><th class="r">Disbursed Loans</th></tr></thead>
+          <tbody id="lbBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ACTIVITY -->
+    <div class="card">
+      <div class="card-h"><div><h3>Recent Advisor Activity</h3><div class="sub">Latest advisor actions across the pipeline</div></div></div>
+      <div class="card-body"><div class="feed" id="feed"></div></div>
+    </div>
+
+  </main>
+</div>
+</div>
+
+<!-- ROW MENU -->
+<div class="menu-pop" id="rowMenu">
+  <button class="primary" data-act="view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>View Advisor</button>
+  <button data-act="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>Edit Advisor</button>
+  <button data-act="leads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>View Assigned Leads</button>
+  <button data-act="assign"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Assign Leads</button>
+  <div class="menu-sep"></div>
+  <button data-act="toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"/></svg><span class="tgl-lbl">Activate / Deactivate</span></button>
+</div>
+
+<!-- ADD / EDIT MODAL -->
+<div class="modal-scrim" id="advModal">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-h">
+      <span class="m-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>
+      <div><b id="modalTitle">Add Advisor</b><span id="modalSub">Register a new advisor</span></div>
+      <button class="x" id="mClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="fld full"><label>Full Name</label><input type="text" id="fName" placeholder="e.g. Sara Lopez"></div>
+      <div class="fld"><label>Role</label><select id="fRole"><option>Mortgage Advisor</option><option>Senior Advisor</option><option>Team Lead</option><option>Sales Director</option><option>Operations Advisor</option></select></div>
+      <div class="fld"><label>Status</label><select id="fStatus"><option>Active</option><option>On Leave</option><option>Inactive</option></select></div>
+      <div class="fld"><label>Email</label><input type="email" id="fEmail" placeholder="name@mortgagecrm.ae"></div>
+      <div class="fld"><label>Phone</label><input type="tel" id="fPhone" placeholder="+971 50 000 0000"></div>
+      <div class="fld"><label>Commission %</label><input type="number" id="fComm" step="0.1" min="0" placeholder="e.g. 0.35"></div>
+      <div class="fld"><label>Joining Date</label><input type="date" id="fJoin"></div>
+      <div class="fld full"><label>Notes</label><textarea id="fNotes" placeholder="Internal notes about this advisor…"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="mCancel">Cancel</button>
+      <button class="btn btn-primary" id="mSave">Save Advisor</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span id="toastMsg"></span></div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+
+/* sidebar */
+const sidebar=$('#sidebar'),scrim=$('#scrim');
+$('#hamburger').addEventListener('click',()=>{sidebar.classList.add('open');scrim.classList.add('show')});
+scrim.addEventListener('click',()=>{sidebar.classList.remove('open');scrim.classList.remove('show')});
+$$('[data-toggle]').forEach(b=>b.addEventListener('click',()=>{
+  const g=b.closest('.nav-group'),was=g.classList.contains('open');
+  $$('.nav-group.open').forEach(o=>o!==g&&o.classList.remove('open'));
+  g.classList.toggle('open',!was);
+}));
+document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#globalSearch')?.focus();}});
+
+/* ---------- advisor data ---------- */
+const ROLES=['Mortgage Advisor','Senior Advisor','Team Lead','Sales Director','Operations Advisor'];
+let ADV=[
+  {name:'Sara Lopez',role:'Team Lead',assigned:42,active:18,approved:39,disbursed:32,revenue:412000,status:'Active'},
+  {name:'Priya Nair',role:'Senior Advisor',assigned:31,active:14,approved:27,disbursed:28,revenue:365000,status:'Active'},
+  {name:'Fatima Rahman',role:'Senior Advisor',assigned:27,active:12,approved:23,disbursed:24,revenue:301000,status:'Active'},
+  {name:'John Mathews',role:'Mortgage Advisor',assigned:24,active:11,approved:18,disbursed:16,revenue:238000,status:'Active'},
+  {name:'Daniel Roy',role:'Mortgage Advisor',assigned:18,active:9,approved:13,disbursed:11,revenue:182000,status:'Active'},
+  {name:'Ahmed Saleh',role:'Mortgage Advisor',assigned:21,active:10,approved:15,disbursed:13,revenue:201000,status:'Active'},
+  {name:'Leila Haddad',role:'Operations Advisor',assigned:16,active:7,approved:11,disbursed:9,revenue:142000,status:'On Leave'},
+  {name:'Marcus Lee',role:'Mortgage Advisor',assigned:14,active:6,approved:9,disbursed:7,revenue:108000,status:'Active'},
+  {name:'Nora Aziz',role:'Mortgage Advisor',assigned:11,active:4,approved:6,disbursed:4,revenue:62000,status:'Inactive'}
+];
+const COMM_RATE=0.30; // 30% of bank commission share -> simplified
+function conv(a){return a.assigned?Math.round(a.approved/a.assigned*100):0;}
+function commission(a){return Math.round(a.revenue*COMM_RATE);}
+const ini=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const fmtAED=v=>v>=1e6?'AED '+(v/1e6).toFixed(2)+'M':'AED '+(v/1e3).toFixed(0)+'K';
+function convColor(c){return c>=85?'var(--success)':c>=70?'var(--primary)':c>=55?'var(--warning)':'var(--danger)';}
+
+/* ---------- KPIs ---------- */
+function buildKPIs(){
+  const KPIS=[
+    {l:'Total Advisors',v:'24',d:'+2 this quarter',cls:'mut',ic:'',svg:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/>',s:[20,21,21,22,22,23,23,24]},
+    {l:'Active Advisors',v:'21',d:'88% active',cls:'pos',ic:'green',svg:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>',s:[17,18,18,19,19,20,20,21]},
+    {l:'Assigned Leads',v:'468',d:'+8.2%',cls:'pos',ic:'',svg:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>',s:[5,6,6,7,7,8,8,9]},
+    {l:'Approved Loans',v:'184',d:'+6.4%',cls:'pos',ic:'green',svg:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',s:[4,5,5,6,6,7,7,8]},
+    {l:'Disbursed Loans',v:'142',d:'+9.6%',cls:'pos',ic:'green',svg:'<path d="M3 11.5 12 4l9 7.5"/><path d="M6 10.5V20h4.5v-5h3v5H18v-9.5"/>',s:[3,4,4,5,5,6,6,7]},
+    {l:'Revenue Generated',v:'AED 2.48M',d:'+12.4%',cls:'pos',ic:'green',svg:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/>',s:[4,5,5,6,7,7,8,9]}
+  ];
+  const spark=(d)=>{const w=54,h=22,max=Math.max(...d),min=Math.min(...d);
+    const pts=d.map((v,i)=>`${(i/(d.length-1))*w},${h-3-((v-min)/(max-min||1))*(h-6)}`).join(' ');
+    return `<svg class="spark" viewBox="0 0 ${w} ${h}"><polyline points="${pts}" fill="none" stroke="#05448B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/></svg>`;};
+  const arrow=cls=>cls==='pos'?'M7 17 17 7M17 7H9M17 7v8':'M5 12h14';
+  $('#kpiGrid').innerHTML=KPIS.map(k=>`
+    <div class="kpi">
+      <div class="kpi-top"><label>${k.l}</label><span class="kpi-ic ${k.ic}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${k.svg}</svg></span></div>
+      <div class="kpi-foot"><div class="val">${k.v}</div>${spark(k.s)}</div>
+      <div class="kpi-foot" style="margin-top:4px"><span class="delta ${k.cls}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="${arrow(k.cls)}"/></svg>${k.d}</span></div>
+    </div>`).join('');
+}
+
+/* ---------- filters ---------- */
+const state={search:'',status:null,role:null,leads:null,revenue:null,perf:null,sort:'Revenue (high → low)',sortK:'revenue',sortDir:-1};
+const FILTER_DEFS={
+  status:{label:'Status',opts:['Active','On Leave','Inactive']},
+  role:{label:'Role',opts:ROLES},
+  leads:{label:'Assigned Leads',opts:['30+','15–30','Under 15']},
+  revenue:{label:'Revenue',opts:['AED 300K+','AED 150–300K','Under AED 150K']},
+  perf:{label:'Performance',opts:['High (85%+)','Medium (70–85%)','Low (<70%)']},
+  sort:{label:'Sort By',opts:['Revenue (high → low)','Conversion Rate','Assigned Leads','Advisor Name']}
+};
+$$('.f-dd').forEach(dd=>{
+  const k=dd.dataset.filter,def=FILTER_DEFS[k];
+  dd.innerHTML=`<button class="f-dd-btn"><span class="lbl">${def.label}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></button>
+    <div class="f-dd-menu">${def.opts.map(o=>`<button data-v="${o}">${o}</button>`).join('')}</div>`;
+  const btn=dd.querySelector('.f-dd-btn');
+  btn.addEventListener('click',e=>{e.stopPropagation();const was=dd.classList.contains('open');$$('.f-dd.open').forEach(o=>o.classList.remove('open'));dd.classList.toggle('open',!was);});
+  dd.querySelectorAll('.f-dd-menu button').forEach(ob=>ob.addEventListener('click',()=>{
+    const v=ob.dataset.v;
+    if(k==='sort'){state.sort=v;const map={'Revenue (high → low)':['revenue',-1],'Conversion Rate':['conv',-1],'Assigned Leads':['assigned',-1],'Advisor Name':['name',1]};[state.sortK,state.sortDir]=map[v];}
+    else{const same=state[k]===v;state[k]=same?null:v;}
+    dd.querySelectorAll('.f-dd-menu button').forEach(x=>x.classList.toggle('sel',x.dataset.v===(k==='sort'?state.sort:state[k])));
+    btn.classList.toggle('on',k==='sort'?true:!!state[k]);btn.querySelector('.lbl').textContent=(k==='sort'?state.sort:state[k])||def.label;
+    dd.classList.remove('open');renderTable();
+  }));
+});
+document.addEventListener('click',()=>$$('.f-dd.open').forEach(o=>o.classList.remove('open')));
+$('#advSearch').addEventListener('input',e=>{state.search=e.target.value.toLowerCase();renderTable();});
+$('#clearFilters').addEventListener('click',()=>{
+  state.search='';$('#advSearch').value='';state.status=state.role=state.leads=state.revenue=state.perf=null;
+  state.sort='Revenue (high → low)';state.sortK='revenue';state.sortDir=-1;
+  $$('.f-dd').forEach(dd=>{const k=dd.dataset.filter;dd.querySelector('.f-dd-btn').classList.remove('on');dd.querySelector('.lbl').textContent=FILTER_DEFS[k].label;dd.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));});
+  renderTable();
+});
+
+/* ---------- table ---------- */
+const STC={Active:'active','On Leave':'leave',Inactive:'inactive'};
+function filtered(){
+  return ADV.filter(a=>{
+    if(state.search&&![a.name,a.role].join(' ').toLowerCase().includes(state.search))return false;
+    if(state.status&&a.status!==state.status)return false;
+    if(state.role&&a.role!==state.role)return false;
+    if(state.leads){const x=a.assigned;if(state.leads==='30+'&&!(x>=30))return false;if(state.leads==='15–30'&&!(x>=15&&x<30))return false;if(state.leads==='Under 15'&&!(x<15))return false;}
+    if(state.revenue){const r=a.revenue;if(state.revenue==='AED 300K+'&&!(r>=300000))return false;if(state.revenue==='AED 150–300K'&&!(r>=150000&&r<300000))return false;if(state.revenue==='Under AED 150K'&&!(r<150000))return false;}
+    if(state.perf){const c=conv(a);if(state.perf==='High (85%+)'&&!(c>=85))return false;if(state.perf==='Medium (70–85%)'&&!(c>=70&&c<85))return false;if(state.perf==='Low (<70%)'&&!(c<70))return false;}
+    return true;
+  }).sort((x,y)=>{
+    let va,vb;
+    if(state.sortK==='conv'){va=conv(x);vb=conv(y);}else{va=x[state.sortK];vb=y[state.sortK];}
+    if(typeof va==='string'){va=va.toLowerCase();vb=vb.toLowerCase();}
+    if(va<vb)return -1*state.sortDir;if(va>vb)return 1*state.sortDir;return 0;
+  });
+}
+function renderTable(){
+  const rows=filtered();
+  $('#tblCount').textContent=rows.length+' advisors';
+  $('#advBody').innerHTML=rows.length?rows.map((a,idx)=>{
+    const c=conv(a);
+    return `<tr>
+      <td><div class="adv-cell"><span class="p-avatar ${idx===0?'deep':''}">${ini(a.name)}</span><div><b>${a.name}</b><span>${a.status}</span></div></div></td>
+      <td><span class="tag">${a.role}</span></td>
+      <td class="r num">${a.assigned}</td>
+      <td class="r num">${a.active}</td>
+      <td class="r num">${a.approved}</td>
+      <td class="r num">${a.disbursed}</td>
+      <td class="r"><div class="conv"><b style="color:${convColor(c)}">${c}%</b><span class="bar"><i style="width:${c}%;background:${convColor(c)}"></i></span></div></td>
+      <td class="r num">${fmtAED(a.revenue)}</td>
+      <td class="r num" style="color:var(--success)">${fmtAED(commission(a))}</td>
+      <td><span class="status ${STC[a.status]}"><i></i>${a.status}</span></td>
+      <td><button class="kebab" data-name="${a.name}" aria-label="Actions"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button></td>
+    </tr>`;}).join(''):`<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text-3)">No advisors match your filters.</td></tr>`;
+  $$('.tbl th.sortable').forEach(th=>th.querySelector('.s-ic').textContent=th.dataset.k===state.sortK?(state.sortDir===1?'▲':'▼'):'');
+  $$('#advBody .kebab').forEach(k=>k.addEventListener('click',e=>{
+    e.stopPropagation();const m=$('#rowMenu'),r=k.getBoundingClientRect();
+    const a=ADV.find(x=>x.name===k.dataset.name);
+    m.querySelector('.tgl-lbl').textContent=a.status==='Inactive'?'Activate Advisor':'Deactivate Advisor';
+    m.classList.add('show');m.dataset.name=k.dataset.name;
+    const mw=188,mh=m.offsetHeight||240;let x=r.right-mw,y=r.bottom+6;
+    if(y+mh>innerHeight-12)y=r.top-mh-6;m.style.left=Math.max(8,x)+'px';m.style.top=y+'px';
+  }));
+}
+$$('.tbl th.sortable').forEach(th=>th.addEventListener('click',()=>{
+  const k=th.dataset.k;if(state.sortK===k)state.sortDir*=-1;else{state.sortK=k;state.sortDir=1;}renderTable();
+}));
+document.addEventListener('click',()=>$('#rowMenu').classList.remove('show'));
+$('#rowMenu').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const name=$('#rowMenu').dataset.name,a=ADV.find(x=>x.name===name),act=b.dataset.act;
+  if(act==='edit'){openModal(a);$('#rowMenu').classList.remove('show');return;}
+  if(act==='toggle'){a.status=a.status==='Inactive'?'Active':'Inactive';buildKPIs();renderTable();buildLeaders();buildWorkload();buildLB();drawCmp();toast(`${name} ${a.status==='Inactive'?'deactivated':'activated'}`);$('#rowMenu').classList.remove('show');return;}
+  const lbl={view:'Opening advisor profile',leads:'Viewing assigned leads',assign:'Assign leads dialog'};
+  toast(`${lbl[act]} — ${name}`);$('#rowMenu').classList.remove('show');
+});
+
+/* ---------- leaderboard cards ---------- */
+function buildLeaders(){
+  const top=[...ADV].sort((a,b)=>b.revenue-a.revenue).slice(0,3);
+  $('#leadGrid').innerHTML=top.map((a,i)=>`
+    <div class="lead-card ${i===0?'gold':''}">
+      <span class="rank">#${i+1}</span>
+      <div class="lc-h"><span class="p-avatar ${i===0?'deep':''}">${ini(a.name)}</span><b class="nm">${a.name}<span>${a.role}</span></b></div>
+      <div class="lc-stats">
+        <div class="ls-row"><label>Revenue</label><b>${fmtAED(a.revenue)}</b></div>
+        <div class="ls-row"><label>Disbursed Loans</label><b>${a.disbursed}</b></div>
+        <div class="ls-row"><label>Conversion Rate</label><b style="color:${convColor(conv(a))}">${conv(a)}%</b></div>
+      </div>
+    </div>`).join('');
+}
+
+/* ---------- workload ---------- */
+function buildWorkload(){
+  const rows=[...ADV].sort((a,b)=>b.assigned-a.assigned).slice(0,6);
+  const max=rows.length?rows[0].assigned:1;
+  $('#workload').innerHTML=rows.map(a=>`<div class="wl-item">
+    <span class="p-avatar">${ini(a.name)}</span>
+    <div class="wl-body"><div class="wl-top"><b>${a.name}</b><span class="wl-count">${a.assigned} Leads</span></div>
+      <div class="wl-bar"><i class="${a.assigned/max>0.85?'hot':''}" data-w="${Math.round(a.assigned/max*100)}"></i></div></div></div>`).join('');
+  requestAnimationFrame(()=>$$('#workload .wl-bar i').forEach(i=>i.style.width=i.dataset.w+'%'));
+}
+
+/* ---------- revenue leaderboard table ---------- */
+function buildLB(){
+  const rows=[...ADV].sort((a,b)=>b.revenue-a.revenue);
+  $('#lbBody').innerHTML=rows.map(a=>`<tr>
+    <td><div class="adv-cell"><span class="p-avatar" style="width:28px;height:28px;font-size:10px">${ini(a.name)}</span><b style="font-size:12.5px">${a.name}</b></div></td>
+    <td class="r num">${fmtAED(a.revenue)}</td>
+    <td class="r num" style="color:var(--success)">${fmtAED(commission(a))}</td>
+    <td class="r num">${a.approved}</td>
+    <td class="r num">${a.disbursed}</td></tr>`).join('');
+}
+
+/* ---------- comparison bar ---------- */
+function drawCmp(){
+  const cv=$('#cmpChart'),ctx=cv.getContext('2d');
+  const W=cv.width=cv.clientWidth*2,H=600;cv.height=H;
+  const data=[...ADV].sort((a,b)=>b.revenue-a.revenue).slice(0,6);
+  data.forEach(d=>d.revK=d.revenue/4000);
+  const pad={l:20,r:20,t:30,b:64},gw=(W-pad.l-pad.r)/data.length;
+  const maxL=Math.max(...data.map(d=>Math.max(d.assigned,d.approved,d.disbursed,d.revK)));
+  const series=[['assigned','#05448B'],['approved','#2D6CB0'],['disbursed','#7FA6CF'],['revK','#16A34A']];
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='#EEF2F7';ctx.lineWidth=2;
+  for(let i=0;i<=4;i++){const y=pad.t+(H-pad.t-pad.b)*i/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();}
+  data.forEach((d,i)=>{
+    const x=pad.l+i*gw,group=gw*0.7,bw=group/4;
+    series.forEach((s,j)=>{
+      const v=d[s[0]],bh=v/maxL*(H-pad.t-pad.b),bx=x+gw*0.15+j*bw,by=H-pad.b-bh;
+      ctx.fillStyle=s[1];rr(ctx,bx+1,by,bw-2,bh,3);
+    });
+    ctx.fillStyle='#64748B';ctx.font='600 18px Inter';ctx.textAlign='center';
+    ctx.fillText(d.name.split(' ')[0],x+gw/2,H-pad.b+30);
+  });
+}
+function rr(ctx,x,y,w,h,r){r=Math.min(r,w/2,h/2);if(h<=0)return;ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,0);ctx.arcTo(x,y+h,x,y,0);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();ctx.fill();}
+
+/* ---------- activity feed ---------- */
+const FEED=[
+  {ic:'ok',svg:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',h:'<b>Sara Lopez</b> closed loan — <b>AED 2.4M</b>',t:'15 mins ago'},
+  {ic:'',svg:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>',h:'<b>Priya Nair</b> assigned new lead — <b>Ahmed Khan</b>',t:'42 mins ago'},
+  {ic:'',svg:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 15l2 2 4-4"/>',h:'<b>Fatima Rahman</b> updated FOL status',t:'1 hour ago'},
+  {ic:'ok',svg:'<path d="M3 21h18M5 21V8l7-5 7 5v13"/>',h:'<b>Daniel Roy</b> completed valuation coordination',t:'Today'},
+  {ic:'',svg:'<path d="M12 5v14M5 12h14"/>',h:'New advisor onboarded — <b>Marcus Lee</b>',t:'Today'}
+];
+function buildFeed(){
+  $('#feed').innerHTML=FEED.map(f=>`<div class="feed-item">
+    <span class="feed-ic ${f.ic}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${f.svg}</svg></span>
+    <div class="feed-body"><p>${f.h}</p><time>${f.t}</time></div></div>`).join('');
+}
+
+/* ---------- add / edit modal ---------- */
+let editing=null;
+function openModal(adv){
+  editing=adv||null;
+  $('#modalTitle').textContent=adv?'Edit Advisor':'Add Advisor';
+  $('#modalSub').textContent=adv?'Update advisor details':'Register a new advisor';
+  $('#fName').value=adv?adv.name:'';$('#fName').disabled=!!adv;
+  $('#fRole').value=adv?adv.role:'Mortgage Advisor';
+  $('#fStatus').value=adv?adv.status:'Active';
+  $('#fEmail').value=adv?(adv.email||''):'';
+  $('#fPhone').value=adv?(adv.phone||''):'';
+  $('#fComm').value=adv?(adv.comm||0.30):'';
+  $('#fJoin').value=adv?(adv.join||''):'';
+  $('#fNotes').value=adv?(adv.notes||''):'';
+  $('#advModal').classList.add('show');
+}
+function closeModal(){$('#advModal').classList.remove('show');editing=null;}
+$('#addBtn').addEventListener('click',()=>openModal(null));
+$('#mClose').addEventListener('click',closeModal);
+$('#mCancel').addEventListener('click',closeModal);
+$('#advModal').addEventListener('click',e=>{if(e.target===$('#advModal'))closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+$('#mSave').addEventListener('click',()=>{
+  const name=$('#fName').value.trim();
+  if(!name){toast('Advisor name is required');return;}
+  const data={role:$('#fRole').value,status:$('#fStatus').value,email:$('#fEmail').value.trim(),phone:$('#fPhone').value.trim(),comm:+$('#fComm').value||0.30,join:$('#fJoin').value,notes:$('#fNotes').value.trim()};
+  if(editing){Object.assign(editing,data);toast(`${editing.name} updated`);}
+  else{ADV.push({name,assigned:0,active:0,approved:0,disbursed:0,revenue:0,...data});toast(`${name} added`);}
+  buildKPIs();renderTable();buildLeaders();buildWorkload();buildLB();drawCmp();closeModal();
+});
+
+/* actions */
+$('#refreshBtn').addEventListener('click',()=>{init();toast('Advisors refreshed');});
+
+/* toast */
+let tTimer;
+function toast(msg){$('#toastMsg').textContent=msg;$('#toast').classList.add('show');clearTimeout(tTimer);tTimer=setTimeout(()=>$('#toast').classList.remove('show'),2400);}
+
+/* init */
+function init(){buildKPIs();renderTable();buildLeaders();buildWorkload();buildLB();buildFeed();drawCmp();}
+init();
+let rT;addEventListener('resize',()=>{clearTimeout(rT);rT=setTimeout(drawCmp,200);});
+</script>
+</body>
+</html>

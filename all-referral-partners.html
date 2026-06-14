@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mortgage CRM — All Referral Partners</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#05448B;--primary-h:#0B5AB3;--blue-2:#2D6CB0;--blue-3:#7FA6CF;
+  --blue-50:#F0F5FB;--blue-100:#DEEAF6;
+  --bg:#F7F9FC;--card:#FFFFFF;
+  --text:#0F172A;--text-2:#64748B;--text-3:#94A3B8;
+  --border:#E2E8F0;--border-soft:#EEF2F7;
+  --success:#16A34A;--warning:#B45309;--danger:#DC2626;
+  --r:14px;
+  --sh-xs:0 1px 2px rgba(15,23,42,.05);
+  --sh-sm:0 1px 3px rgba(15,23,42,.06),0 1px 2px rgba(15,23,42,.04);
+  --sh-md:0 4px 12px -2px rgba(15,23,42,.08);
+  --sh-lg:0 12px 32px -8px rgba(15,23,42,.18);
+  --sb:256px;
+  --font:'Inter',system-ui,-apple-system,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+a{color:inherit;text-decoration:none}
+::selection{background:var(--blue-100)}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+.app{display:flex;min-height:100vh}
+.main{flex:1;min-width:0;margin-left:var(--sb)}
+
+/* sidebar */
+.sidebar{position:fixed;inset:0 auto 0 0;width:var(--sb);background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:60;transition:transform .28s cubic-bezier(.4,0,.2,1)}
+.brand{display:flex;align-items:center;gap:11px;padding:20px 20px 16px}
+.brand-mark{width:36px;height:36px;border-radius:10px;background:var(--primary);display:grid;place-items:center;flex-shrink:0}
+.brand-name{font-weight:700;font-size:15px;letter-spacing:-.015em;color:var(--text)}
+.brand-sub{font-size:11px;color:var(--text-3);font-weight:500}
+.nav{flex:1;overflow-y:auto;padding:6px 12px 16px;scrollbar-width:thin;scrollbar-color:#D7DEE8 transparent}
+.nav::-webkit-scrollbar{width:5px}
+.nav::-webkit-scrollbar-thumb{background:#D7DEE8;border-radius:4px}
+.nav-label{font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--text-3);padding:18px 12px 7px;margin-top:2px}
+.nav-label:first-child{margin-top:0;padding-top:8px}
+.nav-item{display:flex;align-items:center;gap:11px;width:100%;padding:8.5px 11px;border-radius:9px;color:#3F4C61;font-size:13.5px;font-weight:500;text-align:left;transition:background .13s,color .13s;position:relative}
+.nav-item svg{width:17px;height:17px;flex-shrink:0;color:var(--text-2);transition:color .13s}
+.nav-item:hover{background:#F3F6FA;color:var(--text)}
+.nav-item:hover svg{color:var(--text)}
+.nav-item.active{background:var(--blue-50);color:var(--primary);font-weight:600}
+.nav-item.active svg{color:var(--primary)}
+.nav-item.active::before{content:"";position:absolute;left:-12px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--primary)}
+.nav-item .chev{margin-left:auto;width:13px;height:13px;color:var(--text-3);transition:transform .22s cubic-bezier(.4,0,.2,1)}
+.nav-group{margin-bottom:1px}
+.nav-group.open>.nav-item{color:var(--text)}
+.nav-group.open>.nav-item svg{color:var(--text)}
+.nav-group.open .chev{transform:rotate(90deg);color:var(--primary)}
+.nav-sub{overflow:hidden;max-height:0;transition:max-height .3s cubic-bezier(.4,0,.2,1);padding-left:4px;margin-left:18px;border-left:1px solid var(--border-soft)}
+.nav-group.open .nav-sub{max-height:320px}
+.nav-sub .nav-item{padding:6.5px 11px 6.5px 22px;font-size:12.75px;color:var(--text-2);font-weight:500;border-radius:7px;margin:1px 0}
+.nav-sub .nav-item:hover{color:var(--text);background:#F3F6FA}
+.nav-sub .nav-item.active{background:var(--blue-50);color:var(--primary);font-weight:600}
+.nav-sub .nav-item.active::before{display:none}
+.nav-count{margin-left:auto;font-size:11px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--blue-50);color:var(--primary)}
+.sidebar-foot{padding:12px;border-top:1px solid var(--border-soft)}
+.user-card{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;transition:background .13s;width:100%;text-align:left}
+.user-card:hover{background:#F3F6FA}
+.user-card b{display:block;font-size:13px;font-weight:600}
+.user-card span{font-size:11.5px;color:var(--text-3)}
+.avatar{width:32px;height:32px;border-radius:9px;background:var(--primary);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
+
+/* header */
+.header{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;padding:13px 28px;background:rgba(255,255,255,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.hamburger{display:none;width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:#fff;place-items:center}
+.page-title{font-size:15px;font-weight:700;letter-spacing:-.01em;margin-right:6px}
+.search{flex:1;max-width:400px;position:relative}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--text-3)}
+.search input{width:100%;padding:8.5px 64px 8.5px 36px;border-radius:10px;border:1px solid var(--border);background:var(--bg);font:inherit;font-size:13.5px;transition:all .15s}
+.search input::placeholder{color:var(--text-3)}
+.search input:focus{outline:none;background:#fff;border-color:var(--primary);box-shadow:0 0 0 3px rgba(5,68,139,.10)}
+.kbd{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:10.5px;font-weight:600;color:var(--text-3);border:1px solid var(--border);background:#fff;border-radius:5px;padding:1px 6px}
+.h-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+.icon-btn{width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:#fff;display:grid;place-items:center;color:var(--text-2);position:relative;transition:all .14s}
+.icon-btn:hover{color:var(--text);border-color:#CBD5E1;background:var(--bg)}
+.icon-btn svg{width:16px;height:16px}
+.dot{position:absolute;top:8px;right:8px;width:6px;height:6px;border-radius:50%;background:var(--danger);border:1.5px solid #fff}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8.5px 14px;border-radius:9px;font-size:13px;font-weight:600;transition:all .14s;white-space:nowrap}
+.btn svg{width:15px;height:15px}
+.btn-ghost{background:#fff;border:1px solid var(--border);color:var(--text-2)}
+.btn-ghost:hover{color:var(--text);border-color:#CBD5E1;background:var(--bg)}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:var(--sh-xs)}
+.btn-primary:hover{background:var(--primary-h)}
+
+/* content */
+.content{padding:24px 28px 48px;display:flex;flex-direction:column;gap:18px;max-width:1620px;width:100%;margin:0 auto}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.page-head h1{font-size:21px;font-weight:700;letter-spacing:-.02em}
+.page-head p{color:var(--text-2);font-size:13.5px;margin-top:3px;max-width:640px}
+.page-head .actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px 15px 12px;box-shadow:var(--sh-xs);transition:box-shadow .16s,border-color .16s}
+.kpi:hover{box-shadow:var(--sh-md);border-color:#D4DDE8}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.kpi-ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--blue-50);color:var(--primary)}
+.kpi-ic.green{background:#EDFAF1;color:var(--success)}
+.kpi-ic svg{width:14px;height:14px}
+.kpi label{font-size:11.5px;font-weight:600;color:var(--text-2);display:block}
+.kpi .val{font-size:22px;font-weight:700;letter-spacing:-.025em;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi-foot{display:flex;align-items:flex-end;justify-content:space-between;margin-top:6px;gap:6px}
+.delta{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700}
+.delta svg{width:10px;height:10px}
+.delta.pos{color:var(--success)}.delta.neg{color:var(--danger)}.delta.mut{color:var(--text-3)}
+.spark{width:54px;height:22px;flex-shrink:0}
+
+/* filter bar */
+.filter-bar{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-xs);padding:12px 14px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.f-search{position:relative;flex:1;min-width:200px}
+.f-search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-3)}
+.f-search input{width:100%;padding:8px 12px 8px 33px;border-radius:9px;border:1px solid var(--border);background:var(--bg);font:inherit;font-size:13px;transition:all .15s}
+.f-search input:focus{outline:none;background:#fff;border-color:var(--primary);box-shadow:0 0 0 3px rgba(5,68,139,.10)}
+.f-dd{position:relative}
+.f-dd-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:9px;border:1px solid var(--border);background:#fff;font-size:12.5px;font-weight:600;color:var(--text-2);transition:all .14s;white-space:nowrap}
+.f-dd-btn:hover{border-color:#CBD5E1;color:var(--text)}
+.f-dd-btn.on{border-color:var(--primary);color:var(--primary);background:var(--blue-50)}
+.f-dd-btn svg{width:12px;height:12px;color:var(--text-3);transition:transform .18s}
+.f-dd.open .f-dd-btn svg{transform:rotate(180deg)}
+.f-dd-menu{position:absolute;top:calc(100% + 6px);left:0;min-width:200px;background:#fff;border:1px solid var(--border);border-radius:11px;box-shadow:var(--sh-lg);padding:5px;z-index:40;opacity:0;transform:translateY(-4px);pointer-events:none;transition:all .15s;max-height:300px;overflow-y:auto}
+.f-dd.open .f-dd-menu{opacity:1;transform:none;pointer-events:auto}
+.f-dd-menu button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:7.5px 10px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--text-2);transition:background .12s}
+.f-dd-menu button:hover{background:var(--bg);color:var(--text)}
+.f-dd-menu button.sel{background:var(--blue-50);color:var(--primary);font-weight:600}
+.clear-btn{font-size:12.5px;font-weight:600;color:var(--text-3);padding:8px 10px;border-radius:9px;transition:all .14s}
+.clear-btn:hover{color:var(--danger);background:#FEF2F2}
+
+/* cards */
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-xs);min-width:0}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 20px 0}
+.card-h h3{font-size:14px;font-weight:700;letter-spacing:-.008em}
+.card-h .sub{font-size:12px;color:var(--text-2);margin-top:1px}
+.card-body{padding:14px 20px 18px}
+.link-btn{font-size:12px;font-weight:600;color:var(--primary);padding:4px 9px;border-radius:7px;transition:background .14s}
+.link-btn:hover{background:var(--blue-50)}
+
+/* commission summary */
+.cs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.cs-tile{background:var(--bg);border:1px solid var(--border-soft);border-radius:12px;padding:13px 15px;transition:all .14s}
+.cs-tile:hover{background:#fff;border-color:var(--border);box-shadow:var(--sh-xs)}
+.cs-tile label{font-size:11px;font-weight:600;color:var(--text-3)}
+.cs-tile b{display:block;font-size:18px;font-weight:700;letter-spacing:-.02em;margin-top:3px;font-variant-numeric:tabular-nums}
+.cs-tile span{font-size:11px;font-weight:600;margin-top:2px;display:inline-block}
+.cs-tile.hl{background:var(--primary);border-color:var(--primary)}
+.cs-tile.hl label{color:#A9C4E2}
+.cs-tile.hl b{color:#fff}
+.cs-tile.hl span{color:#9FD9B4}
+
+/* table */
+.tbl-wrap{overflow-x:auto;border-radius:0 0 var(--r) var(--r)}
+.tbl{width:100%;border-collapse:collapse;min-width:1280px}
+.tbl thead th{position:sticky;top:0;background:#FAFCFE;z-index:5;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);text-align:left;padding:11px 13px;border-bottom:1px solid var(--border);white-space:nowrap;user-select:none}
+.tbl thead th.sortable{cursor:pointer}
+.tbl thead th.sortable:hover{color:var(--text)}
+.tbl thead th.r,.tbl td.r{text-align:right}
+.tbl thead th .s-ic{margin-left:4px;font-size:9px;opacity:.6}
+.tbl td{padding:12px 13px;border-bottom:1px solid var(--border-soft);font-size:12.5px;vertical-align:middle;white-space:nowrap}
+.tbl tbody tr{transition:background .12s}
+.tbl tbody tr:hover{background:#FAFCFE}
+.tbl tr:last-child td{border-bottom:none}
+.num{font-variant-numeric:tabular-nums;font-weight:600}
+.pt-cell{display:flex;align-items:center;gap:11px}
+.p-avatar{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;flex-shrink:0;font-size:11px;font-weight:700;background:var(--blue-50);color:var(--primary)}
+.p-avatar.deep{background:var(--primary);color:#fff}
+.pt-cell b{display:block;font-size:12.5px;font-weight:600}
+.pt-cell span{font-size:10.5px;color:var(--text-3)}
+.tag{display:inline-flex;font-size:10.5px;font-weight:600;padding:2.5px 9px;border-radius:7px;background:var(--bg);color:var(--text-2);border:1px solid var(--border-soft);white-space:nowrap}
+.conv{display:flex;align-items:center;gap:8px;min-width:112px}
+.conv b{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;width:34px}
+.conv .bar{flex:1;height:6px;border-radius:99px;background:var(--border-soft);overflow:hidden}
+.conv .bar i{display:block;height:100%;border-radius:99px}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:99px}
+.status i{width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block}
+.status.active{background:#EDFAF1;color:var(--success)}
+.status.hold{background:#FEF3E2;color:var(--warning)}
+.status.inactive{background:#F1F5F9;color:var(--text-3)}
+.kebab{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--text-3);transition:all .13s}
+.kebab:hover{background:var(--blue-50);color:var(--primary)}
+.kebab svg{width:15px;height:15px}
+.menu-pop{position:fixed;min-width:184px;background:#fff;border:1px solid var(--border);border-radius:11px;box-shadow:var(--sh-lg);padding:5px;z-index:80;display:none}
+.menu-pop.show{display:block;animation:popIn .14s ease}
+@keyframes popIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.menu-pop button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:7.5px 10px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--text-2);transition:background .12s}
+.menu-pop button:hover{background:var(--bg);color:var(--text)}
+.menu-pop button.primary{color:var(--primary);font-weight:600}
+.menu-pop svg{width:13.5px;height:13.5px}
+.menu-sep{height:1px;background:var(--border-soft);margin:4px 6px}
+
+/* layout rows */
+.row2{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+
+/* leaderboard cards */
+.lead-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.lead-card{border:1px solid var(--border-soft);border-radius:12px;padding:15px;background:var(--bg);transition:all .15s;position:relative;overflow:hidden}
+.lead-card:hover{background:#fff;border-color:var(--border);box-shadow:var(--sh-xs)}
+.lead-card .rank{position:absolute;top:13px;right:14px;font-size:12px;font-weight:800;color:var(--text-3)}
+.lead-card.gold{background:linear-gradient(135deg,#FFFBEB,#fff);border-color:#FCE9B6}
+.lead-card .lc-h{display:flex;align-items:center;gap:10px;margin-bottom:13px}
+.lead-card b.nm{font-size:13px;font-weight:700;display:block;line-height:1.25}
+.lead-card .nm span{font-size:10.5px;color:var(--text-3);font-weight:500}
+.lead-card .lc-stats{display:flex;flex-direction:column;gap:8px}
+.lead-card .ls-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.lead-card .ls-row label{font-size:11px;font-weight:600;color:var(--text-3)}
+.lead-card .ls-row b{font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* contribution chart */
+canvas{display:block;width:100%}
+.chart-legend{display:flex;gap:14px;flex-wrap:wrap}
+.chart-legend span{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--text-2)}
+.chart-legend i{width:9px;height:9px;border-radius:3px;display:inline-block}
+.mini-select{font:inherit;font-size:12px;font-weight:600;padding:6px 9px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text-2);cursor:pointer}
+
+/* activity feed */
+.feed{display:flex;flex-direction:column;max-height:360px;overflow-y:auto;padding-right:4px;scrollbar-width:thin}
+.feed::-webkit-scrollbar{width:5px}
+.feed::-webkit-scrollbar-thumb{background:#D7DEE8;border-radius:4px}
+.feed-item{display:flex;gap:11px;position:relative;padding-bottom:15px}
+.feed-item::before{content:"";position:absolute;left:14px;top:31px;bottom:0;width:1.5px;background:var(--border-soft)}
+.feed-item:last-child{padding-bottom:0}
+.feed-item:last-child::before{display:none}
+.feed-ic{width:29px;height:29px;border-radius:9px;display:grid;place-items:center;flex-shrink:0;z-index:1;background:var(--blue-50);color:var(--primary)}
+.feed-ic.ok{background:#EDFAF1;color:var(--success)}
+.feed-ic svg{width:13px;height:13px}
+.feed-body p{font-size:12.3px;line-height:1.45}
+.feed-body p b{font-weight:600}
+.feed-body time{font-size:10.5px;color:var(--text-3)}
+
+/* modal */
+.modal-scrim{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:85;opacity:0;pointer-events:none;transition:opacity .2s;display:grid;place-items:center;padding:20px;overflow-y:auto}
+.modal-scrim.show{opacity:1;pointer-events:auto}
+.modal{background:#fff;border-radius:16px;box-shadow:var(--sh-lg);width:100%;max-width:560px;transform:translateY(12px) scale(.98);transition:transform .22s cubic-bezier(.4,0,.2,1);margin:auto}
+.modal-scrim.show .modal{transform:none}
+.modal.lg{max-width:600px}
+.modal-h{padding:18px 22px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;gap:12px}
+.modal-h .m-ic{width:38px;height:38px;border-radius:10px;background:var(--blue-50);color:var(--primary);display:grid;place-items:center;flex-shrink:0;font-size:13px;font-weight:700}
+.modal-h .m-ic svg{width:17px;height:17px}
+.modal-h b{font-size:15px;font-weight:700;display:block}
+.modal-h span{font-size:12px;color:var(--text-3)}
+.modal-h .x{margin-left:auto;width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--text-3)}
+.modal-h .x:hover{background:var(--bg);color:var(--text)}
+.modal-body{padding:18px 22px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fld{display:flex;flex-direction:column;gap:6px}
+.fld.full{grid-column:1/-1}
+.fld label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-3)}
+.fld input,.fld select,.fld textarea{padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:#fff;font:inherit;font-size:13px;color:var(--text);transition:all .15s}
+.fld textarea{resize:vertical;min-height:62px}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(5,68,139,.10)}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--border-soft);display:flex;gap:9px;justify-content:flex-end}
+/* view modal */
+.vm-body{padding:0 22px 18px}
+.vm-sec{padding:16px 0;border-bottom:1px solid var(--border-soft)}
+.vm-sec:last-child{border-bottom:none}
+.vm-sec h4{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);margin-bottom:10px}
+.vm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.vm-stat{background:var(--bg);border:1px solid var(--border-soft);border-radius:10px;padding:10px 12px}
+.vm-stat label{font-size:10.5px;font-weight:600;color:var(--text-3)}
+.vm-stat b{display:block;font-size:15px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums}
+.vm-rows{display:flex;flex-direction:column;gap:7px}
+.vm-row{display:flex;justify-content:space-between;gap:12px;font-size:12.5px}
+.vm-row label{color:var(--text-3);font-weight:600}
+.vm-row b{font-weight:600}
+.vm-lead{display:flex;align-items:center;gap:9px;padding:7px 0}
+.vm-lead .p-avatar{width:28px;height:28px;font-size:10px}
+.vm-lead .vl-body{flex:1}
+.vm-lead b{font-size:12.5px;font-weight:600;display:block}
+.vm-lead span{font-size:11px;color:var(--text-3)}
+
+/* toast / scrim / responsive */
+.toast{position:fixed;bottom:26px;right:26px;background:#0F172A;color:#fff;font-size:12.5px;font-weight:600;padding:11px 16px;border-radius:11px;box-shadow:var(--sh-lg);z-index:95;opacity:0;transform:translateY(10px);transition:all .25s;display:flex;align-items:center;gap:9px}
+.toast.show{opacity:1;transform:none}
+.toast svg{width:15px;height:15px;color:#4ADE80}
+.scrim{position:fixed;inset:0;background:rgba(15,23,42,.35);z-index:55;opacity:0;pointer-events:none;transition:opacity .25s}
+.scrim.show{opacity:1;pointer-events:auto}
+@media (max-width:1400px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.cs-grid{grid-template-columns:1fr 1fr}}
+@media (max-width:1100px){.row2{grid-template-columns:1fr}.lead-grid{grid-template-columns:1fr}}
+@media (max-width:960px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0);box-shadow:20px 0 50px rgba(15,23,42,.2)}
+  .main{margin-left:0}.hamburger{display:grid}.hide-md{display:none}
+}
+@media (max-width:660px){
+  .content{padding:16px 14px 40px}.header{padding:10px 14px}
+  .kpi-grid{grid-template-columns:1fr 1fr}.cs-grid{grid-template-columns:1fr}.hide-sm{display:none}
+  .modal-body,.vm-stats{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar" id="sidebar" aria-label="Primary navigation">
+  <div class="brand">
+    <div class="brand-mark"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M3 11.5 12 4l9 7.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10.5V20h4.5v-5h3v5H18v-9.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div><div class="brand-name">Mortgage CRM</div><div class="brand-sub">Operations Console</div></div>
+  </div>
+  <nav class="nav" id="nav">
+    <div class="nav-label">Overview</div>
+    <a class="nav-item" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</a>
+
+    <div class="nav-label">Sales Pipeline</div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Leads<span class="nav-count">468</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><a class="nav-item" href="all-leads.html">All Leads</a><a class="nav-item" href="lead-pipeline.html">Lead Pipeline</a><a class="nav-item" href="lead-sources.html">Lead Sources</a><a class="nav-item" href="lost-leads.html">Lost Leads</a></div>
+    </div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>Tasks<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><a class="nav-item" href="all-tasks.html">All Tasks</a><a class="nav-item" href="overdue-tasks.html">Overdue Tasks</a></div>
+    </div>
+
+    <div class="nav-label">Network</div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg>Banks<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><a class="nav-item" href="all-banks.html">All Banks</a></div>
+    </div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Advisors<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><a class="nav-item" href="all-advisors.html">All Advisors</a></div>
+    </div>
+    <div class="nav-group open">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>Referral Partners<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><a class="nav-item active" href="all-referral-partners.html">All Partners</a></div>
+    </div>
+
+    <div class="nav-label">Operations</div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>Documents<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><button class="nav-item">Pending Documents</button><button class="nav-item">Verified Documents</button><button class="nav-item">Templates</button></div>
+    </div>
+    <button class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.8-.9L3 21l2-5.2a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 8.4-8.5 8.38 8.38 0 0 1 8.5 8z"/></svg>WhatsApp Center<span class="nav-count">26</span></button>
+
+    <div class="nav-label">Finance &amp; Insights</div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 12h.01M18 12h.01"/></svg>Finance<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><button class="nav-item">Revenue</button><button class="nav-item">Advisor Commissions</button><button class="nav-item">Referral Commissions</button><button class="nav-item">VAT</button><button class="nav-item">Net Profit</button></div>
+    </div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 3 5-6"/></svg>Reports &amp; Analytics<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><button class="nav-item">Revenue Reports</button><button class="nav-item">Lead Reports</button><button class="nav-item">Advisor Reports</button><button class="nav-item">Bank Reports</button><button class="nav-item">Referral Reports</button></div>
+    </div>
+
+    <div class="nav-label">Administration</div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>User Management<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><button class="nav-item">Users</button><button class="nav-item">Roles</button><button class="nav-item">Permissions</button></div>
+    </div>
+    <button class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</button>
+  </nav>
+  <div class="sidebar-foot">
+    <button class="user-card"><span class="avatar">KP</span><span><b>Kunal Darji</b><span>Super Admin</span></span></button>
+  </div>
+</aside>
+<div class="scrim" id="scrim"></div>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+  <header class="header">
+    <button class="hamburger" id="hamburger" aria-label="Open navigation"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0F172A" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+    <span class="page-title hide-sm">All Referral Partners</span>
+    <div class="search hide-sm">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="globalSearch" type="text" placeholder="Search leads, applications, banks…" aria-label="Global search">
+      <span class="kbd">⌘K</span>
+    </div>
+    <div class="h-actions">
+      <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot"></span></button>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <!-- PAGE HEAD -->
+    <div class="page-head">
+      <div>
+        <h1>All Referral Partners</h1>
+        <p>Manage referral sources, track lead generation and monitor partner contribution.</p>
+      </div>
+      <div class="actions">
+        <button class="btn btn-ghost" id="refreshBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>Refresh</button>
+        <button class="btn btn-ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export Partners</button>
+        <button class="btn btn-primary" id="addBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Add Partner</button>
+      </div>
+    </div>
+
+    <!-- KPI -->
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar" id="filterBar">
+      <div class="f-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="ptSearch" placeholder="Search partner name, company, contact…">
+      </div>
+      <div class="f-dd" data-filter="type"></div>
+      <div class="f-dd" data-filter="status"></div>
+      <div class="f-dd" data-filter="volume"></div>
+      <div class="f-dd" data-filter="revenue"></div>
+      <div class="f-dd" data-filter="commission"></div>
+      <div class="f-dd" data-filter="range"></div>
+      <button class="clear-btn" id="clearFilters">✕&nbsp; Clear Filters</button>
+    </div>
+
+    <!-- PARTNERS TABLE -->
+    <div class="card">
+      <div class="card-h"><div><h3>Partner Directory</h3><div class="sub">The single source of truth for referral partner management</div></div><span class="tag" id="tblCount"></span></div>
+      <div class="tbl-wrap">
+        <table class="tbl" id="ptTable">
+          <thead><tr>
+            <th class="sortable" data-k="name">Partner<span class="s-ic"></span></th>
+            <th>Company</th>
+            <th>Type</th>
+            <th>Contact</th>
+            <th>Phone</th>
+            <th class="sortable r" data-k="leads">Referral Leads<span class="s-ic"></span></th>
+            <th class="sortable r" data-k="approved">Approved<span class="s-ic"></span></th>
+            <th class="sortable r" data-k="disbursed">Disbursed<span class="s-ic"></span></th>
+            <th class="sortable r" data-k="revenue">Revenue<span class="s-ic"></span></th>
+            <th class="r">Commission</th>
+            <th>Status</th>
+            <th style="width:44px"></th>
+          </tr></thead>
+          <tbody id="ptBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- COMMISSION SUMMARY -->
+    <div class="card">
+      <div class="card-h"><div><h3>Commission Summary</h3><div class="sub">Partner payout overview</div></div></div>
+      <div class="card-body"><div class="cs-grid" id="csGrid"></div></div>
+    </div>
+
+    <!-- TOP PARTNERS -->
+    <div class="card">
+      <div class="card-h"><div><h3>Top Referral Partners</h3><div class="sub">Ranked by revenue generated</div></div></div>
+      <div class="card-body"><div class="lead-grid" id="leadGrid"></div></div>
+    </div>
+
+    <!-- CONTRIBUTION CHART + ACTIVITY -->
+    <div class="row2">
+      <div class="card">
+        <div class="card-h"><div><h3>Partner Contribution</h3><div class="sub">Top partners by selected metric</div></div>
+          <select class="mini-select" id="cmpMetric"><option value="leads">Referral Leads</option><option value="revenue">Revenue Generated</option><option value="disbursed">Disbursed Cases</option></select>
+        </div>
+        <div class="card-body"><canvas id="cmpChart" width="1000" height="300" style="height:300px"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><div><h3>Recent Partner Activity</h3><div class="sub">Latest referral events</div></div></div>
+        <div class="card-body"><div class="feed" id="feed"></div></div>
+      </div>
+    </div>
+
+    <!-- REFERRAL LEAD PERFORMANCE -->
+    <div class="card">
+      <div class="card-h"><div><h3>Referral Lead Performance</h3><div class="sub">Conversion and revenue quality per partner</div></div></div>
+      <div class="tbl-wrap">
+        <table class="tbl" style="min-width:760px">
+          <thead><tr><th>Partner</th><th class="r">Referral Leads</th><th class="r">Approved Cases</th><th class="r">Disbursed Cases</th><th class="r">Conversion Rate</th><th class="r">Revenue Generated</th></tr></thead>
+          <tbody id="perfBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+</div>
+
+<!-- ROW MENU -->
+<div class="menu-pop" id="rowMenu">
+  <button class="primary" data-act="view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>View Partner</button>
+  <button data-act="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>Edit Partner</button>
+  <button data-act="leads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>View Referred Leads</button>
+  <div class="menu-sep"></div>
+  <button data-act="toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"/></svg><span class="tgl-lbl">Activate / Deactivate</span></button>
+</div>
+
+<!-- ADD / EDIT MODAL -->
+<div class="modal-scrim" id="ptModal">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-h">
+      <span class="m-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></span>
+      <div><b id="modalTitle">Add Partner</b><span id="modalSub">Register a new referral partner</span></div>
+      <button class="x" id="mClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="fld"><label>Partner Name</label><input type="text" id="fName" placeholder="e.g. Provident RE"></div>
+      <div class="fld"><label>Company Name</label><input type="text" id="fCompany" placeholder="e.g. Provident Real Estate"></div>
+      <div class="fld"><label>Partner Type</label><select id="fType"></select></div>
+      <div class="fld"><label>Status</label><select id="fStatus"><option>Active</option><option>On Hold</option><option>Inactive</option></select></div>
+      <div class="fld"><label>Contact Person</label><input type="text" id="fContact" placeholder="Full name"></div>
+      <div class="fld"><label>Phone Number</label><input type="tel" id="fPhone" placeholder="+971 4 000 0000"></div>
+      <div class="fld"><label>Email Address</label><input type="email" id="fEmail" placeholder="name@company.com"></div>
+      <div class="fld"><label>Commission %</label><input type="number" id="fComm" step="0.1" min="0" placeholder="e.g. 0.5"></div>
+      <div class="fld full"><label>Address</label><input type="text" id="fAddress" placeholder="Office address"></div>
+      <div class="fld full"><label>Notes</label><textarea id="fNotes" placeholder="Internal notes about this partner…"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="mCancel">Cancel</button>
+      <button class="btn btn-primary" id="mSave">Save Partner</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW MODAL -->
+<div class="modal-scrim" id="viewModal">
+  <div class="modal lg" role="dialog" aria-modal="true">
+    <div class="modal-h">
+      <span class="m-ic" id="vAvatar"></span>
+      <div><b id="vName"></b><span id="vSub"></span></div>
+      <button class="x" id="vClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="vm-body" id="vBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="vCloseBtn">Close</button>
+      <button class="btn btn-primary" id="vEdit">Edit Partner</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span id="toastMsg"></span></div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+
+/* sidebar */
+const sidebar=$('#sidebar'),scrim=$('#scrim');
+$('#hamburger').addEventListener('click',()=>{sidebar.classList.add('open');scrim.classList.add('show')});
+scrim.addEventListener('click',()=>{sidebar.classList.remove('open');scrim.classList.remove('show')});
+$$('[data-toggle]').forEach(b=>b.addEventListener('click',()=>{
+  const g=b.closest('.nav-group'),was=g.classList.contains('open');
+  $$('.nav-group.open').forEach(o=>o!==g&&o.classList.remove('open'));
+  g.classList.toggle('open',!was);
+}));
+document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#globalSearch')?.focus();}});
+
+/* ---------- partner data ---------- */
+const PT_TYPES=['Real Estate Agency','Property Consultant','Developer','Financial Consultant','Corporate Partner','Insurance Partner','Independent Agent'];
+let PARTNERS=[
+  {name:'Provident RE',company:'Provident Real Estate',type:'Real Estate Agency',contact:'Rami Haddad',phone:'+971 4 123 4567',email:'rami@providentre.ae',leads:86,approved:38,disbursed:31,revenue:8400000,status:'Active'},
+  {name:'Betterhomes',company:'Betterhomes LLC',type:'Real Estate Agency',contact:'Sofia Rossi',phone:'+971 4 222 8899',email:'sofia@betterhomes.ae',leads:74,approved:30,disbursed:27,revenue:6900000,status:'Active'},
+  {name:'Allsopp & Allsopp',company:'Allsopp & Allsopp Group',type:'Real Estate Agency',contact:'James Allsopp',phone:'+971 4 333 1212',email:'james@allsopp.ae',leads:68,approved:27,disbursed:24,revenue:5700000,status:'Active'},
+  {name:'Espace RE',company:'Espace Real Estate',type:'Property Consultant',contact:'Lina Chedid',phone:'+971 4 444 5656',email:'lina@espace.ae',leads:54,approved:21,disbursed:18,revenue:4200000,status:'Active'},
+  {name:'Property Finder',company:'Property Finder Partner',type:'Corporate Partner',contact:'Omar Aziz',phone:'+971 4 555 7878',email:'omar@pf.ae',leads:62,approved:22,disbursed:16,revenue:3900000,status:'Active'},
+  {name:'Bayut Partner',company:'Bayut Referral Network',type:'Corporate Partner',contact:'Huda Salem',phone:'+971 4 666 9090',email:'huda@bayut.ae',leads:48,approved:16,disbursed:12,revenue:2800000,status:'Active'},
+  {name:'Damac Desk',company:'Damac Referral Desk',type:'Developer',contact:'Tariq Mansour',phone:'+971 4 777 3434',email:'tariq@damac.ae',leads:41,approved:18,disbursed:15,revenue:4600000,status:'Active'},
+  {name:'Sobha Realty',company:'Sobha Realty',type:'Developer',contact:'Anita Desai',phone:'+971 4 888 1267',email:'anita@sobha.ae',leads:37,approved:15,disbursed:13,revenue:3700000,status:'On Hold'},
+  {name:'Danube',company:'Danube Properties',type:'Developer',contact:'Faisal Rahim',phone:'+971 4 999 5623',email:'faisal@danube.ae',leads:29,approved:9,disbursed:7,revenue:1900000,status:'Active'},
+  {name:'Azizi',company:'Azizi Developments',type:'Developer',contact:'Grace Okafor',phone:'+971 4 101 2323',email:'grace@azizi.ae',leads:22,approved:6,disbursed:4,revenue:1100000,status:'Inactive'}
+];
+const COMM_RATE=0.005; // 0.5% of revenue payable to partner
+function conv(p){return p.leads?Math.round(p.approved/p.leads*100):0;}
+function commission(p){return Math.round(p.revenue*COMM_RATE);}
+const ini=n=>n.replace(/&/g,'').split(' ').filter(Boolean).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const fmtAED=v=>v>=1e6?'AED '+(v/1e6).toFixed(1)+'M':'AED '+(v/1e3).toFixed(0)+'K';
+function convColor(c){return c>=40?'var(--success)':c>=28?'var(--primary)':c>=18?'var(--warning)':'var(--danger)';}
+
+/* ---------- KPIs ---------- */
+function buildKPIs(){
+  const KPIS=[
+    {l:'Total Partners',v:'34',d:'+3 this quarter',cls:'mut',ic:'',svg:'<path d="M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>',s:[28,29,30,31,32,33,33,34]},
+    {l:'Active Partners',v:'28',d:'82% active',cls:'pos',ic:'green',svg:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>',s:[22,23,24,25,26,27,27,28]},
+    {l:'Referral Leads',v:'612',d:'+11.2%',cls:'pos',ic:'',svg:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>',s:[5,6,6,7,7,8,8,9]},
+    {l:'Approved Cases',v:'198',d:'+7.1%',cls:'pos',ic:'green',svg:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',s:[4,5,5,6,6,7,7,8]},
+    {l:'Disbursed Cases',v:'153',d:'+9.4%',cls:'pos',ic:'green',svg:'<path d="M3 11.5 12 4l9 7.5"/><path d="M6 10.5V20h4.5v-5h3v5H18v-9.5"/>',s:[3,4,4,5,5,6,6,7]},
+    {l:'Commission Payable',v:'AED 428K',d:'+8.8%',cls:'pos',ic:'',svg:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/>',s:[4,5,5,6,7,7,8,9]}
+  ];
+  const spark=(d)=>{const w=54,h=22,max=Math.max(...d),min=Math.min(...d);
+    const pts=d.map((v,i)=>`${(i/(d.length-1))*w},${h-3-((v-min)/(max-min||1))*(h-6)}`).join(' ');
+    return `<svg class="spark" viewBox="0 0 ${w} ${h}"><polyline points="${pts}" fill="none" stroke="#05448B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/></svg>`;};
+  const arrow=cls=>cls==='pos'?'M7 17 17 7M17 7H9M17 7v8':'M5 12h14';
+  $('#kpiGrid').innerHTML=KPIS.map(k=>`
+    <div class="kpi">
+      <div class="kpi-top"><label>${k.l}</label><span class="kpi-ic ${k.ic}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${k.svg}</svg></span></div>
+      <div class="kpi-foot"><div class="val">${k.v}</div>${spark(k.s)}</div>
+      <div class="kpi-foot" style="margin-top:4px"><span class="delta ${k.cls}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="${arrow(k.cls)}"/></svg>${k.d}</span></div>
+    </div>`).join('');
+}
+
+/* ---------- commission summary ---------- */
+function buildCS(){
+  const totalComm=PARTNERS.reduce((s,p)=>s+commission(p),0);
+  const paid=Math.round(totalComm*0.62),pending=totalComm-paid;
+  const thisMonth=Math.round(totalComm*0.21),avg=Math.round(totalComm/PARTNERS.length);
+  const TILES=[
+    {l:'Total Commission Paid',v:fmtAED(paid),s:'62% settled',cls:'',sc:'up'},
+    {l:'Total Commission Pending',v:fmtAED(pending),s:'awaiting payout',cls:'',sc:'warn'},
+    {l:'This Month Commission',v:fmtAED(thisMonth),s:'June 2026',cls:'',sc:'up'},
+    {l:'Avg Commission / Partner',v:fmtAED(avg),s:'across active partners',cls:'hl',sc:''}
+  ];
+  $('#csGrid').innerHTML=TILES.map(t=>`<div class="cs-tile ${t.cls}"><label>${t.l}</label><b>${t.v}</b><span style="color:${t.sc==='up'?'var(--success)':t.sc==='warn'?'var(--warning)':''}">${t.s}</span></div>`).join('');
+}
+
+/* ---------- filters ---------- */
+const state={search:'',type:null,status:null,volume:null,revenue:null,commission:null,range:null,sortK:'revenue',sortDir:-1};
+const FILTER_DEFS={
+  type:{label:'Partner Type',opts:PT_TYPES},
+  status:{label:'Status',opts:['Active','On Hold','Inactive']},
+  volume:{label:'Referral Volume',opts:['60+ leads','30–60 leads','Under 30']},
+  revenue:{label:'Revenue Generated',opts:['AED 5M+','AED 2–5M','Under AED 2M']},
+  commission:{label:'Commission Status',opts:['Paid','Pending']},
+  range:{label:'Date Range',opts:['Last 30 Days','This Quarter','This Year']}
+};
+$$('.f-dd').forEach(dd=>{
+  const k=dd.dataset.filter,def=FILTER_DEFS[k];
+  dd.innerHTML=`<button class="f-dd-btn"><span class="lbl">${def.label}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></button>
+    <div class="f-dd-menu">${def.opts.map(o=>`<button data-v="${o}">${o}</button>`).join('')}</div>`;
+  const btn=dd.querySelector('.f-dd-btn');
+  btn.addEventListener('click',e=>{e.stopPropagation();const was=dd.classList.contains('open');$$('.f-dd.open').forEach(o=>o.classList.remove('open'));dd.classList.toggle('open',!was);});
+  dd.querySelectorAll('.f-dd-menu button').forEach(ob=>ob.addEventListener('click',()=>{
+    const v=ob.dataset.v,same=state[k]===v;state[k]=same?null:v;
+    dd.querySelectorAll('.f-dd-menu button').forEach(x=>x.classList.toggle('sel',x.dataset.v===state[k]));
+    btn.classList.toggle('on',!!state[k]);btn.querySelector('.lbl').textContent=state[k]||def.label;
+    dd.classList.remove('open');renderTable();
+  }));
+});
+document.addEventListener('click',()=>$$('.f-dd.open').forEach(o=>o.classList.remove('open')));
+$('#ptSearch').addEventListener('input',e=>{state.search=e.target.value.toLowerCase();renderTable();});
+$('#clearFilters').addEventListener('click',()=>{
+  state.search='';$('#ptSearch').value='';Object.keys(FILTER_DEFS).forEach(k=>state[k]=null);
+  $$('.f-dd').forEach(dd=>{const k=dd.dataset.filter;dd.querySelector('.f-dd-btn').classList.remove('on');dd.querySelector('.lbl').textContent=FILTER_DEFS[k].label;dd.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));});
+  renderTable();
+});
+
+/* ---------- table ---------- */
+const STC={Active:'active','On Hold':'hold',Inactive:'inactive'};
+function filtered(){
+  return PARTNERS.filter(p=>{
+    if(state.search&&![p.name,p.company,p.contact,p.type].join(' ').toLowerCase().includes(state.search))return false;
+    if(state.type&&p.type!==state.type)return false;
+    if(state.status&&p.status!==state.status)return false;
+    if(state.volume){const x=p.leads;if(state.volume==='60+ leads'&&!(x>=60))return false;if(state.volume==='30–60 leads'&&!(x>=30&&x<60))return false;if(state.volume==='Under 30'&&!(x<30))return false;}
+    if(state.revenue){const r=p.revenue;if(state.revenue==='AED 5M+'&&!(r>=5e6))return false;if(state.revenue==='AED 2–5M'&&!(r>=2e6&&r<5e6))return false;if(state.revenue==='Under AED 2M'&&!(r<2e6))return false;}
+    return true;
+  }).sort((a,b)=>{
+    let va=a[state.sortK],vb=b[state.sortK];
+    if(typeof va==='string'){va=va.toLowerCase();vb=vb.toLowerCase();}
+    if(va<vb)return -1*state.sortDir;if(va>vb)return 1*state.sortDir;return 0;
+  });
+}
+function renderTable(){
+  const rows=filtered();
+  $('#tblCount').textContent=rows.length+' partners';
+  $('#ptBody').innerHTML=rows.length?rows.map((p,idx)=>`<tr>
+    <td><div class="pt-cell"><span class="p-avatar ${idx===0?'deep':''}">${ini(p.name)}</span><div><b>${p.name}</b><span>${p.email}</span></div></div></td>
+    <td style="color:var(--text-2)">${p.company}</td>
+    <td><span class="tag">${p.type}</span></td>
+    <td style="color:var(--text-2)">${p.contact}</td>
+    <td class="num" style="font-weight:500">${p.phone}</td>
+    <td class="r num">${p.leads}</td>
+    <td class="r num">${p.approved}</td>
+    <td class="r num">${p.disbursed}</td>
+    <td class="r num">${fmtAED(p.revenue)}</td>
+    <td class="r num" style="color:var(--success)">${fmtAED(commission(p))}</td>
+    <td><span class="status ${STC[p.status]}"><i></i>${p.status}</span></td>
+    <td><button class="kebab" data-name="${p.name}" aria-label="Actions"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button></td>
+  </tr>`).join(''):`<tr><td colspan="12" style="text-align:center;padding:40px;color:var(--text-3)">No partners match your filters.</td></tr>`;
+  $$('.tbl th.sortable').forEach(th=>th.querySelector('.s-ic').textContent=th.dataset.k===state.sortK?(state.sortDir===1?'▲':'▼'):'');
+  $$('#ptBody .kebab').forEach(k=>k.addEventListener('click',e=>{
+    e.stopPropagation();const m=$('#rowMenu'),r=k.getBoundingClientRect();
+    const p=PARTNERS.find(x=>x.name===k.dataset.name);
+    m.querySelector('.tgl-lbl').textContent=p.status==='Inactive'?'Activate Partner':'Deactivate Partner';
+    m.classList.add('show');m.dataset.name=k.dataset.name;
+    const mw=188,mh=m.offsetHeight||220;let x=r.right-mw,y=r.bottom+6;
+    if(y+mh>innerHeight-12)y=r.top-mh-6;m.style.left=Math.max(8,x)+'px';m.style.top=y+'px';
+  }));
+}
+$$('.tbl th.sortable').forEach(th=>th.addEventListener('click',()=>{
+  const k=th.dataset.k;if(state.sortK===k)state.sortDir*=-1;else{state.sortK=k;state.sortDir=1;}renderTable();
+}));
+document.addEventListener('click',()=>$('#rowMenu').classList.remove('show'));
+$('#rowMenu').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const name=$('#rowMenu').dataset.name,p=PARTNERS.find(x=>x.name===name),act=b.dataset.act;
+  if(act==='view'){openView(p);$('#rowMenu').classList.remove('show');return;}
+  if(act==='edit'){openModal(p);$('#rowMenu').classList.remove('show');return;}
+  if(act==='toggle'){p.status=p.status==='Inactive'?'Active':'Inactive';buildKPIs();renderTable();buildLeaders();buildPerf();drawCmp();toast(`${name} ${p.status==='Inactive'?'deactivated':'activated'}`);$('#rowMenu').classList.remove('show');return;}
+  toast(`Viewing referred leads — ${name}`);$('#rowMenu').classList.remove('show');
+});
+
+/* ---------- leaderboard ---------- */
+function buildLeaders(){
+  const top=[...PARTNERS].sort((a,b)=>b.revenue-a.revenue).slice(0,3);
+  $('#leadGrid').innerHTML=top.map((p,i)=>`
+    <div class="lead-card ${i===0?'gold':''}">
+      <span class="rank">#${i+1}</span>
+      <div class="lc-h"><span class="p-avatar ${i===0?'deep':''}">${ini(p.name)}</span><b class="nm">${p.company}<span>${p.type}</span></b></div>
+      <div class="lc-stats">
+        <div class="ls-row"><label>Referral Leads</label><b>${p.leads}</b></div>
+        <div class="ls-row"><label>Disbursed Loans</label><b>${p.disbursed}</b></div>
+        <div class="ls-row"><label>Revenue Generated</label><b>${fmtAED(p.revenue)}</b></div>
+        <div class="ls-row"><label>Commission Earned</label><b style="color:var(--success)">${fmtAED(commission(p))}</b></div>
+      </div>
+    </div>`).join('');
+}
+
+/* ---------- referral performance ---------- */
+function buildPerf(){
+  const rows=[...PARTNERS].sort((a,b)=>b.revenue-a.revenue);
+  $('#perfBody').innerHTML=rows.map(p=>{
+    const c=conv(p);
+    return `<tr>
+      <td><div class="pt-cell"><span class="p-avatar" style="width:28px;height:28px;font-size:10px">${ini(p.name)}</span><b style="font-size:12.5px">${p.company}</b></div></td>
+      <td class="r num">${p.leads}</td>
+      <td class="r num">${p.approved}</td>
+      <td class="r num">${p.disbursed}</td>
+      <td class="r"><div class="conv"><b style="color:${convColor(c)}">${c}%</b><span class="bar"><i style="width:${Math.min(c*2,100)}%;background:${convColor(c)}"></i></span></div></td>
+      <td class="r num">${fmtAED(p.revenue)}</td></tr>`;
+  }).join('');
+}
+
+/* ---------- contribution chart ---------- */
+let cmpMetric='leads';
+function drawCmp(){
+  const cv=$('#cmpChart'),ctx=cv.getContext('2d');
+  const W=cv.width=cv.clientWidth*2,H=600;cv.height=H;
+  const key=cmpMetric;
+  const data=[...PARTNERS].sort((a,b)=>b[key]-a[key]).slice(0,7);
+  const pad={l:20,r:20,t:34,b:64},gw=(W-pad.l-pad.r)/data.length,max=Math.max(...data.map(d=>d[key]),1);
+  const col=key==='revenue'?'#16A34A':key==='disbursed'?'#2D6CB0':'#05448B';
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='#EEF2F7';ctx.lineWidth=2;ctx.fillStyle='#94A3B8';ctx.font='600 19px Inter';ctx.textAlign='right';
+  for(let i=0;i<=4;i++){const y=pad.t+(H-pad.t-pad.b)*i/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
+    const lv=max*(1-i/4);ctx.fillText(key==='revenue'?(lv/1e6).toFixed(1)+'M':Math.round(lv),pad.l+40,y+6);}
+  data.forEach((d,i)=>{
+    const x=pad.l+i*gw,bw=gw*0.5,rh=d[key]/max*(H-pad.t-pad.b),bx=x+gw*0.25,by=H-pad.b-rh;
+    ctx.fillStyle=col;rr(ctx,bx,by,bw,rh,7);
+    ctx.fillStyle='#64748B';ctx.font='600 17px Inter';ctx.textAlign='center';
+    const nm=d.name.length>11?d.name.slice(0,10)+'…':d.name;ctx.fillText(nm,x+gw/2,H-pad.b+28);
+    ctx.fillStyle=col;ctx.font='700 19px Inter';ctx.fillText(key==='revenue'?fmtAED(d[key]):d[key],x+gw/2,by-12);
+  });
+}
+function rr(ctx,x,y,w,h,r){r=Math.min(r,w/2,h/2);if(h<=0)return;ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,0);ctx.arcTo(x,y+h,x,y,0);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();ctx.fill();}
+$('#cmpMetric').addEventListener('change',e=>{cmpMetric=e.target.value;drawCmp();});
+
+/* ---------- activity feed ---------- */
+const FEED=[
+  {ic:'',svg:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>',h:'<b>Provident Real Estate</b> referred <b>Ahmed Khan</b>',t:'12 mins ago'},
+  {ic:'',svg:'<path d="M12 5v14M5 12h14"/>',h:'<b>Betterhomes</b> generated a new mortgage lead',t:'28 mins ago'},
+  {ic:'ok',svg:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>',h:'<b>Damac Referral Desk</b> closed a successful deal',t:'1 hour ago'},
+  {ic:'ok',svg:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',h:'<b>Sobha Realty</b> referral approved by bank',t:'Today'},
+  {ic:'',svg:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/>',h:'Commission of <b>AED 42K</b> marked payable to <b>Provident RE</b>',t:'Today'}
+];
+function buildFeed(){
+  $('#feed').innerHTML=FEED.map(f=>`<div class="feed-item">
+    <span class="feed-ic ${f.ic}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${f.svg}</svg></span>
+    <div class="feed-body"><p>${f.h}</p><time>${f.t}</time></div></div>`).join('');
+}
+
+/* ---------- view modal ---------- */
+const REFERRED={'Provident RE':['Ahmed Khan','Omar Khalil','Aisha Verma'],'Betterhomes':['Marcus Lee','Rania Saeed'],'Allsopp & Allsopp':['Karan Shah','Nora Aziz']};
+function openView(p){
+  $('#vAvatar').textContent=ini(p.name);
+  $('#vName').textContent=p.company;
+  $('#vSub').textContent=`${p.type} · ${p.status}`;
+  const refs=REFERRED[p.name]||['Recent lead A','Recent lead B'];
+  $('#vBody').innerHTML=`
+    <div class="vm-sec"><h4>Referral Statistics</h4>
+      <div class="vm-stats">
+        <div class="vm-stat"><label>Referral Leads</label><b>${p.leads}</b></div>
+        <div class="vm-stat"><label>Approved Cases</label><b>${p.approved}</b></div>
+        <div class="vm-stat"><label>Disbursed Cases</label><b>${p.disbursed}</b></div>
+        <div class="vm-stat"><label>Conversion Rate</label><b style="color:${convColor(conv(p))}">${conv(p)}%</b></div>
+        <div class="vm-stat"><label>Revenue Generated</label><b>${fmtAED(p.revenue)}</b></div>
+        <div class="vm-stat"><label>Commission Earned</label><b style="color:var(--success)">${fmtAED(commission(p))}</b></div>
+      </div>
+    </div>
+    <div class="vm-sec"><h4>Contact Details</h4>
+      <div class="vm-rows">
+        <div class="vm-row"><label>Contact Person</label><b>${p.contact}</b></div>
+        <div class="vm-row"><label>Phone</label><b>${p.phone}</b></div>
+        <div class="vm-row"><label>Email</label><b>${p.email}</b></div>
+        <div class="vm-row"><label>Partner Type</label><b>${p.type}</b></div>
+      </div>
+    </div>
+    <div class="vm-sec"><h4>Recent Referred Leads</h4>
+      ${refs.map(n=>`<div class="vm-lead"><span class="p-avatar">${n.split(' ').map(w=>w[0]).join('').slice(0,2)}</span><div class="vl-body"><b>${n}</b><span>Referred by ${p.company}</span></div></div>`).join('')}
+    </div>`;
+  $('#viewModal').dataset.name=p.name;
+  $('#viewModal').classList.add('show');
+}
+$('#vClose').addEventListener('click',()=>$('#viewModal').classList.remove('show'));
+$('#vCloseBtn').addEventListener('click',()=>$('#viewModal').classList.remove('show'));
+$('#viewModal').addEventListener('click',e=>{if(e.target===$('#viewModal'))$('#viewModal').classList.remove('show');});
+$('#vEdit').addEventListener('click',()=>{const p=PARTNERS.find(x=>x.name===$('#viewModal').dataset.name);$('#viewModal').classList.remove('show');openModal(p);});
+
+/* ---------- add / edit modal ---------- */
+let editing=null;
+$('#fType').innerHTML=PT_TYPES.map(t=>`<option>${t}</option>`).join('');
+function openModal(p){
+  editing=p||null;
+  $('#modalTitle').textContent=p?'Edit Partner':'Add Partner';
+  $('#modalSub').textContent=p?'Update referral partner details':'Register a new referral partner';
+  $('#fName').value=p?p.name:'';$('#fName').disabled=!!p;
+  $('#fCompany').value=p?p.company:'';
+  $('#fType').value=p?p.type:PT_TYPES[0];
+  $('#fStatus').value=p?p.status:'Active';
+  $('#fContact').value=p?p.contact:'';
+  $('#fPhone').value=p?p.phone:'';
+  $('#fEmail').value=p?p.email:'';
+  $('#fComm').value=p?(p.comm||0.5):'';
+  $('#fAddress').value=p?(p.address||''):'';
+  $('#fNotes').value=p?(p.notes||''):'';
+  $('#ptModal').classList.add('show');
+}
+function closeModal(){$('#ptModal').classList.remove('show');editing=null;}
+$('#addBtn').addEventListener('click',()=>openModal(null));
+$('#mClose').addEventListener('click',closeModal);
+$('#mCancel').addEventListener('click',closeModal);
+$('#ptModal').addEventListener('click',e=>{if(e.target===$('#ptModal'))closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();$('#viewModal').classList.remove('show');}});
+$('#mSave').addEventListener('click',()=>{
+  const name=$('#fName').value.trim();
+  if(!name){toast('Partner name is required');return;}
+  const data={company:$('#fCompany').value.trim()||name,type:$('#fType').value,status:$('#fStatus').value,contact:$('#fContact').value.trim()||'—',phone:$('#fPhone').value.trim(),email:$('#fEmail').value.trim(),comm:+$('#fComm').value||0.5,address:$('#fAddress').value.trim(),notes:$('#fNotes').value.trim()};
+  if(editing){Object.assign(editing,data);toast(`${editing.company} updated`);}
+  else{PARTNERS.push({name,leads:0,approved:0,disbursed:0,revenue:0,...data});toast(`${name} added`);}
+  buildKPIs();buildCS();renderTable();buildLeaders();buildPerf();drawCmp();closeModal();
+});
+
+/* actions */
+$('#refreshBtn').addEventListener('click',()=>{init();toast('Partners refreshed');});
+
+/* toast */
+let tTimer;
+function toast(msg){$('#toastMsg').textContent=msg;$('#toast').classList.add('show');clearTimeout(tTimer);tTimer=setTimeout(()=>$('#toast').classList.remove('show'),2400);}
+
+/* init */
+function init(){buildKPIs();buildCS();renderTable();buildLeaders();buildPerf();buildFeed();drawCmp();}
+init();
+let rT;addEventListener('resize',()=>{clearTimeout(rT);rT=setTimeout(drawCmp,200);});
+</script>
+</body>
+</html>
