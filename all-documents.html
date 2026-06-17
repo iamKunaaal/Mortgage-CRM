@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mortgage CRM — Overdue Tasks</title>
+<title>Mortgage CRM — All Documents</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -62,7 +62,6 @@ a{color:inherit;text-decoration:none}
 .nav-sub .nav-item.active{background:var(--blue-50);color:var(--primary);font-weight:600}
 .nav-sub .nav-item.active::before{display:none}
 .nav-count{margin-left:auto;font-size:11px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--blue-50);color:var(--primary)}
-.nav-count.red{background:#FEE2E2;color:var(--danger)}
 .sidebar-foot{padding:12px;border-top:1px solid var(--border-soft)}
 .user-card{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;transition:background .13s;width:100%;text-align:left}
 .user-card:hover{background:#F3F6FA}
@@ -96,30 +95,21 @@ a{color:inherit;text-decoration:none}
 .content{padding:24px 28px 48px;display:flex;flex-direction:column;gap:18px;max-width:1620px;width:100%;margin:0 auto}
 .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .page-head h1{font-size:21px;font-weight:700;letter-spacing:-.02em}
-.page-head p{color:var(--text-2);font-size:13.5px;margin-top:3px;max-width:660px}
+.page-head p{color:var(--text-2);font-size:13.5px;margin-top:3px;max-width:640px}
 .page-head .actions{display:flex;gap:8px;flex-wrap:wrap}
-
-/* alert banner */
-.alert-bar{display:flex;gap:11px;align-items:center;background:#FEF2F2;border:1px solid #F6DADA;border-radius:12px;padding:12px 15px}
-.alert-bar .ab-ic{width:30px;height:30px;border-radius:9px;background:#FEE2E2;color:var(--danger);display:grid;place-items:center;flex-shrink:0}
-.alert-bar .ab-ic svg{width:15px;height:15px}
-.alert-bar p{font-size:12.5px;line-height:1.5;color:#7F1D1D}
-.alert-bar p b{font-weight:700}
 
 /* KPI */
 .kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
 .kpi{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px 15px 12px;box-shadow:var(--sh-xs);transition:box-shadow .16s,border-color .16s}
 .kpi:hover{box-shadow:var(--sh-md);border-color:#D4DDE8}
-.kpi.crit{border-color:#F6DADA;background:linear-gradient(180deg,#FEFAFA,#fff)}
 .kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .kpi-ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--blue-50);color:var(--primary)}
-.kpi-ic.red{background:#FEE2E2;color:var(--danger)}
-.kpi-ic.amber{background:#FEF3E2;color:var(--warning)}
 .kpi-ic.green{background:#EDFAF1;color:var(--success)}
+.kpi-ic.amber{background:#FEF3E2;color:var(--warning)}
+.kpi-ic.red{background:#FEE2E2;color:var(--danger)}
 .kpi-ic svg{width:14px;height:14px}
 .kpi label{font-size:11.5px;font-weight:600;color:var(--text-2);display:block}
 .kpi .val{font-size:22px;font-weight:700;letter-spacing:-.025em;line-height:1.1;font-variant-numeric:tabular-nums}
-.kpi .val.red{color:var(--danger)}
 .kpi-foot{display:flex;align-items:flex-end;justify-content:space-between;margin-top:6px;gap:6px}
 .delta{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700}
 .delta svg{width:10px;height:10px}
@@ -138,7 +128,7 @@ a{color:inherit;text-decoration:none}
 .f-dd-btn.on{border-color:var(--primary);color:var(--primary);background:var(--blue-50)}
 .f-dd-btn svg{width:12px;height:12px;color:var(--text-3);transition:transform .18s}
 .f-dd.open .f-dd-btn svg{transform:rotate(180deg)}
-.f-dd-menu{position:absolute;top:calc(100% + 6px);left:0;min-width:188px;background:#fff;border:1px solid var(--border);border-radius:11px;box-shadow:var(--sh-lg);padding:5px;z-index:40;opacity:0;transform:translateY(-4px);pointer-events:none;transition:all .15s;max-height:300px;overflow-y:auto}
+.f-dd-menu{position:absolute;top:calc(100% + 6px);left:0;min-width:194px;background:#fff;border:1px solid var(--border);border-radius:11px;box-shadow:var(--sh-lg);padding:5px;z-index:40;opacity:0;transform:translateY(-4px);pointer-events:none;transition:all .15s;max-height:300px;overflow-y:auto}
 .f-dd.open .f-dd-menu{opacity:1;transform:none;pointer-events:auto}
 .f-dd-menu button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:7.5px 10px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--text-2);transition:background .12s}
 .f-dd-menu button:hover{background:var(--bg);color:var(--text)}
@@ -161,44 +151,39 @@ a{color:inherit;text-decoration:none}
 .tbl thead th{position:sticky;top:0;background:#FAFCFE;z-index:5;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);text-align:left;padding:11px 13px;border-bottom:1px solid var(--border);white-space:nowrap;user-select:none}
 .tbl thead th.sortable{cursor:pointer}
 .tbl thead th.sortable:hover{color:var(--text)}
+.tbl thead th.r,.tbl td.r{text-align:right}
 .tbl thead th .s-ic{margin-left:4px;font-size:9px;opacity:.6}
 .tbl td{padding:12px 13px;border-bottom:1px solid var(--border-soft);font-size:12.5px;vertical-align:middle;white-space:nowrap}
 .tbl tbody tr{transition:background .12s}
 .tbl tbody tr:hover{background:#FAFCFE}
 .tbl tr:last-child td{border-bottom:none}
-.tsk-id{font-size:11.5px;font-weight:700;color:var(--text-2);font-variant-numeric:tabular-nums}
-.tsk-title b{font-weight:600;font-size:12.5px}
-.lead-link{display:block}
-.lead-link b{font-size:12px;font-weight:600;color:var(--primary);transition:color .12s}
+.num{font-variant-numeric:tabular-nums;font-weight:600}
+.doc-cell{display:flex;align-items:center;gap:11px}
+.doc-ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;flex-shrink:0;background:var(--blue-50);color:var(--primary)}
+.doc-ic svg{width:15px;height:15px}
+.doc-cell b{display:block;font-size:12.5px;font-weight:600}
+.doc-cell span{font-size:10.5px;color:var(--text-3)}
+.lead-link b{font-size:12px;font-weight:600;color:var(--primary)}
 .lead-link:hover b{text-decoration:underline;text-underline-offset:2px}
-.lead-link span{font-size:10.5px;color:var(--text-3);font-variant-numeric:tabular-nums}
-.assignee{display:flex;align-items:center;gap:8px}
-.assignee .p-avatar{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:9.5px;font-weight:700;flex-shrink:0;background:var(--blue-50);color:var(--primary)}
-.tag{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:7px;background:var(--bg);color:var(--text-2);border:1px solid var(--border-soft);white-space:nowrap}
-.tag i{width:6px;height:6px;border-radius:50%;display:inline-block}
-.pri{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:99px}
-.pri.high{background:#FEE2E2;color:var(--danger)}
-.pri.med{background:#FEF3E2;color:var(--warning)}
-.pri.low{background:var(--blue-50);color:var(--blue-2)}
-.pri i{width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block}
-.od-badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:99px;font-variant-numeric:tabular-nums}
-.od-badge.g{background:#EDFAF1;color:var(--success)}
-.od-badge.o{background:#FEF3E2;color:var(--warning)}
-.od-badge.r{background:#FEE2E2;color:var(--danger)}
-.esc{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;padding:3px 9px;border-radius:7px;text-transform:uppercase;letter-spacing:.03em}
-.esc.l1{background:var(--blue-50);color:var(--blue-2)}
-.esc.l2{background:#FEF3E2;color:var(--warning)}
-.esc.l3{background:#FFE4E6;color:#BE123C}
-.esc.crit{background:#DC2626;color:#fff}
+.tag{display:inline-flex;font-size:10.5px;font-weight:600;padding:2.5px 9px;border-radius:7px;background:var(--bg);color:var(--text-2);border:1px solid var(--border-soft);white-space:nowrap}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:99px;white-space:nowrap}
+.status i{width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block}
+.status.verified{background:#EDFAF1;color:var(--success)}
+.status.pending{background:#FEF3E2;color:var(--warning)}
+.status.uploaded{background:var(--blue-50);color:var(--primary)}
+.status.rejected{background:#FEE2E2;color:var(--danger)}
+.status.missing{background:#F1F5F9;color:var(--text-3)}
 .kebab{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--text-3);transition:all .13s}
 .kebab:hover{background:var(--blue-50);color:var(--primary)}
 .kebab svg{width:15px;height:15px}
-.menu-pop{position:fixed;min-width:176px;background:#fff;border:1px solid var(--border);border-radius:11px;box-shadow:var(--sh-lg);padding:5px;z-index:80;display:none}
+.menu-pop{position:fixed;min-width:182px;background:#fff;border:1px solid var(--border);border-radius:11px;box-shadow:var(--sh-lg);padding:5px;z-index:80;display:none}
 .menu-pop.show{display:block;animation:popIn .14s ease}
 @keyframes popIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .menu-pop button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:7.5px 10px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--text-2);transition:background .12s}
 .menu-pop button:hover{background:var(--bg);color:var(--text)}
 .menu-pop button.primary{color:var(--primary);font-weight:600}
+.menu-pop button.ok{color:var(--success)}
+.menu-pop button.ok:hover{background:#EDFAF1}
 .menu-pop button.danger{color:var(--danger)}
 .menu-pop button.danger:hover{background:#FEF2F2}
 .menu-pop svg{width:13.5px;height:13.5px}
@@ -212,65 +197,66 @@ a{color:inherit;text-decoration:none}
 .pg-btn:disabled{opacity:.35;cursor:default}
 
 /* layout rows */
-.row2{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
-.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.row2b{display:grid;grid-template-columns:1.6fr 1fr;gap:16px}
 
-/* donut */
-.donut-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-.donut-legend{flex:1;min-width:130px;display:flex;flex-direction:column;gap:8px}
-.donut-legend .dl{display:flex;align-items:center;gap:9px;font-size:12px}
-.donut-legend .dl i{width:9px;height:9px;border-radius:3px;flex-shrink:0}
-.donut-legend .dl b{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums}
-.donut-legend .dl span{color:var(--text-2)}
-canvas{display:block;width:100%}
-
-/* team delay */
-.wl-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-soft)}
-.wl-item:last-child{border-bottom:none}
-.wl-item .p-avatar{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-size:11.5px;font-weight:700;flex-shrink:0;background:var(--blue-50);color:var(--primary)}
-.wl-body{flex:1;min-width:0}
-.wl-body .wl-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px}
-.wl-body b{font-size:12.5px;font-weight:600}
-.wl-body .wl-count{font-size:11.5px;font-weight:700;color:var(--danger);font-variant-numeric:tabular-nums}
-.wl-bar{height:6px;border-radius:99px;background:var(--border-soft);overflow:hidden}
-.wl-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#DC2626,#F87171);width:0;transition:width .9s cubic-bezier(.4,0,.2,1)}
-
-/* bottlenecks */
-.bn-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border-soft)}
-.bn-item:last-child{border-bottom:none}
-.bn-ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex-shrink:0;background:var(--blue-50);color:var(--primary)}
-.bn-ic.warn{background:#FEF3E2;color:var(--warning)}
-.bn-ic.danger{background:#FEE2E2;color:var(--danger)}
-.bn-ic svg{width:15px;height:15px}
-.bn-body{flex:1;min-width:0}
-.bn-body b{font-size:13px;font-weight:600;display:block}
-.bn-body span{font-size:11.5px;color:var(--text-3)}
-.bn-val{font-size:18px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;flex-shrink:0}
-
-/* attention */
-.att-item{display:flex;align-items:center;gap:11px;padding:11px;border:1px solid #F6DADA;background:#FEFAFA;border-radius:12px;margin-bottom:10px}
-.att-item:last-child{margin-bottom:0}
-.att-item .p-avatar{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-size:11px;font-weight:700;flex-shrink:0;background:#FEE2E2;color:var(--danger)}
-.att-body{flex:1;min-width:0}
-.att-body b{font-size:13px;font-weight:700;display:block}
-.att-body span{font-size:11.5px;color:var(--text-2)}
-.att-od{font-size:10px;font-weight:700;color:var(--danger);background:#FEE2E2;padding:3px 9px;border-radius:99px;text-transform:uppercase;letter-spacing:.03em;flex-shrink:0;white-space:nowrap}
+/* days pill */
+.dpill{display:inline-flex;font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:99px;font-variant-numeric:tabular-nums}
+.dpill.g{background:#EDFAF1;color:var(--success)}
+.dpill.o{background:#FEF3E2;color:var(--warning)}
+.dpill.r{background:#FEE2E2;color:var(--danger)}
+.pri{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:99px}
+.pri.high{background:#FEE2E2;color:var(--danger)}
+.pri.med{background:#FEF3E2;color:var(--warning)}
+.pri.low{background:var(--blue-50);color:var(--blue-2)}
+.pri i{width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block}
 
 /* activity feed */
-.feed{display:flex;flex-direction:column;max-height:340px;overflow-y:auto;padding-right:4px;scrollbar-width:thin}
+.feed{display:flex;flex-direction:column;max-height:380px;overflow-y:auto;padding-right:4px;scrollbar-width:thin}
 .feed::-webkit-scrollbar{width:5px}
 .feed::-webkit-scrollbar-thumb{background:#D7DEE8;border-radius:4px}
 .feed-item{display:flex;gap:11px;position:relative;padding-bottom:15px}
 .feed-item::before{content:"";position:absolute;left:14px;top:31px;bottom:0;width:1.5px;background:var(--border-soft)}
 .feed-item:last-child{padding-bottom:0}
 .feed-item:last-child::before{display:none}
-.feed-ic{width:29px;height:29px;border-radius:9px;display:grid;place-items:center;flex-shrink:0;z-index:1;background:#FEF3E2;color:var(--warning)}
-.feed-ic.danger{background:#FEE2E2;color:var(--danger)}
-.feed-ic.blue{background:var(--blue-50);color:var(--primary)}
+.feed-ic{width:29px;height:29px;border-radius:9px;display:grid;place-items:center;flex-shrink:0;z-index:1;background:var(--blue-50);color:var(--primary)}
+.feed-ic.ok{background:#EDFAF1;color:var(--success)}
+.feed-ic.bad{background:#FEE2E2;color:var(--danger)}
 .feed-ic svg{width:13px;height:13px}
 .feed-body p{font-size:12.3px;line-height:1.45}
 .feed-body p b{font-weight:600}
 .feed-body time{font-size:10.5px;color:var(--text-3)}
+
+/* modal */
+.modal-scrim{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:85;opacity:0;pointer-events:none;transition:opacity .2s;display:grid;place-items:center;padding:20px;overflow-y:auto}
+.modal-scrim.show{opacity:1;pointer-events:auto}
+.modal{background:#fff;border-radius:16px;box-shadow:var(--sh-lg);width:100%;max-width:480px;transform:translateY(12px) scale(.98);transition:transform .22s cubic-bezier(.4,0,.2,1);margin:auto}
+.modal.lg{max-width:640px}
+.modal-scrim.show .modal{transform:none}
+.modal-h{padding:18px 22px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;gap:12px}
+.modal-h .m-ic{width:38px;height:38px;border-radius:10px;background:var(--blue-50);color:var(--primary);display:grid;place-items:center;flex-shrink:0}
+.modal-h .m-ic svg{width:17px;height:17px}
+.modal-h b{font-size:15px;font-weight:700;display:block}
+.modal-h span{font-size:12px;color:var(--text-3)}
+.modal-h .x{margin-left:auto;width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--text-3)}
+.modal-h .x:hover{background:var(--bg);color:var(--text)}
+.modal-body{padding:18px 22px;display:flex;flex-direction:column;gap:14px}
+.fld{display:flex;flex-direction:column;gap:6px}
+.fld label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-3)}
+.fld input,.fld select,.fld textarea{padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:#fff;font:inherit;font-size:13px;color:var(--text);transition:all .15s}
+.fld textarea{resize:vertical;min-height:72px}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(5,68,139,.10)}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--border-soft);display:flex;gap:9px;justify-content:flex-end}
+/* doc preview */
+.doc-preview{height:200px;border:1.5px dashed #CBD5E1;border-radius:12px;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--text-3)}
+.doc-preview svg{width:40px;height:40px;color:var(--blue-3)}
+.doc-preview b{font-size:13px;font-weight:700;color:var(--text-2)}
+.doc-preview span{font-size:11.5px}
+.vm-rows{display:flex;flex-direction:column;gap:8px}
+.vm-row{display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:5px 0;border-bottom:1px solid var(--border-soft)}
+.vm-row:last-child{border-bottom:none}
+.vm-row label{color:var(--text-3);font-weight:600}
+.vm-row b{font-weight:600;text-align:right}
 
 /* toast / scrim / responsive */
 .toast{position:fixed;bottom:26px;right:26px;background:#0F172A;color:#fff;font-size:12.5px;font-weight:600;padding:11px 16px;border-radius:11px;box-shadow:var(--sh-lg);z-index:95;opacity:0;transform:translateY(10px);transition:all .25s;display:flex;align-items:center;gap:9px}
@@ -279,7 +265,7 @@ canvas{display:block;width:100%}
 .scrim{position:fixed;inset:0;background:rgba(15,23,42,.35);z-index:55;opacity:0;pointer-events:none;transition:opacity .25s}
 .scrim.show{opacity:1;pointer-events:auto}
 @media (max-width:1400px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
-@media (max-width:1100px){.row2,.row3{grid-template-columns:1fr}}
+@media (max-width:1100px){.row2,.row2b{grid-template-columns:1fr}}
 @media (max-width:960px){
   .sidebar{transform:translateX(-100%)}
   .sidebar.open{transform:translateX(0);box-shadow:20px 0 50px rgba(15,23,42,.2)}
@@ -308,10 +294,11 @@ canvas{display:block;width:100%}
       <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Leads<span class="nav-count">468</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
       <div class="nav-sub"><a class="nav-item" href="all-leads.html">All Leads</a><a class="nav-item" href="lead-pipeline.html">Lead Pipeline</a><a class="nav-item" href="lead-sources.html">Lead Sources</a><a class="nav-item" href="lost-leads.html">Lost Leads</a></div>
     </div>
-    <div class="nav-group open">
+    <div class="nav-group">
       <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>Tasks<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
-      <div class="nav-sub"><a class="nav-item" href="all-tasks.html">All Tasks</a><a class="nav-item active" href="overdue-tasks.html">Overdue Tasks</a></div>
+      <div class="nav-sub"><a class="nav-item" href="all-tasks.html">All Tasks</a><a class="nav-item" href="overdue-tasks.html">Overdue Tasks</a></div>
     </div>
+
     <div class="nav-label">Network</div>
     <div class="nav-group">
       <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg>Banks<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
@@ -327,9 +314,9 @@ canvas{display:block;width:100%}
     </div>
 
     <div class="nav-label">Operations</div>
-    <div class="nav-group">
+    <div class="nav-group open">
       <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>Documents<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
-      <div class="nav-sub"><a class="nav-item" href="all-documents.html">All Documents</a></div>
+      <div class="nav-sub"><a class="nav-item active" href="all-documents.html">All Documents</a></div>
     </div>
 
     <div class="nav-label">Finance &amp; Insights</div>
@@ -359,7 +346,7 @@ canvas{display:block;width:100%}
 <div class="main">
   <header class="header">
     <button class="hamburger" id="hamburger" aria-label="Open navigation"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0F172A" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
-    <span class="page-title hide-sm">Overdue Tasks</span>
+    <span class="page-title hide-sm">All Documents</span>
     <div class="search hide-sm">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       <input id="globalSearch" type="text" placeholder="Search leads, applications, banks…" aria-label="Global search">
@@ -375,20 +362,14 @@ canvas{display:block;width:100%}
     <!-- PAGE HEAD -->
     <div class="page-head">
       <div>
-        <h1>Overdue Tasks</h1>
-        <p>Track delayed operational activities and resolve bottlenecks before they impact mortgage processing.</p>
+        <h1>All Documents</h1>
+        <p>Monitor, verify and manage customer mortgage documents across all leads.</p>
       </div>
       <div class="actions">
         <button class="btn btn-ghost" id="refreshBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>Refresh</button>
-        <button class="btn btn-ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export Report</button>
-        <button class="btn btn-primary" id="escSettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>Escalation Settings</button>
+        <button class="btn btn-ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export Documents</button>
+        <button class="btn btn-primary" id="uploadBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>Upload Document</button>
       </div>
-    </div>
-
-    <!-- ALERT BANNER -->
-    <div class="alert-bar">
-      <span class="ab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></span>
-      <p><b>3 critical tasks</b> and <b>6 tasks 7+ days overdue</b> require immediate escalation. Affected leads risk SLA breach and pipeline delays.</p>
     </div>
 
     <!-- KPI -->
@@ -398,37 +379,34 @@ canvas{display:block;width:100%}
     <div class="filter-bar" id="filterBar">
       <div class="f-search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-        <input type="text" id="taskSearch" placeholder="Search task, lead, advisor…">
+        <input type="text" id="docSearch" placeholder="Search lead name, document name, lead ID…">
       </div>
-      <div class="f-dd" data-filter="assignee"></div>
-      <div class="f-dd" data-filter="priority"></div>
       <div class="f-dd" data-filter="type"></div>
-      <div class="f-dd" data-filter="overdue"></div>
-      <div class="f-dd" data-filter="source"></div>
-      <div class="f-dd" data-filter="bank"></div>
-      <div class="f-dd" data-filter="escalation"></div>
+      <div class="f-dd" data-filter="status"></div>
+      <div class="f-dd" data-filter="advisor"></div>
+      <div class="f-dd" data-filter="uploader"></div>
+      <div class="f-dd" data-filter="range"></div>
       <button class="clear-btn" id="clearFilters">✕&nbsp; Clear Filters</button>
     </div>
 
-    <!-- TABLE -->
+    <!-- DOCUMENTS TABLE -->
     <div class="card">
-      <div class="card-h"><div><h3>Overdue Task List</h3><div class="sub">Tasks past their due date, ranked by escalation severity</div></div><span class="tag" id="tblCount"></span></div>
+      <div class="card-h"><div><h3>Document Register</h3><div class="sub">Every document uploaded across all mortgage leads</div></div><span class="tag" id="tblCount"></span></div>
       <div class="tbl-wrap">
-        <table class="tbl" id="taskTable">
+        <table class="tbl" id="docTable">
           <thead><tr>
-            <th class="sortable" data-k="id">Task ID<span class="s-ic"></span></th>
-            <th class="sortable" data-k="title">Task Title<span class="s-ic"></span></th>
-            <th>Related Lead</th>
-            <th>Assigned To</th>
+            <th class="sortable" data-k="name">Document<span class="s-ic"></span></th>
+            <th>Lead ID</th>
+            <th>Customer</th>
             <th>Type</th>
-            <th class="sortable" data-k="priority">Priority<span class="s-ic"></span></th>
-            <th>Due Date</th>
-            <th class="sortable" data-k="od">Days Overdue<span class="s-ic"></span></th>
-            <th>Last Activity</th>
-            <th class="sortable" data-k="esc">Escalation<span class="s-ic"></span></th>
+            <th>Uploaded By</th>
+            <th class="sortable" data-k="date">Upload Date<span class="s-ic"></span></th>
+            <th>Status</th>
+            <th>Verified By</th>
+            <th>Last Updated</th>
             <th style="width:44px"></th>
           </tr></thead>
-          <tbody id="taskBody"></tbody>
+          <tbody id="docBody"></tbody>
         </table>
       </div>
       <div class="tbl-foot">
@@ -437,45 +415,32 @@ canvas{display:block;width:100%}
       </div>
     </div>
 
-    <!-- DONUT + TEAM DELAY -->
+    <!-- PENDING + MISSING -->
     <div class="row2">
       <div class="card">
-        <div class="card-h"><div><h3>Team Delay Analysis</h3><div class="sub">Most delayed team members by overdue task count</div></div></div>
-        <div class="card-body" id="teamDelay"></div>
+        <div class="card-h"><div><h3>Documents Awaiting Verification</h3><div class="sub">Pending review — oldest first</div></div><span class="status pending" id="pendCount"><i></i>0</span></div>
+        <div class="tbl-wrap">
+          <table class="tbl" style="min-width:560px">
+            <thead><tr><th>Lead</th><th>Document</th><th>Uploaded</th><th>Advisor</th><th class="r">Pending</th><th>Priority</th></tr></thead>
+            <tbody id="pendBody"></tbody>
+          </table>
+        </div>
       </div>
       <div class="card">
-        <div class="card-h"><div><h3>Overdue Distribution</h3><div class="sub">By severity band</div></div></div>
-        <div class="card-body">
-          <div class="donut-wrap">
-            <canvas id="donut" width="320" height="320" style="width:160px;height:160px;flex-shrink:0"></canvas>
-            <div class="donut-legend" id="donutLegend"></div>
-          </div>
+        <div class="card-h"><div><h3>Missing Documents</h3><div class="sub">Requested but not yet uploaded</div></div><span class="status missing" id="missCount"><i></i>0</span></div>
+        <div class="tbl-wrap">
+          <table class="tbl" style="min-width:560px">
+            <thead><tr><th>Customer</th><th>Required Document</th><th>Requested</th><th>Advisor</th><th class="r">Outstanding</th></tr></thead>
+            <tbody id="missBody"></tbody>
+          </table>
         </div>
       </div>
     </div>
 
-    <!-- TYPE BAR + BOTTLENECKS -->
-    <div class="row2">
-      <div class="card">
-        <div class="card-h"><div><h3>Overdue Task Type Analysis</h3><div class="sub">Which task categories are most delayed</div></div></div>
-        <div class="card-body"><canvas id="typeChart" width="900" height="290" style="height:290px"></canvas></div>
-      </div>
-      <div class="card">
-        <div class="card-h"><div><h3>Pipeline Bottlenecks</h3><div class="sub">Where mortgage files are getting stuck</div></div></div>
-        <div class="card-body" id="bottlenecks"></div>
-      </div>
-    </div>
-
-    <!-- ATTENTION + ESCALATIONS -->
-    <div class="row2">
-      <div class="card">
-        <div class="card-h"><div><h3>Attention Required</h3><div class="sub">Highest-severity files needing action today</div></div><span class="att-od" id="attCount">0</span></div>
-        <div class="card-body" id="attList"></div>
-      </div>
-      <div class="card">
-        <div class="card-h"><div><h3>Recent Escalations</h3><div class="sub">Latest escalation activity</div></div></div>
-        <div class="card-body"><div class="feed" id="feed"></div></div>
-      </div>
+    <!-- ACTIVITY -->
+    <div class="card">
+      <div class="card-h"><div><h3>Recent Document Activity</h3><div class="sub">Latest uploads, verifications and rejections</div></div></div>
+      <div class="card-body"><div class="feed" id="feed"></div></div>
     </div>
 
   </main>
@@ -484,14 +449,48 @@ canvas{display:block;width:100%}
 
 <!-- ROW MENU -->
 <div class="menu-pop" id="rowMenu">
-  <button class="primary" data-act="viewlead"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>View Lead</button>
-  <button data-act="viewtask"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>View Task</button>
-  <button data-act="complete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>Mark Complete</button>
-  <button data-act="reassign"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Reassign Task</button>
-  <button data-act="extend"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M12 14v4"/></svg>Extend Due Date</button>
-  <button data-act="escalate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>Escalate</button>
+  <button class="primary" data-act="view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>View Document</button>
+  <button data-act="download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Download</button>
   <div class="menu-sep"></div>
-  <button data-act="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Add Note</button>
+  <button class="ok" data-act="verify"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>Verify</button>
+  <button class="danger" data-act="reject"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg>Reject</button>
+  <button data-act="reupload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>Request Re-upload</button>
+</div>
+
+<!-- VIEW MODAL -->
+<div class="modal-scrim" id="viewModal">
+  <div class="modal lg" role="dialog" aria-modal="true">
+    <div class="modal-h">
+      <span class="m-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></span>
+      <div><b id="vName">Document</b><span id="vSub"></span></div>
+      <button class="x" id="vClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="doc-preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg><b id="vPrevName">Preview</b><span>Document preview not available in demo</span></div>
+      <div class="vm-rows" id="vRows"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="vDownload">Download</button>
+      <button class="btn btn-ghost" id="vReject" style="color:var(--danger);border-color:#F6DADA">Reject</button>
+      <button class="btn btn-primary" id="vVerify">Verify</button>
+    </div>
+  </div>
+</div>
+
+<!-- ACTION MODAL (verify / reject / reupload / upload) -->
+<div class="modal-scrim" id="actModal">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-h">
+      <span class="m-ic" id="aIc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg></span>
+      <div><b id="aTitle">Verify Document</b><span id="aSub"></span></div>
+      <button class="x" id="aClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body" id="aBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="aCancel">Cancel</button>
+      <button class="btn btn-primary" id="aConfirm">Confirm</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span id="toastMsg"></span></div>
@@ -510,93 +509,80 @@ $$('[data-toggle]').forEach(b=>b.addEventListener('click',()=>{
 }));
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#globalSearch')?.focus();}});
 
-/* ---------- reference data ---------- */
-const TEAM=['Sara Lopez','Fatima Rahman','John Mathews','Priya Nair','Daniel Roy','Ahmed Saleh'];
-const TYPES=[
-  {name:'Documents',col:'#05448B'},{name:'Bank Follow-up',col:'#2D6CB0'},{name:'Valuation',col:'#BE185D'},
-  {name:'Customer Follow-up',col:'#0F766E'},{name:'FOL',col:'#6D28D9'},{name:'Disbursement',col:'#16A34A'},{name:'Application',col:'#B45309'}
-];
-const TYPE_COL=Object.fromEntries(TYPES.map(t=>[t.name,t.col]));
-const SOURCES=['Meta Ads','Google Ads','Referral Partner','Website','Walk-In','WhatsApp Inquiry'];
-const BANKS=['Emirates NBD','FAB','ADCB','Mashreq','DIB','HSBC'];
-const TITLES=[
-  ['Collect Salary Certificate','Documents'],['Request Missing Documents','Documents'],['Collect Bank Statements','Documents'],
-  ['Upload Property Documents','Documents'],['Collect Liability Letter','Documents'],
-  ['Book Property Valuation','Valuation'],['Follow-up With Valuer','Valuation'],
-  ['Submit Bank Application','Application'],['Check Pre-Approval Status','Bank Follow-up'],['Follow-up With Bank','Bank Follow-up'],
-  ['Arrange FOL Signing','FOL'],['Submit Disbursement Request','Disbursement'],['Call Customer','Customer Follow-up']
-];
-const LEAD_NAMES=['Ahmed Khan','Marcus Lee','Leila Haddad','James Wright','Aisha Verma','Karan Shah','Nora Aziz','Hassan Qadir','Sanjay Mehta','Rania Saeed','Omar Khalil','Elena Petrova','David Chen','Mariam Noor','Sofia Rossi','Yusuf Ali'];
-const PRIO=['High','Medium','Low'];
-const PRC={High:'high',Medium:'med',Low:'low'};
-const LAST_ACT=['No update','Called, no answer','Awaiting customer','Bank not responding','Reminder sent','Docs requested','Escalated once'];
+/* ---------- data ---------- */
+const DOC_TYPES=['Passport','Emirates ID','Salary Certificate','Bank Statements','Trade License','Property MOU','Title Deed','Liability Letter','Property Documents','Other Documents'];
+const ADVISORS=['Fatima Rahman','John Mathews','Daniel Roy','Priya Nair','Ahmed Saleh','Sara Lopez'];
+const UPLOADERS=['Customer','Advisor','Operations','Agent'];
+const STATUSES=['Verified','Pending Review','Uploaded','Rejected','Missing'];
+const NAMES=['Mariam Noor','Marcus Lee','Ahmed Khan','Omar Khalil','Aisha Verma','Rania Saeed','Sanjay Mehta','Leila Haddad','Karan Shah','Nora Aziz','Hassan Qadir','Elena Petrova','David Chen','Sofia Rossi','Yusuf Ali','Anita Desai','James Wright','Huda Salem','Grace Okafor','Ali Mansour'];
+const REJECT_REASONS=['Unreadable copy','Expired document','Wrong document uploaded','Incomplete pages','Poor scan quality'];
+const MON=['Jan','Feb','Mar','Apr','May','Jun'];
 const ini=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
 function leadId(i){return 'LD-'+String(2400+i*3+(i%2));}
+function dateStr(d){return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
 
-/* escalation from days overdue */
-function escFor(od){return od<=3?{k:'l1',t:'Level 1'}:od<=7?{k:'l2',t:'Level 2'}:od<=14?{k:'l3',t:'Level 3'}:{k:'crit',t:'Critical'};}
-function odClass(od){return od<=2?'g':od<=5?'o':'r';}
-
-const OD_VALUES=[1,2,3,4,4,5,7,9,12,2,3,5,8,1,6,10,14,3,4,7,2,5,9,1,11,3,6,8,4];
-let TASKS=OD_VALUES.map((od,i)=>{
-  const [title,type]=TITLES[i%TITLES.length];
-  const li=i%LEAD_NAMES.length;
+let DOCS=Array.from({length:56},(_,i)=>{
+  const type=DOC_TYPES[i%DOC_TYPES.length];
+  const li=i%NAMES.length;
+  let status;
+  const r=i%10;
+  if(r<5)status='Verified';else if(r<7)status='Pending Review';else if(r<8)status='Uploaded';else if(r<9)status='Rejected';else status='Missing';
+  const day=1+((i*7)%28), mon=3+((i*2)%3); // Apr-Jun
+  const upDate=new Date(2026,mon,day);
+  const updated=new Date(upDate);updated.setDate(updated.getDate()+(i%5));
   return {
-    id:'TSK-'+(1024+i),title,type,
-    leadName:LEAD_NAMES[li],leadId:leadId(li),
-    assignee:TEAM[i%TEAM.length],
-    source:SOURCES[i%SOURCES.length],bank:BANKS[i%BANKS.length],
-    priority:od>=8?'High':PRIO[i%3],
-    od,last:LAST_ACT[i%LAST_ACT.length],
-    esc:escFor(od)
+    id:'DOC-'+(1000+i),
+    name:type.replace(/ /g,'_')+'.pdf',type,
+    leadName:NAMES[li],leadId:leadId(li),
+    uploader:status==='Missing'?'—':UPLOADERS[i%UPLOADERS.length],
+    advisor:ADVISORS[i%ADVISORS.length],
+    upDate,updated,
+    status,
+    verifiedBy:status==='Verified'?ADVISORS[i%ADVISORS.length]:'—',
+    reason:status==='Rejected'?REJECT_REASONS[i%REJECT_REASONS.length]:'',
+    pendingDays:2+((i*3)%12),
+    priority:['High','Medium','Low'][i%3]
   };
 });
 
-function dueDate(od){const d=new Date(2026,5,12);d.setDate(d.getDate()-od);return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
+const DOC_SVG='<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>';
+const STC={'Verified':'verified','Pending Review':'pending','Uploaded':'uploaded','Rejected':'rejected','Missing':'missing'};
 
 /* ---------- KPIs ---------- */
 function buildKPIs(){
-  const total=TASKS.length;
-  const b13=TASKS.filter(t=>t.od>=1&&t.od<=3).length;
-  const b47=TASKS.filter(t=>t.od>=4&&t.od<=7).length;
-  const b7=TASKS.filter(t=>t.od>7).length;
-  const crit=TASKS.filter(t=>t.od>14).length;
-  const leads=new Set(TASKS.map(t=>t.leadId)).size;
   const KPIS=[
-    {l:'Total Overdue Tasks',v:total,d:'+4 today',cls:'neg',ic:'red',svg:'<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/>',s:[5,6,6,7,7,8,8,9],crit:0,red:0},
-    {l:'1–3 Days Overdue',v:b13,d:'Level 1',cls:'mut',ic:'amber',svg:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>',s:[3,4,4,5,4,5,5,4]},
-    {l:'4–7 Days Overdue',v:b47,d:'Level 2',cls:'mut',ic:'amber',svg:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>',s:[4,4,5,4,5,5,4,5]},
-    {l:'7+ Days Overdue',v:b7,d:'Level 3',cls:'neg',ic:'red',svg:'<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/>',s:[2,3,3,4,4,5,5,6],red:1},
-    {l:'Critical Tasks',v:crit,d:'14+ days',cls:'neg',ic:'red',svg:'<circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/>',s:[1,1,2,2,2,3,3,3],crit:1,red:1},
-    {l:'Affected Leads',v:leads,d:'at risk',cls:'mut',ic:'amber',svg:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/>',s:[5,5,6,6,6,7,7,7]}
+    {l:'Total Documents',v:'2,486',d:'+42 today',cls:'mut',ic:'',svg:DOC_SVG,s:[5,6,6,7,7,8,8,9]},
+    {l:'Verified Documents',v:'1,932',d:'78% verified',cls:'pos',ic:'green',svg:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>',s:[4,5,5,6,7,7,8,9]},
+    {l:'Pending Review',v:'287',d:'+12 today',cls:'mut',ic:'amber',svg:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>',s:[6,6,7,6,7,7,8,7]},
+    {l:'Rejected Documents',v:'74',d:'+3 today',cls:'neg',ic:'red',svg:'<circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/>',s:[3,3,4,3,4,4,3,4]},
+    {l:'Missing Documents',v:'118',d:'needs action',cls:'neg',ic:'red',svg:'<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/>',s:[5,5,6,5,6,6,5,6]},
+    {l:"Today's Uploads",v:'42',d:'+18% vs avg',cls:'pos',ic:'',svg:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',s:[3,4,4,5,5,6,7,8]}
   ];
   const spark=(d,neg)=>{const w=54,h=22,max=Math.max(...d),min=Math.min(...d);
     const pts=d.map((v,i)=>`${(i/(d.length-1))*w},${h-3-((v-min)/(max-min||1))*(h-6)}`).join(' ');
     return `<svg class="spark" viewBox="0 0 ${w} ${h}"><polyline points="${pts}" fill="none" stroke="${neg?'#DC2626':'#05448B'}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/></svg>`;};
   const arrow=cls=>cls==='neg'?'M7 7l10 10M17 17H9M17 17V9':cls==='pos'?'M7 17 17 7M17 7H9M17 7v8':'M5 12h14';
   $('#kpiGrid').innerHTML=KPIS.map(k=>`
-    <div class="kpi ${k.crit?'crit':''}">
+    <div class="kpi">
       <div class="kpi-top"><label>${k.l}</label><span class="kpi-ic ${k.ic}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${k.svg}</svg></span></div>
-      <div class="kpi-foot"><div class="val ${k.red?'red':''}">${k.v}</div>${spark(k.s,k.cls==='neg')}</div>
+      <div class="kpi-foot"><div class="val">${k.v}</div>${spark(k.s,k.cls==='neg')}</div>
       <div class="kpi-foot" style="margin-top:4px"><span class="delta ${k.cls==='pos'?'pos':k.cls==='neg'?'neg':'mut'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="${arrow(k.cls)}"/></svg>${k.d}</span></div>
     </div>`).join('');
 }
 
 /* ---------- filters ---------- */
-const state={search:'',assignee:null,priority:null,type:null,overdue:null,source:null,bank:null,escalation:null,sortK:'od',sortDir:-1,page:1,per:12};
+const state={search:'',type:null,status:null,advisor:null,uploader:null,range:null,sortK:'date',sortDir:-1,page:1,per:12};
 const FILTER_DEFS={
-  assignee:{label:'Assigned To',opts:TEAM},
-  priority:{label:'Priority',opts:PRIO},
-  type:{label:'Task Type',opts:TYPES.map(t=>t.name)},
-  overdue:{label:'Days Overdue',opts:['1–3 Days','4–7 Days','8–14 Days','14+ Days']},
-  source:{label:'Lead Source',opts:SOURCES},
-  bank:{label:'Bank',opts:BANKS},
-  escalation:{label:'Escalation',opts:['Level 1','Level 2','Level 3','Critical']}
+  type:{label:'Document Type',opts:DOC_TYPES},
+  status:{label:'Status',opts:STATUSES},
+  advisor:{label:'Advisor',opts:ADVISORS},
+  uploader:{label:'Uploaded By',opts:UPLOADERS},
+  range:{label:'Date Range',opts:['Today','Last 7 Days','Last 30 Days','This Quarter']}
 };
 $$('.f-dd').forEach(dd=>{
   const k=dd.dataset.filter,def=FILTER_DEFS[k];
   dd.innerHTML=`<button class="f-dd-btn"><span class="lbl">${def.label}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></button>
-    <div class="f-dd-menu">${def.opts.map(o=>`<button data-v="${o}">${k==='type'?`<i style="width:7px;height:7px;border-radius:50%;background:${TYPE_COL[o]};flex-shrink:0"></i>`:''}${o}</button>`).join('')}</div>`;
+    <div class="f-dd-menu">${def.opts.map(o=>`<button data-v="${o}">${o}</button>`).join('')}</div>`;
   const btn=dd.querySelector('.f-dd-btn');
   btn.addEventListener('click',e=>{e.stopPropagation();const was=dd.classList.contains('open');$$('.f-dd.open').forEach(o=>o.classList.remove('open'));dd.classList.toggle('open',!was);});
   dd.querySelectorAll('.f-dd-menu button').forEach(ob=>ob.addEventListener('click',()=>{
@@ -607,39 +593,26 @@ $$('.f-dd').forEach(dd=>{
   }));
 });
 document.addEventListener('click',()=>$$('.f-dd.open').forEach(o=>o.classList.remove('open')));
-$('#taskSearch').addEventListener('input',e=>{state.search=e.target.value.toLowerCase();state.page=1;renderTable();});
+$('#docSearch').addEventListener('input',e=>{state.search=e.target.value.toLowerCase();state.page=1;renderTable();});
 $('#clearFilters').addEventListener('click',()=>{
-  state.search='';$('#taskSearch').value='';
-  Object.keys(FILTER_DEFS).forEach(k=>{
-    state[k]=null;const dd=document.querySelector(`.f-dd[data-filter=${k}]`);
-    dd.querySelector('.f-dd-btn').classList.remove('on');
-    dd.querySelector('.lbl').textContent=FILTER_DEFS[k].label;
-    dd.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));
-  });
+  state.search='';$('#docSearch').value='';Object.keys(FILTER_DEFS).forEach(k=>state[k]=null);
+  $$('.f-dd').forEach(dd=>{const k=dd.dataset.filter;dd.querySelector('.f-dd-btn').classList.remove('on');dd.querySelector('.lbl').textContent=FILTER_DEFS[k].label;dd.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));});
   state.page=1;renderTable();
 });
 
 /* ---------- table ---------- */
 function filtered(){
-  return TASKS.filter(t=>{
-    if(state.search&&![t.id,t.title,t.leadName,t.leadId,t.assignee,t.type].join(' ').toLowerCase().includes(state.search))return false;
-    if(state.assignee&&t.assignee!==state.assignee)return false;
-    if(state.priority&&t.priority!==state.priority)return false;
-    if(state.type&&t.type!==state.type)return false;
-    if(state.source&&t.source!==state.source)return false;
-    if(state.bank&&t.bank!==state.bank)return false;
-    if(state.escalation&&t.esc.t!==state.escalation)return false;
-    if(state.overdue){
-      if(state.overdue==='1–3 Days'&&!(t.od<=3))return false;
-      if(state.overdue==='4–7 Days'&&!(t.od>=4&&t.od<=7))return false;
-      if(state.overdue==='8–14 Days'&&!(t.od>=8&&t.od<=14))return false;
-      if(state.overdue==='14+ Days'&&!(t.od>14))return false;
-    }
+  return DOCS.filter(d=>{
+    if(state.search&&![d.name,d.leadName,d.leadId,d.type,d.advisor].join(' ').toLowerCase().includes(state.search))return false;
+    if(state.type&&d.type!==state.type)return false;
+    if(state.status&&d.status!==state.status)return false;
+    if(state.advisor&&d.advisor!==state.advisor)return false;
+    if(state.uploader&&d.uploader!==state.uploader)return false;
+    if(state.range){const diff=(new Date(2026,5,12)-d.upDate)/864e5;if(state.range==='Today'&&diff>1)return false;if(state.range==='Last 7 Days'&&diff>7)return false;if(state.range==='Last 30 Days'&&diff>30)return false;}
     return true;
   }).sort((a,b)=>{
     let va=a[state.sortK],vb=b[state.sortK];
-    if(state.sortK==='priority'){const o={High:0,Medium:1,Low:2};va=o[a.priority];vb=o[b.priority];}
-    if(state.sortK==='esc'){const o={l1:0,l2:1,l3:2,crit:3};va=o[a.esc.k];vb=o[b.esc.k];}
+    if(state.sortK==='date'){va=a.upDate.getTime();vb=b.upDate.getTime();}
     if(typeof va==='string'){va=va.toLowerCase();vb=vb.toLowerCase();}
     if(va<vb)return -1*state.sortDir;if(va>vb)return 1*state.sortDir;return 0;
   });
@@ -648,29 +621,28 @@ function renderTable(){
   const rows=filtered(),per=state.per,total=rows.length,pages=Math.max(1,Math.ceil(total/per));
   if(state.page>pages)state.page=pages;
   const slice=rows.slice((state.page-1)*per,state.page*per);
-  $('#tblCount').textContent=total+' overdue';
-  $('#taskBody').innerHTML=slice.length?slice.map(t=>`<tr>
-    <td><span class="tsk-id">${t.id}</span></td>
-    <td class="tsk-title"><b>${t.title}</b></td>
-    <td><a class="lead-link" href="lead-detail.html?id=${t.leadId}"><b>${t.leadName}</b><span>${t.leadId}</span></a></td>
-    <td><div class="assignee"><span class="p-avatar">${ini(t.assignee)}</span>${t.assignee}</div></td>
-    <td><span class="tag"><i style="background:${TYPE_COL[t.type]}"></i>${t.type}</span></td>
-    <td><span class="pri ${PRC[t.priority]}"><i></i>${t.priority}</span></td>
-    <td style="color:var(--text-2)">${dueDate(t.od)}</td>
-    <td><span class="od-badge ${odClass(t.od)}">${t.od} ${t.od===1?'Day':'Days'}</span></td>
-    <td style="color:${t.last==='No update'?'var(--danger)':'var(--text-3)'};font-size:11.5px">${t.last}</td>
-    <td><span class="esc ${t.esc.k}">${t.esc.t}</span></td>
-    <td><button class="kebab" data-id="${t.id}" aria-label="Actions"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button></td>
-  </tr>`).join(''):`<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text-3)">No overdue tasks match your filters. 🎉</td></tr>`;
-  $$('.tbl th.sortable').forEach(th=>th.querySelector('.s-ic').textContent=th.dataset.k===state.sortK?(state.sortDir===1?'▲':'▼'):'');
-  $('#pageInfo').textContent=total?`Showing ${(state.page-1)*per+1}–${Math.min(state.page*per,total)} of ${total} overdue tasks`:'0 tasks';
+  $('#tblCount').textContent=total+' documents';
+  $('#docBody').innerHTML=slice.length?slice.map(d=>`<tr>
+    <td><div class="doc-cell"><span class="doc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${DOC_SVG}</svg></span><div><b>${d.name}</b><span>${d.id}</span></div></div></td>
+    <td><a class="lead-link" href="lead-detail.html?id=${d.leadId}"><b>${d.leadId}</b></a></td>
+    <td>${d.leadName}</td>
+    <td><span class="tag">${d.type}</span></td>
+    <td style="color:var(--text-2)">${d.uploader}</td>
+    <td style="color:var(--text-2)">${d.status==='Missing'?'—':dateStr(d.upDate)}</td>
+    <td><span class="status ${STC[d.status]}"><i></i>${d.status}</span>${d.reason?`<div style="font-size:10px;color:var(--danger);margin-top:3px">${d.reason}</div>`:''}</td>
+    <td style="color:var(--text-2)">${d.verifiedBy}</td>
+    <td style="color:var(--text-3);font-size:11.5px">${d.status==='Missing'?'—':dateStr(d.updated)}</td>
+    <td><button class="kebab" data-id="${d.id}" aria-label="Actions"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button></td>
+  </tr>`).join(''):`<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-3)">No documents match your filters.</td></tr>`;
+  $$('.tbl th.sortable').forEach(th=>th.querySelector('.s-ic')&&(th.querySelector('.s-ic').textContent=th.dataset.k===state.sortK?(state.sortDir===1?'▲':'▼'):''));
+  $('#pageInfo').textContent=total?`Showing ${(state.page-1)*per+1}–${Math.min(state.page*per,total)} of ${total} documents`:'0 documents';
   let pg=`<button class="pg-btn" ${state.page===1?'disabled':''} data-p="${state.page-1}">‹</button>`;
   const win=[];for(let i=1;i<=pages;i++){if(i===1||i===pages||Math.abs(i-state.page)<=1)win.push(i);else if(win[win.length-1]!=='…')win.push('…');}
   win.forEach(i=>pg+=i==='…'?`<span class="pg-btn" style="cursor:default">…</span>`:`<button class="pg-btn ${i===state.page?'on':''}" data-p="${i}">${i}</button>`);
   pg+=`<button class="pg-btn" ${state.page===pages?'disabled':''} data-p="${state.page+1}">›</button>`;
   $('#pager').innerHTML=pg;
   $$('#pager .pg-btn[data-p]').forEach(b=>b.addEventListener('click',()=>{state.page=+b.dataset.p;renderTable();}));
-  $$('#taskBody .kebab').forEach(k=>k.addEventListener('click',e=>{
+  $$('#docBody .kebab').forEach(k=>k.addEventListener('click',e=>{
     e.stopPropagation();const m=$('#rowMenu'),r=k.getBoundingClientRect();
     m.classList.add('show');m.dataset.id=k.dataset.id;
     const mw=180,mh=m.offsetHeight||240;let x=r.right-mw,y=r.bottom+6;
@@ -678,100 +650,52 @@ function renderTable(){
   }));
 }
 $$('.tbl th.sortable').forEach(th=>th.addEventListener('click',()=>{
-  const k=th.dataset.k;if(state.sortK===k)state.sortDir*=-1;else{state.sortK=k;state.sortDir=1;}renderTable();
+  const k=th.dataset.k;if(!k)return;if(state.sortK===k)state.sortDir*=-1;else{state.sortK=k;state.sortDir=1;}renderTable();
 }));
 document.addEventListener('click',()=>$('#rowMenu').classList.remove('show'));
 $('#rowMenu').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
-  const id=$('#rowMenu').dataset.id,t=TASKS.find(x=>x.id===id);
-  if(b.dataset.act==='viewlead'){location.href=`lead-detail.html?id=${t.leadId}`;return;}
-  if(b.dataset.act==='complete'){TASKS=TASKS.filter(x=>x.id!==id);buildKPIs();renderTable();buildTeam();buildAtt();drawDonut();drawType();toast(`${id} marked complete`);$('#rowMenu').classList.remove('show');return;}
-  const lbl={viewtask:'Opening task',reassign:'Reassign task',extend:'Extend due date',escalate:'Escalated',note:'Add note'};
-  toast(`${lbl[b.dataset.act]} — ${id}`);$('#rowMenu').classList.remove('show');
+  const d=DOCS.find(x=>x.id===$('#rowMenu').dataset.id),act=b.dataset.act;
+  $('#rowMenu').classList.remove('show');
+  if(act==='view')openView(d);
+  else if(act==='download')toast(`Downloading ${d.name}`);
+  else if(act==='verify')openAction('verify',d);
+  else if(act==='reject')openAction('reject',d);
+  else if(act==='reupload')openAction('reupload',d);
 });
 
-/* ---------- team delay ---------- */
-function buildTeam(){
-  const m={};TASKS.forEach(t=>m[t.assignee]=(m[t.assignee]||0)+1);
-  const rows=Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,6);
-  const max=rows.length?rows[0][1]:1;
-  $('#teamDelay').innerHTML=rows.map(([n,c])=>`<div class="wl-item">
-    <span class="p-avatar">${ini(n)}</span>
-    <div class="wl-body"><div class="wl-top"><b>${n}</b><span class="wl-count">${c} Overdue</span></div>
-      <div class="wl-bar"><i data-w="${Math.round(c/max*100)}"></i></div></div></div>`).join('');
-  requestAnimationFrame(()=>$$('#teamDelay .wl-bar i').forEach(i=>i.style.width=i.dataset.w+'%'));
+/* ---------- pending / missing / activity ---------- */
+function dpill(days){const c=days<=3?'g':days<=7?'o':'r';return `<span class="dpill ${c}">${days}d</span>`;}
+function buildPending(){
+  const rows=DOCS.filter(d=>d.status==='Pending Review').sort((a,b)=>b.pendingDays-a.pendingDays).slice(0,6);
+  $('#pendCount').innerHTML='<i></i>'+DOCS.filter(d=>d.status==='Pending Review').length;
+  $('#pendBody').innerHTML=rows.map(d=>`<tr>
+    <td><b style="font-weight:600">${d.leadName}</b><div style="font-size:10.5px;color:var(--text-3)">${d.leadId}</div></td>
+    <td><span class="tag">${d.type}</span></td>
+    <td style="color:var(--text-2)">${dateStr(d.upDate)}</td>
+    <td style="color:var(--text-2)">${d.advisor}</td>
+    <td class="r">${dpill(d.pendingDays)}</td>
+    <td><span class="pri ${d.priority==='High'?'high':d.priority==='Medium'?'med':'low'}"><i></i>${d.priority}</span></td></tr>`).join('')||emptyRow(6);
 }
-
-/* ---------- donut ---------- */
-function drawDonut(){
-  const cv=$('#donut'),ctx=cv.getContext('2d'),cx=160,cy=160,rO=150,rI=92;
-  const segs=[
-    {name:'1–3 Days',val:TASKS.filter(t=>t.od<=3).length,col:'#16A34A'},
-    {name:'4–7 Days',val:TASKS.filter(t=>t.od>=4&&t.od<=7).length,col:'#B45309'},
-    {name:'7+ Days',val:TASKS.filter(t=>t.od>7&&t.od<=14).length,col:'#DC2626'},
-    {name:'Critical',val:TASKS.filter(t=>t.od>14).length,col:'#7F1D1D'}
-  ];
-  const total=segs.reduce((s,x)=>s+x.val,0)||1;let a=-Math.PI/2;
-  ctx.clearRect(0,0,320,320);
-  segs.forEach(sg=>{if(!sg.val)return;const ang=sg.val/total*Math.PI*2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,rO,a,a+ang);ctx.closePath();ctx.fillStyle=sg.col;ctx.fill();a+=ang;});
-  ctx.beginPath();ctx.arc(cx,cy,rI,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
-  ctx.fillStyle='#0F172A';ctx.font='700 36px Inter';ctx.textAlign='center';ctx.fillText(total,cx,cy-2);
-  ctx.fillStyle='#94A3B8';ctx.font='600 14px Inter';ctx.fillText('OVERDUE',cx,cy+22);
-  $('#donutLegend').innerHTML=segs.map(sg=>`<div class="dl"><i style="background:${sg.col}"></i><span>${sg.name}</span><b>${sg.val}</b></div>`).join('');
+function buildMissing(){
+  const rows=DOCS.filter(d=>d.status==='Missing').sort((a,b)=>b.pendingDays-a.pendingDays).slice(0,6);
+  $('#missCount').innerHTML='<i></i>'+DOCS.filter(d=>d.status==='Missing').length;
+  $('#missBody').innerHTML=rows.map(d=>`<tr>
+    <td><b style="font-weight:600">${d.leadName}</b><div style="font-size:10.5px;color:var(--text-3)">${d.leadId}</div></td>
+    <td><span class="tag">${d.type}</span></td>
+    <td style="color:var(--text-2)">${dateStr(d.upDate)}</td>
+    <td style="color:var(--text-2)">${d.advisor}</td>
+    <td class="r">${dpill(d.pendingDays)}</td></tr>`).join('')||emptyRow(5);
 }
+function emptyRow(c){return `<tr><td colspan="${c}" style="text-align:center;padding:26px;color:var(--text-3)">Nothing here 🎉</td></tr>`;}
 
-/* ---------- type bar ---------- */
-function drawType(){
-  const cv=$('#typeChart'),ctx=cv.getContext('2d');
-  const W=cv.width=cv.clientWidth*2,H=580;cv.height=H;
-  const m={};TYPES.forEach(t=>m[t.name]=0);TASKS.forEach(t=>m[t.type]++);
-  const data=TYPES.map(t=>({name:t.name,val:m[t.name],col:t.col})).filter(d=>d.val>0).sort((a,b)=>b.val-a.val);
-  const pad={l:20,r:20,t:34,b:64},gw=(W-pad.l-pad.r)/data.length,max=Math.max(...data.map(d=>d.val),1);
-  ctx.clearRect(0,0,W,H);
-  ctx.strokeStyle='#EEF2F7';ctx.lineWidth=2;ctx.fillStyle='#94A3B8';ctx.font='600 20px Inter';ctx.textAlign='right';
-  for(let i=0;i<=4;i++){const y=pad.t+(H-pad.t-pad.b)*i/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();ctx.fillText(Math.round(max*(1-i/4)),pad.l+26,y+6);}
-  data.forEach((d,i)=>{
-    const x=pad.l+i*gw,bw=gw*0.5,rh=d.val/max*(H-pad.t-pad.b),bx=x+gw*0.25,by=H-pad.b-rh;
-    ctx.fillStyle=d.col;rr(ctx,bx,by,bw,rh,7);
-    ctx.fillStyle='#64748B';ctx.font='600 19px Inter';ctx.textAlign='center';
-    const nm=d.name.length>13?d.name.slice(0,12)+'…':d.name;ctx.fillText(nm,x+gw/2,H-pad.b+28);
-    ctx.fillStyle=d.col;ctx.font='700 21px Inter';ctx.fillText(d.val,x+gw/2,by-12);
-  });
-}
-function rr(ctx,x,y,w,h,r){r=Math.min(r,w/2,h/2);if(h<=0)return;ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,0);ctx.arcTo(x,y+h,x,y,0);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();ctx.fill();}
-
-/* ---------- bottlenecks ---------- */
-function buildBottlenecks(){
-  const BN=[
-    {t:'Documents Pending',n:8,ic:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>',c:'danger'},
-    {t:'FOL Pending',n:6,ic:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 15l2 2 4-4"/>',c:'warn'},
-    {t:'Under Review',n:5,ic:'<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',c:'warn'},
-    {t:'Valuation Pending',n:3,ic:'<path d="M3 21h18M5 21V8l7-5 7 5v13"/>',c:''},
-    {t:'Disbursement Pending',n:2,ic:'<path d="M3 11.5 12 4l9 7.5"/><path d="M6 10.5V20h4.5v-5h3v5H18v-9.5"/>',c:''}
-  ];
-  $('#bottlenecks').innerHTML=BN.map(b=>`<div class="bn-item">
-    <span class="bn-ic ${b.c}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${b.ic}</svg></span>
-    <div class="bn-body"><b>${b.t}</b><span>${b.n} delayed ${b.n===1?'file':'files'}</span></div>
-    <span class="bn-val" style="color:${b.c==='danger'?'var(--danger)':b.c==='warn'?'var(--warning)':'var(--text)'}">${b.n}</span></div>`).join('');
-}
-
-/* ---------- attention ---------- */
-function buildAtt(){
-  const top=[...TASKS].sort((a,b)=>b.od-a.od).slice(0,5);
-  $('#attCount').textContent=TASKS.filter(t=>t.od>7).length+' urgent';
-  $('#attList').innerHTML=top.map(t=>`<div class="att-item">
-    <span class="p-avatar">${ini(t.leadName)}</span>
-    <div class="att-body"><b>${t.leadName}</b><span>${t.title} · ${t.assignee}</span></div>
-    <span class="att-od">Overdue ${t.od} Days</span></div>`).join('');
-}
-
-/* ---------- escalations feed ---------- */
 const FEED=[
-  {ic:'danger',svg:'<path d="M12 19V5M5 12l7-7 7 7"/>',h:'<b>Operations Manager</b> escalated <b>Salary Certificate Collection</b>',t:'15 mins ago'},
-  {ic:'blue',svg:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',h:'Task reassigned from <b>Sara Lopez</b> to <b>Fatima Rahman</b>',t:'1 hour ago'},
-  {ic:'danger',svg:'<circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/>',h:'<b>Valuation Follow-up</b> marked critical',t:'2 hours ago'},
-  {ic:'',svg:'<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/>',h:'<b>Disbursement Request</b> overdue for 10 days',t:'Today'},
-  {ic:'blue',svg:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',h:'Due date extended on <b>Bank Application — Karan Shah</b>',t:'Today'}
+  {ic:'',svg:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',h:'Passport uploaded for <b>Mariam Noor</b>',t:'12 mins ago'},
+  {ic:'ok',svg:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>',h:'Salary Certificate verified by <b>Fatima Rahman</b>',t:'35 mins ago'},
+  {ic:'bad',svg:'<circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/>',h:'Bank Statement rejected — <b>unreadable copy</b>',t:'1 hour ago'},
+  {ic:'',svg:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',h:'Trade License uploaded for <b>Marcus Lee</b>',t:'Today'},
+  {ic:'ok',svg:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>',h:'Emirates ID verified by <b>Priya Nair</b>',t:'Today'},
+  {ic:'',svg:'<path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/>',h:'Re-upload requested for <b>Ahmed Khan</b> — Bank Statement',t:'Today'}
 ];
 function buildFeed(){
   $('#feed').innerHTML=FEED.map(f=>`<div class="feed-item">
@@ -779,18 +703,80 @@ function buildFeed(){
     <div class="feed-body"><p>${f.h}</p><time>${f.t}</time></div></div>`).join('');
 }
 
+/* ---------- view modal ---------- */
+function openView(d){
+  $('#vName').textContent=d.name;
+  $('#vSub').textContent=`${d.leadName} · ${d.leadId}`;
+  $('#vPrevName').textContent=d.name;
+  $('#vRows').innerHTML=`
+    <div class="vm-row"><label>Document Type</label><b>${d.type}</b></div>
+    <div class="vm-row"><label>Lead</label><b>${d.leadName} (${d.leadId})</b></div>
+    <div class="vm-row"><label>Uploaded By</label><b>${d.uploader}</b></div>
+    <div class="vm-row"><label>Upload Date</label><b>${d.status==='Missing'?'—':dateStr(d.upDate)}</b></div>
+    <div class="vm-row"><label>Status</label><b><span class="status ${STC[d.status]}"><i></i>${d.status}</span></b></div>
+    <div class="vm-row"><label>Verified By</label><b>${d.verifiedBy}</b></div>
+    ${d.reason?`<div class="vm-row"><label>Rejection Reason</label><b style="color:var(--danger)">${d.reason}</b></div>`:''}`;
+  $('#viewModal').dataset.id=d.id;
+  $('#viewModal').classList.add('show');
+}
+$('#vClose').addEventListener('click',()=>$('#viewModal').classList.remove('show'));
+$('#viewModal').addEventListener('click',e=>{if(e.target===$('#viewModal'))$('#viewModal').classList.remove('show');});
+$('#vDownload').addEventListener('click',()=>{const d=DOCS.find(x=>x.id===$('#viewModal').dataset.id);toast(`Downloading ${d.name}`);});
+$('#vVerify').addEventListener('click',()=>{const d=DOCS.find(x=>x.id===$('#viewModal').dataset.id);$('#viewModal').classList.remove('show');openAction('verify',d);});
+$('#vReject').addEventListener('click',()=>{const d=DOCS.find(x=>x.id===$('#viewModal').dataset.id);$('#viewModal').classList.remove('show');openAction('reject',d);});
+
+/* ---------- action modal ---------- */
+let actCtx=null;
+const ACT_CFG={
+  verify:{title:'Verify Document',ic:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>',confirm:'Verify Document',
+    body:d=>`<div class="fld"><label>Verification Notes</label><textarea id="aNotes" placeholder="Optional notes…"></textarea></div>
+      <div class="fld"><label>Verified By</label><input type="text" value="Kunal Darji" id="aBy"></div>
+      <div class="fld"><label>Verification Date</label><input type="date" id="aDate" value="2026-06-12"></div>`,
+    done:d=>{d.status='Verified';d.verifiedBy=$('#aBy').value||'Kunal Darji';d.reason='';d.updated=new Date(2026,5,12);return `${d.name} verified`;}},
+  reject:{title:'Reject Document',ic:'<circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/>',confirm:'Reject Document',
+    body:d=>`<div class="fld"><label>Rejection Reason</label><select id="aReason">${REJECT_REASONS.map(r=>`<option>${r}</option>`).join('')}</select></div>
+      <div class="fld"><label>Additional Notes</label><textarea id="aNotes" placeholder="Optional notes to the team…"></textarea></div>`,
+    done:d=>{d.status='Rejected';d.reason=$('#aReason').value;d.verifiedBy='—';d.updated=new Date(2026,5,12);return `${d.name} rejected`;}},
+  reupload:{title:'Request Re-upload',ic:'<path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/>',confirm:'Send Request',
+    body:d=>`<div class="fld"><label>Reason For Re-upload</label><select id="aReason">${REJECT_REASONS.map(r=>`<option>${r}</option>`).join('')}</select></div>
+      <div class="fld"><label>Message To Customer</label><textarea id="aMsg" placeholder="Dear customer, please re-upload a clear copy…"></textarea></div>`,
+    done:d=>{d.status='Missing';d.uploader='—';d.verifiedBy='—';d.reason='';return `Re-upload requested for ${d.name}`;}},
+  upload:{title:'Upload Document',ic:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',confirm:'Upload',
+    body:()=>`<div class="fld"><label>Lead</label><select id="aLead">${NAMES.slice(0,10).map((n,i)=>`<option value="${i}">${n} (${leadId(i)})</option>`).join('')}</select></div>
+      <div class="fld"><label>Document Type</label><select id="aType">${DOC_TYPES.map(t=>`<option>${t}</option>`).join('')}</select></div>
+      <div class="fld"><label>File</label><input type="file"></div>`,
+    done:()=>{const li=+$('#aLead').value,type=$('#aType').value;DOCS.unshift({id:'DOC-'+(1000+DOCS.length),name:type.replace(/ /g,'_')+'.pdf',type,leadName:NAMES[li],leadId:leadId(li),uploader:'Operations',advisor:ADVISORS[li%ADVISORS.length],upDate:new Date(2026,5,12),updated:new Date(2026,5,12),status:'Pending Review',verifiedBy:'—',reason:'',pendingDays:0,priority:'Medium'});return 'Document uploaded';}}
+};
+function openAction(kind,d){
+  actCtx={kind,d};const c=ACT_CFG[kind];
+  $('#aIc').innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${c.ic}</svg>`;
+  $('#aTitle').textContent=c.title;
+  $('#aSub').textContent=d?`${d.name} · ${d.leadName}`:'New document';
+  $('#aBody').innerHTML=c.body(d);
+  $('#aConfirm').textContent=c.confirm;
+  $('#actModal').classList.add('show');
+}
+$('#aClose').addEventListener('click',()=>$('#actModal').classList.remove('show'));
+$('#aCancel').addEventListener('click',()=>$('#actModal').classList.remove('show'));
+$('#actModal').addEventListener('click',e=>{if(e.target===$('#actModal'))$('#actModal').classList.remove('show');});
+$('#aConfirm').addEventListener('click',()=>{
+  const c=ACT_CFG[actCtx.kind];const msg=c.done(actCtx.d);
+  $('#actModal').classList.remove('show');
+  buildKPIs();renderTable();buildPending();buildMissing();toast(msg);
+});
+$('#uploadBtn').addEventListener('click',()=>openAction('upload',null));
+
 /* actions */
-$('#refreshBtn').addEventListener('click',()=>{init();toast('Overdue tasks refreshed');});
-$('#escSettings').addEventListener('click',()=>toast('Escalation settings coming soon'));
+$('#refreshBtn').addEventListener('click',()=>{init();toast('Documents refreshed');});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('#viewModal').classList.remove('show');$('#actModal').classList.remove('show');}});
 
 /* toast */
 let tTimer;
 function toast(msg){$('#toastMsg').textContent=msg;$('#toast').classList.add('show');clearTimeout(tTimer);tTimer=setTimeout(()=>$('#toast').classList.remove('show'),2400);}
 
 /* init */
-function init(){buildKPIs();renderTable();buildTeam();buildBottlenecks();buildAtt();buildFeed();drawDonut();drawType();}
+function init(){buildKPIs();renderTable();buildPending();buildMissing();buildFeed();}
 init();
-let rT;addEventListener('resize',()=>{clearTimeout(rT);rT=setTimeout(drawType,200);});
 </script>
 </body>
 </html>
