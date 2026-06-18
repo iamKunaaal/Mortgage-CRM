@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mortgage CRM — Roles & Permissions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#05448B;--primary-h:#0B5AB3;--blue-2:#2D6CB0;--blue-3:#7FA6CF;
+  --blue-50:#F0F5FB;--blue-100:#DEEAF6;
+  --bg:#F7F9FC;--card:#FFFFFF;
+  --text:#0F172A;--text-2:#64748B;--text-3:#94A3B8;
+  --border:#E2E8F0;--border-soft:#EEF2F7;
+  --success:#16A34A;--warning:#B45309;--danger:#DC2626;
+  --r:14px;
+  --sh-xs:0 1px 2px rgba(15,23,42,.05);
+  --sh-sm:0 1px 3px rgba(15,23,42,.06),0 1px 2px rgba(15,23,42,.04);
+  --sh-md:0 4px 12px -2px rgba(15,23,42,.08);
+  --sh-lg:0 12px 32px -8px rgba(15,23,42,.18);
+  --sb:256px;
+  --font:'Inter',system-ui,-apple-system,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+a{color:inherit;text-decoration:none}
+::selection{background:var(--blue-100)}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+.app{display:flex;min-height:100vh}
+.main{flex:1;min-width:0;margin-left:var(--sb)}
+
+/* sidebar */
+.sidebar{position:fixed;inset:0 auto 0 0;width:var(--sb);background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:60;transition:transform .28s cubic-bezier(.4,0,.2,1)}
+.brand{display:flex;align-items:center;gap:11px;padding:20px 20px 16px}
+.brand-mark{width:36px;height:36px;border-radius:10px;background:var(--primary);display:grid;place-items:center;flex-shrink:0}
+.brand-name{font-weight:700;font-size:15px;letter-spacing:-.015em;color:var(--text)}
+.brand-sub{font-size:11px;color:var(--text-3);font-weight:500}
+.nav{flex:1;overflow-y:auto;padding:6px 12px 16px;scrollbar-width:thin;scrollbar-color:#D7DEE8 transparent}
+.nav::-webkit-scrollbar{width:5px}
+.nav::-webkit-scrollbar-thumb{background:#D7DEE8;border-radius:4px}
+.nav-label{font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--text-3);padding:18px 12px 7px;margin-top:2px}
+.nav-label:first-child{margin-top:0;padding-top:8px}
+.nav-item{display:flex;align-items:center;gap:11px;width:100%;padding:8.5px 11px;border-radius:9px;color:#3F4C61;font-size:13.5px;font-weight:500;text-align:left;transition:background .13s,color .13s;position:relative}
+.nav-item svg{width:17px;height:17px;flex-shrink:0;color:var(--text-2);transition:color .13s}
+.nav-item:hover{background:#F3F6FA;color:var(--text)}
+.nav-item:hover svg{color:var(--text)}
+.nav-item.active{background:var(--blue-50);color:var(--primary);font-weight:600}
+.nav-item.active svg{color:var(--primary)}
+.nav-item.active::before{content:"";position:absolute;left:-12px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--primary)}
+.nav-item .chev{margin-left:auto;width:13px;height:13px;color:var(--text-3);transition:transform .22s cubic-bezier(.4,0,.2,1)}
+.nav-group{margin-bottom:1px}
+.nav-group.open>.nav-item{color:var(--text)}
+.nav-group.open>.nav-item svg{color:var(--text)}
+.nav-group.open .chev{transform:rotate(90deg);color:var(--primary)}
+.nav-sub{overflow:hidden;max-height:0;transition:max-height .3s cubic-bezier(.4,0,.2,1);padding-left:4px;margin-left:18px;border-left:1px solid var(--border-soft)}
+.nav-group.open .nav-sub{max-height:320px}
+.nav-sub .nav-item{padding:6.5px 11px 6.5px 22px;font-size:12.75px;color:var(--text-2);font-weight:500;border-radius:7px;margin:1px 0}
+.nav-sub .nav-item:hover{color:var(--text);background:#F3F6FA}
+.nav-sub .nav-item.active{background:var(--blue-50);color:var(--primary);font-weight:600}
+.nav-sub .nav-item.active::before{display:none}
+.nav-count{margin-left:auto;font-size:11px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--blue-50);color:var(--primary)}
+.sidebar-foot{padding:12px;border-top:1px solid var(--border-soft)}
+.user-card{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;transition:background .13s;width:100%;text-align:left}
+.user-card:hover{background:#F3F6FA}
+.user-card b{display:block;font-size:13px;font-weight:600}
+.user-card span{font-size:11.5px;color:var(--text-3)}
+.avatar{width:32px;height:32px;border-radius:9px;background:var(--primary);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
+
+/* header */
+.header{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;padding:13px 28px;background:rgba(255,255,255,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.hamburger{display:none;width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:#fff;place-items:center}
+.page-title{font-size:15px;font-weight:700;letter-spacing:-.01em;margin-right:6px}
+.search{flex:1;max-width:400px;position:relative}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--text-3)}
+.search input{width:100%;padding:8.5px 64px 8.5px 36px;border-radius:10px;border:1px solid var(--border);background:var(--bg);font:inherit;font-size:13.5px;transition:all .15s}
+.search input::placeholder{color:var(--text-3)}
+.search input:focus{outline:none;background:#fff;border-color:var(--primary);box-shadow:0 0 0 3px rgba(5,68,139,.10)}
+.kbd{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:10.5px;font-weight:600;color:var(--text-3);border:1px solid var(--border);background:#fff;border-radius:5px;padding:1px 6px}
+.h-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+.icon-btn{width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:#fff;display:grid;place-items:center;color:var(--text-2);position:relative;transition:all .14s}
+.icon-btn:hover{color:var(--text);border-color:#CBD5E1;background:var(--bg)}
+.icon-btn svg{width:16px;height:16px}
+.dot{position:absolute;top:8px;right:8px;width:6px;height:6px;border-radius:50%;background:var(--danger);border:1.5px solid #fff}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8.5px 14px;border-radius:9px;font-size:13px;font-weight:600;transition:all .14s;white-space:nowrap}
+.btn svg{width:15px;height:15px}
+.btn-ghost{background:#fff;border:1px solid var(--border);color:var(--text-2)}
+.btn-ghost:hover{color:var(--text);border-color:#CBD5E1;background:var(--bg)}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:var(--sh-xs)}
+.btn-primary:hover{background:var(--primary-h)}
+
+/* content */
+.content{padding:24px 28px 48px;display:flex;flex-direction:column;gap:18px;max-width:1620px;width:100%;margin:0 auto}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.page-head h1{font-size:21px;font-weight:700;letter-spacing:-.02em}
+.page-head p{color:var(--text-2);font-size:13.5px;margin-top:3px;max-width:640px}
+.page-head .actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px 15px 12px;box-shadow:var(--sh-xs);transition:box-shadow .16s,border-color .16s}
+.kpi:hover{box-shadow:var(--sh-md);border-color:#D4DDE8}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.kpi-ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--blue-50);color:var(--primary)}
+.kpi-ic.green{background:#EDFAF1;color:var(--success)}
+.kpi-ic svg{width:14px;height:14px}
+.kpi label{font-size:11.5px;font-weight:600;color:var(--text-2);display:block}
+.kpi .val{font-size:22px;font-weight:700;letter-spacing:-.025em;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi .sub{font-size:11px;font-weight:600;margin-top:5px;color:var(--text-3)}
+
+/* cards */
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-xs);min-width:0}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 20px 0}
+.card-h h3{font-size:14px;font-weight:700;letter-spacing:-.008em}
+.card-h .sub{font-size:12px;color:var(--text-2);margin-top:1px}
+.card-body{padding:14px 20px 18px}
+.link-btn{font-size:12px;font-weight:600;color:var(--primary);padding:4px 9px;border-radius:7px;transition:background .14s}
+.link-btn:hover{background:var(--blue-50)}
+
+/* role overview cards */
+.ro-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.ro-card{border:1px solid var(--border-soft);border-radius:12px;padding:14px;background:var(--bg);transition:all .15s}
+.ro-card:hover{background:#fff;border-color:var(--border);box-shadow:var(--sh-xs)}
+.ro-card .ro-h{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.ro-ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;flex-shrink:0}
+.ro-ic svg{width:15px;height:15px}
+.ro-card b.nm{font-size:13px;font-weight:700}
+.ro-card .ro-stats{display:flex;gap:16px}
+.ro-card .ro-stats>div label{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em;display:block}
+.ro-card .ro-stats>div b{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* table */
+.tbl-wrap{overflow-x:auto;border-radius:0 0 var(--r) var(--r)}
+.tbl{width:100%;border-collapse:collapse;min-width:980px}
+.tbl thead th{position:sticky;top:0;background:#FAFCFE;z-index:5;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);text-align:left;padding:11px 13px;border-bottom:1px solid var(--border);white-space:nowrap;user-select:none}
+.tbl thead th.r,.tbl td.r{text-align:right}
+.tbl td{padding:12px 13px;border-bottom:1px solid var(--border-soft);font-size:12.5px;vertical-align:middle}
+.tbl tbody tr{transition:background .12s}
+.tbl tbody tr:hover{background:#FAFCFE}
+.tbl tr:last-child td{border-bottom:none}
+.num{font-variant-numeric:tabular-nums;font-weight:600}
+.role-cell{display:flex;align-items:center;gap:11px}
+.role-cell .ro-ic{width:32px;height:32px}
+.role-cell b{display:block;font-size:12.5px;font-weight:600}
+.role-cell span{font-size:10.5px;color:var(--text-3)}
+.role-desc{font-size:12px;color:var(--text-2);max-width:280px}
+.uchips{display:flex;align-items:center}
+.uchip{width:24px;height:24px;border-radius:7px;background:var(--blue-50);color:var(--primary);display:grid;place-items:center;font-size:9px;font-weight:700;border:1.5px solid #fff;margin-left:-6px}
+.uchip:first-child{margin-left:0}
+.uchip.more{background:var(--border-soft);color:var(--text-2)}
+.perm-count{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums}
+.perm-count i{width:6px;height:6px;border-radius:50%;background:var(--primary);display:inline-block}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:99px}
+.status i{width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block}
+.status.active{background:#EDFAF1;color:var(--success)}
+.status.inactive{background:#F1F5F9;color:var(--text-3)}
+.kebab{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--text-3);transition:all .13s}
+.kebab:hover{background:var(--blue-50);color:var(--primary)}
+.kebab svg{width:15px;height:15px}
+.menu-pop{position:fixed;min-width:178px;background:#fff;border:1px solid var(--border);border-radius:11px;box-shadow:var(--sh-lg);padding:5px;z-index:80;display:none}
+.menu-pop.show{display:block;animation:popIn .14s ease}
+@keyframes popIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.menu-pop button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:7.5px 10px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--text-2);transition:background .12s}
+.menu-pop button:hover{background:var(--bg);color:var(--text)}
+.menu-pop button.primary{color:var(--primary);font-weight:600}
+.menu-pop button:disabled{opacity:.4;cursor:not-allowed}
+.menu-pop button:disabled:hover{background:none}
+.menu-pop svg{width:13.5px;height:13.5px}
+.menu-sep{height:1px;background:var(--border-soft);margin:4px 6px}
+
+/* layout rows */
+.row2{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+
+/* permissions matrix */
+.matrix-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+.matrix-select{font:inherit;font-size:12.5px;font-weight:600;padding:7px 11px;border-radius:9px;border:1px solid var(--border);background:#fff;color:var(--text);cursor:pointer}
+.matrix{width:100%;border-collapse:collapse}
+.matrix th{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);padding:9px 10px;border-bottom:1px solid var(--border);text-align:center}
+.matrix th:first-child{text-align:left}
+.matrix td{padding:9px 10px;border-bottom:1px solid var(--border-soft);font-size:12.5px;text-align:center}
+.matrix td:first-child{text-align:left;font-weight:600}
+.matrix tr:last-child td{border-bottom:none}
+.matrix tbody tr:hover{background:#FAFCFE}
+.pm-cell{width:24px;height:24px;border-radius:7px;display:inline-grid;place-items:center;cursor:pointer;transition:all .13s}
+.pm-cell.on{background:#EDFAF1;color:var(--success)}
+.pm-cell.off{background:var(--bg);color:var(--text-3)}
+.pm-cell svg{width:13px;height:13px}
+.pm-cell.readonly{cursor:default}
+.mod-ic{display:inline-flex;align-items:center;gap:8px}
+.mod-ic span{width:24px;height:24px;border-radius:7px;background:var(--blue-50);color:var(--primary);display:grid;place-items:center;flex-shrink:0}
+.mod-ic span svg{width:13px;height:13px}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.donut-legend{flex:1;min-width:130px;display:flex;flex-direction:column;gap:7px}
+.donut-legend .dl{display:flex;align-items:center;gap:9px;font-size:12px}
+.donut-legend .dl i{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.donut-legend .dl b{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums}
+.donut-legend .dl span{color:var(--text-2)}
+canvas{display:block;width:100%}
+
+/* activity feed */
+.feed{display:flex;flex-direction:column;max-height:340px;overflow-y:auto;padding-right:4px;scrollbar-width:thin}
+.feed::-webkit-scrollbar{width:5px}
+.feed::-webkit-scrollbar-thumb{background:#D7DEE8;border-radius:4px}
+.feed-item{display:flex;gap:11px;position:relative;padding-bottom:15px}
+.feed-item::before{content:"";position:absolute;left:14px;top:31px;bottom:0;width:1.5px;background:var(--border-soft)}
+.feed-item:last-child{padding-bottom:0}
+.feed-item:last-child::before{display:none}
+.feed-ic{width:29px;height:29px;border-radius:9px;display:grid;place-items:center;flex-shrink:0;z-index:1;background:var(--blue-50);color:var(--primary)}
+.feed-ic.ok{background:#EDFAF1;color:var(--success)}
+.feed-ic svg{width:13px;height:13px}
+.feed-body p{font-size:12.3px;line-height:1.45}
+.feed-body p b{font-weight:600}
+.feed-body time{font-size:10.5px;color:var(--text-3)}
+
+/* modal */
+.modal-scrim{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:85;opacity:0;pointer-events:none;transition:opacity .2s;display:grid;place-items:center;padding:20px;overflow-y:auto}
+.modal-scrim.show{opacity:1;pointer-events:auto}
+.modal{background:#fff;border-radius:16px;box-shadow:var(--sh-lg);width:100%;max-width:640px;transform:translateY(12px) scale(.98);transition:transform .22s cubic-bezier(.4,0,.2,1);margin:auto}
+.modal-scrim.show .modal{transform:none}
+.modal-h{padding:18px 22px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;gap:12px}
+.modal-h .m-ic{width:38px;height:38px;border-radius:10px;background:var(--blue-50);color:var(--primary);display:grid;place-items:center;flex-shrink:0}
+.modal-h .m-ic svg{width:17px;height:17px}
+.modal-h b{font-size:15px;font-weight:700;display:block}
+.modal-h span{font-size:12px;color:var(--text-3)}
+.modal-h .x{margin-left:auto;width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--text-3)}
+.modal-h .x:hover{background:var(--bg);color:var(--text)}
+.modal-body{padding:18px 22px;max-height:60vh;overflow-y:auto}
+.fld{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.frow{display:grid;grid-template-columns:1fr 180px;gap:14px}
+.fld label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-3)}
+.fld input,.fld select,.fld textarea{padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:#fff;font:inherit;font-size:13px;color:var(--text);transition:all .15s}
+.fld textarea{resize:vertical;min-height:54px}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(5,68,139,.10)}
+.matrix-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-3);margin-bottom:8px}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--border-soft);display:flex;gap:9px;justify-content:flex-end}
+/* view modal */
+.vm-prof{display:flex;align-items:center;gap:13px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);margin-bottom:16px}
+.vm-prof .ro-ic{width:48px;height:48px;border-radius:12px}
+.vm-prof .ro-ic svg{width:22px;height:22px}
+.vm-prof b{font-size:16px;font-weight:700;display:block}
+.vm-prof span{font-size:12px;color:var(--text-3)}
+.vm-rows{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.vm-row{display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:5px 0;border-bottom:1px solid var(--border-soft)}
+.vm-row:last-child{border-bottom:none}
+.vm-row label{color:var(--text-3);font-weight:600}
+.vm-row b{font-weight:600;text-align:right}
+.vm-users{display:flex;flex-wrap:wrap;gap:6px}
+.vm-user{display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border-soft);border-radius:99px;padding:3px 10px 3px 4px;font-size:11.5px;font-weight:600}
+.vm-user .ua{width:20px;height:20px;border-radius:50%;background:var(--blue-50);color:var(--primary);display:grid;place-items:center;font-size:8.5px;font-weight:700}
+
+/* toast / scrim / responsive */
+.toast{position:fixed;bottom:26px;right:26px;background:#0F172A;color:#fff;font-size:12.5px;font-weight:600;padding:11px 16px;border-radius:11px;box-shadow:var(--sh-lg);z-index:95;opacity:0;transform:translateY(10px);transition:all .25s;display:flex;align-items:center;gap:9px}
+.toast.show{opacity:1;transform:none}
+.toast svg{width:15px;height:15px;color:#4ADE80}
+.scrim{position:fixed;inset:0;background:rgba(15,23,42,.35);z-index:55;opacity:0;pointer-events:none;transition:opacity .25s}
+.scrim.show{opacity:1;pointer-events:auto}
+@media (max-width:1400px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.ro-grid{grid-template-columns:1fr 1fr}}
+@media (max-width:1100px){.row2{grid-template-columns:1fr}}
+@media (max-width:960px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0);box-shadow:20px 0 50px rgba(15,23,42,.2)}
+  .main{margin-left:0}.hamburger{display:grid}.hide-md{display:none}
+}
+@media (max-width:660px){
+  .content{padding:16px 14px 40px}.header{padding:10px 14px}
+  .kpi-grid{grid-template-columns:1fr 1fr}.ro-grid{grid-template-columns:1fr}.hide-sm{display:none}
+  .frow{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar" id="sidebar" aria-label="Primary navigation">
+  <div class="brand">
+    <div class="brand-mark"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M3 11.5 12 4l9 7.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10.5V20h4.5v-5h3v5H18v-9.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div><div class="brand-name">Mortgage CRM</div><div class="brand-sub">Operations Console</div></div>
+  </div>
+  <nav class="nav" id="nav">
+    <div class="nav-label">Overview</div>
+    <a class="nav-item" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</a>
+
+    <div class="nav-label">Sales Pipeline</div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Leads<span class="nav-count">468</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><a class="nav-item" href="all-leads.html">All Leads</a><a class="nav-item" href="lead-pipeline.html">Lead Pipeline</a><a class="nav-item" href="lead-sources.html">Lead Sources</a><a class="nav-item" href="lost-leads.html">Lost Leads</a></div>
+    </div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>Tasks<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><a class="nav-item" href="all-tasks.html">All Tasks</a><a class="nav-item" href="overdue-tasks.html">Overdue Tasks</a></div>
+    </div>
+
+    <div class="nav-label">Network</div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg>Banks<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><a class="nav-item" href="all-banks.html">All Banks</a></div>
+    </div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Advisors<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><a class="nav-item" href="all-advisors.html">All Advisors</a></div>
+    </div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>Referral Partners<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><a class="nav-item" href="all-referral-partners.html">All Partners</a></div>
+    </div>
+
+    <div class="nav-label">Operations</div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>Documents<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><a class="nav-item" href="all-documents.html">All Documents</a></div>
+    </div>
+
+    <div class="nav-label">Finance &amp; Insights</div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 12h.01M18 12h.01"/></svg>Finance<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><button class="nav-item">Revenue</button><button class="nav-item">Advisor Commissions</button><button class="nav-item">Referral Commissions</button><button class="nav-item">VAT</button><button class="nav-item">Net Profit</button></div>
+    </div>
+    <div class="nav-group">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 3 5-6"/></svg>Reports &amp; Analytics<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><button class="nav-item">Revenue Reports</button><button class="nav-item">Lead Reports</button><button class="nav-item">Advisor Reports</button><button class="nav-item">Bank Reports</button><button class="nav-item">Referral Reports</button></div>
+    </div>
+
+    <div class="nav-label">Administration</div>
+    <div class="nav-group open">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>User Management<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><a class="nav-item" href="users.html">Users</a><a class="nav-item active" href="roles.html">Roles &amp; Permissions</a></div>
+    </div>
+    <a class="nav-item" href="settings.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</a>
+  </nav>
+  <div class="sidebar-foot">
+    <button class="user-card"><span class="avatar">KP</span><span><b>Kunal Darji</b><span>Super Admin</span></span></button>
+  </div>
+</aside>
+<div class="scrim" id="scrim"></div>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+  <header class="header">
+    <button class="hamburger" id="hamburger" aria-label="Open navigation"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0F172A" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+    <span class="page-title hide-sm">Roles &amp; Permissions</span>
+    <div class="search hide-sm">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="globalSearch" type="text" placeholder="Search leads, applications, banks…" aria-label="Global search">
+      <span class="kbd">⌘K</span>
+    </div>
+    <div class="h-actions">
+      <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot"></span></button>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <!-- PAGE HEAD -->
+    <div class="page-head">
+      <div>
+        <h1>Roles &amp; Permissions</h1>
+        <p>Manage user roles and control access across the Mortgage CRM.</p>
+      </div>
+      <div class="actions">
+        <button class="btn btn-ghost" id="refreshBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>Refresh</button>
+        <button class="btn btn-ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export Roles</button>
+        <button class="btn btn-primary" id="addBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Create Role</button>
+      </div>
+    </div>
+
+    <!-- KPI -->
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <!-- ROLE OVERVIEW CARDS -->
+    <div class="card">
+      <div class="card-h"><div><h3>Role Overview</h3><div class="sub">Quick view of key roles and their access</div></div></div>
+      <div class="card-body"><div class="ro-grid" id="roGrid"></div></div>
+    </div>
+
+    <!-- ROLES TABLE -->
+    <div class="card">
+      <div class="card-h"><div><h3>All Roles</h3><div class="sub">Every system role — permissions are managed at role level</div></div><span class="status active" id="tblCount"><i></i>0</span></div>
+      <div class="tbl-wrap">
+        <table class="tbl" id="roleTable">
+          <thead><tr>
+            <th>Role Name</th>
+            <th>Description</th>
+            <th class="r">Assigned Users</th>
+            <th class="r">Permissions</th>
+            <th>Created</th>
+            <th>Status</th>
+            <th style="width:44px"></th>
+          </tr></thead>
+          <tbody id="roleBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PERMISSIONS MATRIX -->
+    <div class="card">
+      <div class="card-h">
+        <div><h3>Role Permissions Matrix</h3><div class="sub">What this role can do in each module — click cells to toggle</div></div>
+        <select class="matrix-select" id="matrixRole"></select>
+      </div>
+      <div class="card-body">
+        <table class="matrix" id="matrix">
+          <thead><tr><th>Module</th><th>View</th><th>Create</th><th>Edit</th><th>Delete</th><th>Export</th></tr></thead>
+          <tbody id="matrixBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DONUT + ACTIVITY -->
+    <div class="row2">
+      <div class="card">
+        <div class="card-h"><div><h3>Recent Role Activity</h3><div class="sub">Latest changes to roles and assignments</div></div></div>
+        <div class="card-body"><div class="feed" id="feed"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><div><h3>Role Distribution</h3><div class="sub">Users per role</div></div></div>
+        <div class="card-body">
+          <div class="donut-wrap">
+            <canvas id="donut" width="300" height="300" style="width:150px;height:150px;flex-shrink:0"></canvas>
+            <div class="donut-legend" id="donutLegend"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+</div>
+
+<!-- ROW MENU -->
+<div class="menu-pop" id="rowMenu">
+  <button class="primary" data-act="view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>View Role</button>
+  <button data-act="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>Edit Role</button>
+  <button data-act="duplicate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Duplicate Role</button>
+  <div class="menu-sep"></div>
+  <button data-act="toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"/></svg><span class="tgl-lbl">Activate / Deactivate</span></button>
+</div>
+
+<!-- CREATE / EDIT MODAL -->
+<div class="modal-scrim" id="roleModal">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-h">
+      <span class="m-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5z"/></svg></span>
+      <div><b id="modalTitle">Create Role</b><span id="modalSub">Define a new role and its access</span></div>
+      <button class="x" id="mClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="frow">
+        <div class="fld"><label>Role Name</label><input type="text" id="fName" placeholder="e.g. Regional Manager"></div>
+        <div class="fld"><label>Status</label><select id="fStatus"><option>Active</option><option>Inactive</option></select></div>
+      </div>
+      <div class="fld"><label>Description</label><textarea id="fDesc" placeholder="What can this role access and do?"></textarea></div>
+      <div class="matrix-label">Permissions Matrix</div>
+      <table class="matrix"><thead><tr><th>Module</th><th>View</th><th>Create</th><th>Edit</th><th>Delete</th><th>Export</th></tr></thead><tbody id="editMatrixBody"></tbody></table>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="mCancel">Cancel</button>
+      <button class="btn btn-primary" id="mSave">Create Role</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW MODAL -->
+<div class="modal-scrim" id="viewModal">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-h">
+      <b style="font-size:15px">Role Details</b>
+      <button class="x" id="vClose" aria-label="Close" style="margin-left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body" id="vBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="vCloseBtn">Close</button>
+      <button class="btn btn-primary" id="vEdit">Edit Role</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span id="toastMsg"></span></div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+
+/* sidebar */
+const sidebar=$('#sidebar'),scrim=$('#scrim');
+$('#hamburger').addEventListener('click',()=>{sidebar.classList.add('open');scrim.classList.add('show')});
+scrim.addEventListener('click',()=>{sidebar.classList.remove('open');scrim.classList.remove('show')});
+$$('[data-toggle]').forEach(b=>b.addEventListener('click',()=>{
+  const g=b.closest('.nav-group'),was=g.classList.contains('open');
+  $$('.nav-group.open').forEach(o=>o!==g&&o.classList.remove('open'));
+  g.classList.toggle('open',!was);
+}));
+document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#globalSearch')?.focus();}});
+
+/* ---------- data ---------- */
+const MODULES=[
+  {k:'Dashboard',ic:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>'},
+  {k:'Leads',ic:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>'},
+  {k:'Tasks',ic:'<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>'},
+  {k:'Banks',ic:'<path d="M3 21h18M5 21V8l7-5 7 5v13"/>'},
+  {k:'Advisors',ic:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'},
+  {k:'Referral Partners',ic:'<path d="M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>'},
+  {k:'Documents',ic:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>'},
+  {k:'Finance',ic:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/>'},
+  {k:'Reports',ic:'<path d="M3 3v18h18"/><path d="m7 14 4-4 4 3 5-6"/>'},
+  {k:'User Management',ic:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>'},
+  {k:'Settings',ic:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82M4.6 9a1.65 1.65 0 0 0-.33-1.82"/>'}
+];
+const ACTIONS=['view','create','edit','del','export'];
+const ROLE_COL={'Super Admin':'#6D28D9','Operations Manager':'#B45309','Sales Director':'#0F766E','Advisor':'#05448B','Telecaller':'#64748B','Finance Manager':'#16A34A','Document Verification Team':'#0369A1','Bank Coordinator':'#BE185D','Regional Manager':'#2D6CB0'};
+const ROLE_TINT={'Super Admin':'#EDE9FE','Operations Manager':'#FEF3E2','Sales Director':'#CCFBF1','Advisor':'#F0F5FB','Telecaller':'#F1F5F9','Finance Manager':'#EDFAF1','Document Verification Team':'#E0F2FE','Bank Coordinator':'#FCE7F3','Regional Manager':'#E7F0FE'};
+/* permission helper: build perm object from spec. spec[module]=array of allowed actions, or 'all' */
+function perm(spec){const o={};MODULES.forEach(m=>{o[m.k]={};ACTIONS.forEach(a=>o[m.k][a]=spec==='all'?true:(spec[m.k]||[]).includes(a));});return o;}
+function countPerms(p){let n=0;MODULES.forEach(m=>ACTIONS.forEach(a=>{if(p[m.k][a])n++;}));return n;}
+
+let ROLES=[
+  {name:'Super Admin',desc:'Full system access',users:2,created:'01 Jun 2023',status:'Active',custom:false,perm:perm('all')},
+  {name:'Operations Manager',desc:'Manage pipeline, documents, tasks and lead processing',users:4,created:'01 Jun 2023',status:'Active',custom:false,
+    perm:perm({Dashboard:['view'],Leads:['view','create','edit','export'],Tasks:['view','create','edit','del'],Banks:['view'],Advisors:['view'],'Referral Partners':['view'],Documents:['view','create','edit','del','export'],Reports:['view','export']})},
+  {name:'Sales Director',desc:'Monitor advisors, leads and sales performance',users:3,created:'04 Nov 2023',status:'Active',custom:false,
+    perm:perm({Dashboard:['view'],Leads:['view','edit','export'],Tasks:['view'],Advisors:['view','export'],'Referral Partners':['view'],Reports:['view','export']})},
+  {name:'Advisor',desc:'Manage assigned leads and customer relationships',users:18,created:'01 Jun 2023',status:'Active',custom:false,
+    perm:perm({Dashboard:['view'],Leads:['view','edit'],Tasks:['view','edit'],Banks:['view'],Documents:['view']})},
+  {name:'Telecaller',desc:'Create and qualify leads',users:6,created:'15 Feb 2024',status:'Active',custom:false,
+    perm:perm({Dashboard:['view'],Leads:['view','create'],Tasks:['view']})},
+  {name:'Finance Manager',desc:'View commissions, revenue and finance reports',users:3,created:'09 Mar 2024',status:'Active',custom:true,
+    perm:perm({Dashboard:['view'],Finance:['view','export'],Reports:['view','export'],Advisors:['view']})},
+  {name:'Document Verification Team',desc:'Verify customer documents',users:4,created:'18 Sep 2023',status:'Active',custom:true,
+    perm:perm({Dashboard:['view'],Documents:['view','edit'],Leads:['view']})},
+  {name:'Bank Coordinator',desc:'Manage bank communication and application updates',users:2,created:'02 Jan 2024',status:'Inactive',custom:true,
+    perm:perm({Dashboard:['view'],Banks:['view','edit'],Leads:['view','edit'],Documents:['view']})}
+];
+
+const ini=n=>n.replace(/&/g,'').split(' ').filter(Boolean).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>';
+const CROSS='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+function roleIc(name){const c=ROLE_COL[name]||'#05448B',t=ROLE_TINT[name]||'#F0F5FB';return `<span class="ro-ic" style="background:${t};color:${c}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5z"/></svg></span>`;}
+
+/* ---------- KPIs ---------- */
+function buildKPIs(){
+  const total=ROLES.length, active=ROLES.filter(r=>r.status==='Active').length;
+  const usersAssigned=ROLES.reduce((s,r)=>s+r.users,0);
+  const custom=ROLES.filter(r=>r.custom).length;
+  const KPIS=[
+    {l:'Total Roles',v:total,sub:'system + custom',ic:'',svg:'<path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5z"/>'},
+    {l:'Active Roles',v:active,sub:Math.round(active/total*100)+'% active',ic:'green',svg:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>'},
+    {l:'Total Users Assigned',v:usersAssigned,sub:'across all roles',ic:'',svg:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/>'},
+    {l:'Custom Roles',v:custom,sub:'created by admin',ic:'',svg:'<path d="M12 5v14M5 12h14"/>'},
+    {l:'Permission Groups',v:12,sub:'across 11 modules',ic:'',svg:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>'},
+    {l:'Last Updated',v:'Today',sub:'Advisor permissions',ic:'',svg:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>'}
+  ];
+  $('#kpiGrid').innerHTML=KPIS.map(k=>`
+    <div class="kpi">
+      <div class="kpi-top"><label>${k.l}</label><span class="kpi-ic ${k.ic}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${k.svg}</svg></span></div>
+      <div class="val">${k.v}</div>
+      <div class="sub">${k.sub}</div>
+    </div>`).join('');
+}
+
+/* ---------- role overview cards ---------- */
+function buildOverview(){
+  const top=['Super Admin','Operations Manager','Advisor','Finance Manager'].map(n=>ROLES.find(r=>r.name===n)).filter(Boolean);
+  $('#roGrid').innerHTML=top.map(r=>{
+    const c=ROLE_COL[r.name],t=ROLE_TINT[r.name];
+    const pc=r.name==='Super Admin'?'Full Access':countPerms(r.perm)+' permissions';
+    return `<div class="ro-card">
+      <div class="ro-h"><span class="ro-ic" style="background:${t};color:${c}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5z"/></svg></span><b class="nm">${r.name}</b></div>
+      <div class="ro-stats">
+        <div><label>Users</label><b>${r.users}</b></div>
+        <div><label>Permissions</label><b style="font-size:${r.name==='Super Admin'?'12.5px':'15px'}">${pc}</b></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ---------- roles table ---------- */
+const STC={Active:'active',Inactive:'inactive'};
+function buildTable(){
+  $('#tblCount').innerHTML='<i></i>'+ROLES.length+' roles';
+  $('#roleBody').innerHTML=ROLES.map(r=>{
+    const pc=r.name==='Super Admin'?'Full':countPerms(r.perm);
+    const chips=Array.from({length:Math.min(r.users,3)},(_,i)=>`<span class="uchip">${['SA','OM','AD','FM','TC','BC'][i]||'U'+i}</span>`).join('')+(r.users>3?`<span class="uchip more">+${r.users-3}</span>`:'');
+    return `<tr>
+      <td><div class="role-cell">${roleIc(r.name)}<div><b>${r.name}</b><span>${r.custom?'Custom role':'System role'}</span></div></div></td>
+      <td><div class="role-desc">${r.desc}</div></td>
+      <td class="r"><div class="uchips" style="justify-content:flex-end">${chips||'<span style="color:var(--text-3)">0</span>'}</div></td>
+      <td class="r"><span class="perm-count"><i></i>${pc}</span></td>
+      <td style="color:var(--text-2)">${r.created}</td>
+      <td><span class="status ${STC[r.status]}"><i></i>${r.status}</span></td>
+      <td><button class="kebab" data-name="${r.name}" aria-label="Actions"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button></td>
+    </tr>`;
+  }).join('');
+  $$('#roleBody .kebab').forEach(k=>k.addEventListener('click',e=>{
+    e.stopPropagation();const m=$('#rowMenu'),r=k.getBoundingClientRect();
+    const role=ROLES.find(x=>x.name===k.dataset.name);
+    m.querySelector('.tgl-lbl').textContent=role.status==='Active'?'Deactivate Role':'Activate Role';
+    const tgl=m.querySelector('[data-act=toggle]');
+    tgl.disabled=role.name==='Super Admin';
+    m.classList.add('show');m.dataset.name=k.dataset.name;
+    const mw=182,mh=m.offsetHeight||220;let x=r.right-mw,y=r.bottom+6;
+    if(y+mh>innerHeight-12)y=r.top-mh-6;m.style.left=Math.max(8,x)+'px';m.style.top=y+'px';
+  }));
+}
+document.addEventListener('click',()=>$('#rowMenu').classList.remove('show'));
+$('#rowMenu').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b||b.disabled)return;
+  const role=ROLES.find(x=>x.name===$('#rowMenu').dataset.name),act=b.dataset.act;
+  $('#rowMenu').classList.remove('show');
+  if(act==='view')openView(role);
+  else if(act==='edit')openModal(role);
+  else if(act==='duplicate'){const copy={...role,name:role.name+' (Copy)',users:0,custom:true,created:'Today',perm:JSON.parse(JSON.stringify(role.perm))};ROLES.push(copy);refresh();toast(`${role.name} duplicated`);}
+  else if(act==='toggle'){
+    if(role.name==='Super Admin'){toast('Super Admin role cannot be deactivated');return;}
+    role.status=role.status==='Active'?'Inactive':'Active';refresh();toast(`${role.name} ${role.status==='Active'?'activated':'deactivated'}`);
+  }
+});
+
+/* ---------- permissions matrix (live) ---------- */
+let matrixRoleName='Advisor';
+function buildMatrixSelect(){
+  $('#matrixRole').innerHTML=ROLES.map(r=>`<option${r.name===matrixRoleName?' selected':''}>${r.name}</option>`).join('');
+}
+function buildMatrix(){
+  const role=ROLES.find(r=>r.name===matrixRoleName)||ROLES[0];
+  const ro=role.name==='Super Admin';
+  $('#matrixBody').innerHTML=MODULES.map(m=>`<tr>
+    <td><span class="mod-ic"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${m.ic}</svg></span>${m.k}</span></td>
+    ${ACTIONS.map(a=>{const on=role.perm[m.k][a];return `<td><span class="pm-cell ${on?'on':'off'} ${ro?'readonly':''}" data-mod="${m.k}" data-act="${a}">${on?CHECK:CROSS}</span></td>`;}).join('')}
+  </tr>`).join('');
+  if(!ro)$$('#matrixBody .pm-cell').forEach(c=>c.addEventListener('click',()=>{
+    const m=c.dataset.mod,a=c.dataset.act;role.perm[m][a]=!role.perm[m][a];buildMatrix();buildTable();buildOverview();toast(`${matrixRoleName}: ${m} · ${a} ${role.perm[m][a]?'enabled':'disabled'}`);
+  }));
+}
+$('#matrixRole').addEventListener('change',e=>{matrixRoleName=e.target.value;buildMatrix();});
+
+/* ---------- donut ---------- */
+function drawDonut(){
+  const cv=$('#donut'),ctx=cv.getContext('2d'),cx=150,cy=150,rO=140,rI=86;
+  const segs=ROLES.filter(r=>r.users>0).map(r=>({name:r.name,val:r.users,col:ROLE_COL[r.name]||'#94A3B8'})).sort((a,b)=>b.val-a.val);
+  const total=segs.reduce((s,x)=>s+x.val,0)||1;let a=-Math.PI/2;
+  ctx.clearRect(0,0,300,300);
+  segs.forEach(sg=>{const ang=sg.val/total*Math.PI*2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,rO,a,a+ang);ctx.closePath();ctx.fillStyle=sg.col;ctx.fill();a+=ang;});
+  ctx.beginPath();ctx.arc(cx,cy,rI,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+  ctx.fillStyle='#0F172A';ctx.font='700 32px Inter';ctx.textAlign='center';ctx.fillText(total,cx,cy-2);
+  ctx.fillStyle='#94A3B8';ctx.font='600 13px Inter';ctx.fillText('USERS',cx,cy+20);
+  $('#donutLegend').innerHTML=segs.map(sg=>`<div class="dl"><i style="background:${sg.col}"></i><span>${sg.name.replace('Document Verification Team','Document Team')}</span><b>${sg.val}</b></div>`).join('');
+}
+
+/* ---------- activity feed ---------- */
+const FEED=[
+  {ic:'',svg:'<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>',h:'<b>Advisor</b> role permissions updated',t:'20 mins ago'},
+  {ic:'ok',svg:'<path d="M12 5v14M5 12h14"/>',h:'New <b>Finance Manager</b> role created',t:'2 hours ago'},
+  {ic:'',svg:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>',h:'User assigned to <b>Operations Manager</b> role',t:'Today'},
+  {ic:'',svg:'<path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"/>',h:'<b>Bank Coordinator</b> role deactivated',t:'Yesterday'},
+  {ic:'ok',svg:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>',h:'<b>Document Team</b> granted edit access to Documents',t:'2 days ago'}
+];
+function buildFeed(){
+  $('#feed').innerHTML=FEED.map(f=>`<div class="feed-item">
+    <span class="feed-ic ${f.ic}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${f.svg}</svg></span>
+    <div class="feed-body"><p>${f.h}</p><time>${f.t}</time></div></div>`).join('');
+}
+
+/* ---------- view modal ---------- */
+function openView(r){
+  const c=ROLE_COL[r.name],t=ROLE_TINT[r.name];
+  const pc=r.name==='Super Admin'?'Full Access (all modules)':countPerms(r.perm)+' permissions';
+  const allowed=MODULES.filter(m=>ACTIONS.some(a=>r.perm[m.k][a])).map(m=>{
+    const acts=ACTIONS.filter(a=>r.perm[m.k][a]).map(a=>a==='del'?'Delete':a.charAt(0).toUpperCase()+a.slice(1));
+    return `<div class="vm-row"><label>${m.k}</label><b>${acts.join(', ')}</b></div>`;
+  }).join('')||'<div class="vm-row"><label>No module access</label><b>—</b></div>';
+  $('#vBody').innerHTML=`
+    <div class="vm-prof"><span class="ro-ic" style="background:${t};color:${c}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5z"/></svg></span>
+      <div><b>${r.name}</b><span>${r.custom?'Custom role':'System role'} · <span class="status ${STC[r.status]}" style="vertical-align:1px"><i></i>${r.status}</span></span></div></div>
+    <div class="vm-rows">
+      <div class="vm-row"><label>Description</label><b style="max-width:320px">${r.desc}</b></div>
+      <div class="vm-row"><label>Assigned Users</label><b>${r.users}</b></div>
+      <div class="vm-row"><label>Permissions</label><b>${pc}</b></div>
+      <div class="vm-row"><label>Created Date</label><b>${r.created}</b></div>
+      <div class="vm-row"><label>Last Updated</label><b>Today</b></div>
+    </div>
+    <div class="matrix-label">Module Access</div>
+    <div class="vm-rows">${allowed}</div>`;
+  $('#viewModal').dataset.name=r.name;
+  $('#viewModal').classList.add('show');
+}
+$('#vClose').addEventListener('click',()=>$('#viewModal').classList.remove('show'));
+$('#vCloseBtn').addEventListener('click',()=>$('#viewModal').classList.remove('show'));
+$('#viewModal').addEventListener('click',e=>{if(e.target===$('#viewModal'))$('#viewModal').classList.remove('show');});
+$('#vEdit').addEventListener('click',()=>{const r=ROLES.find(x=>x.name===$('#viewModal').dataset.name);$('#viewModal').classList.remove('show');openModal(r);});
+
+/* ---------- create / edit modal ---------- */
+let editing=null,draftPerm=null;
+function buildEditMatrix(){
+  $('#editMatrixBody').innerHTML=MODULES.map(m=>`<tr>
+    <td><span class="mod-ic"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${m.ic}</svg></span>${m.k}</span></td>
+    ${ACTIONS.map(a=>{const on=draftPerm[m.k][a];return `<td><span class="pm-cell ${on?'on':'off'}" data-mod="${m.k}" data-act="${a}">${on?CHECK:CROSS}</span></td>`;}).join('')}
+  </tr>`).join('');
+  $$('#editMatrixBody .pm-cell').forEach(c=>c.addEventListener('click',()=>{
+    const m=c.dataset.mod,a=c.dataset.act;draftPerm[m][a]=!draftPerm[m][a];buildEditMatrix();
+  }));
+}
+function openModal(r){
+  editing=r||null;
+  $('#modalTitle').textContent=r?'Edit Role':'Create Role';
+  $('#modalSub').textContent=r?'Update role details and permissions':'Define a new role and its access';
+  $('#mSave').textContent=r?'Save Changes':'Create Role';
+  $('#fName').value=r?r.name:'';$('#fName').disabled=r&&!r.custom&&r.name==='Super Admin';
+  $('#fDesc').value=r?r.desc:'';
+  $('#fStatus').value=r?r.status:'Active';
+  draftPerm=r?JSON.parse(JSON.stringify(r.perm)):perm({Dashboard:['view']});
+  buildEditMatrix();
+  $('#roleModal').classList.add('show');
+}
+function closeModal(){$('#roleModal').classList.remove('show');editing=null;}
+$('#addBtn').addEventListener('click',()=>openModal(null));
+$('#mClose').addEventListener('click',closeModal);
+$('#mCancel').addEventListener('click',closeModal);
+$('#roleModal').addEventListener('click',e=>{if(e.target===$('#roleModal'))closeModal();});
+$('#mSave').addEventListener('click',()=>{
+  const name=$('#fName').value.trim();
+  if(!name){toast('Role name is required');return;}
+  const data={desc:$('#fDesc').value.trim()||'—',status:$('#fStatus').value,perm:draftPerm};
+  if(editing){
+    if(editing.name==='Super Admin'&&data.status==='Inactive'){toast('Super Admin must remain active');return;}
+    Object.assign(editing,data);toast(`${editing.name} updated`);
+  }else{ROLES.push({name,users:0,created:'Today',custom:true,...data});toast(`${name} created`);}
+  refresh();closeModal();
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();$('#viewModal').classList.remove('show');}});
+
+/* refresh */
+function refresh(){buildKPIs();buildOverview();buildTable();buildMatrixSelect();buildMatrix();drawDonut();}
+$('#refreshBtn').addEventListener('click',()=>{refresh();toast('Roles refreshed');});
+
+/* toast */
+let tTimer;
+function toast(msg){$('#toastMsg').textContent=msg;$('#toast').classList.add('show');clearTimeout(tTimer);tTimer=setTimeout(()=>$('#toast').classList.remove('show'),2400);}
+
+/* init */
+function init(){buildKPIs();buildOverview();buildTable();buildMatrixSelect();buildMatrix();buildFeed();drawDonut();}
+init();
+</script>
+</body>
+</html>
