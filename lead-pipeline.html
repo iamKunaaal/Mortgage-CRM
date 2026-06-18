@@ -204,6 +204,9 @@ a{color:inherit;text-decoration:none}
 .lc-act:hover{background:var(--blue-50);color:var(--primary)}
 .lc-act.primary{background:var(--primary);color:#fff;flex:1.4;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:5px}
 .lc-act.primary:hover{background:var(--primary-h)}
+.lc-act.added{background:#EDFAF1;color:var(--success)}
+.pipe-chip{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:99px;background:#EDFAF1;color:var(--success);margin-top:5px;text-transform:uppercase;letter-spacing:.03em}
+.pipe-chip svg{width:9px;height:9px}
 .lc-act svg{width:13px;height:13px}
 
 /* ---------- ops grid ---------- */
@@ -435,10 +438,14 @@ a{color:inherit;text-decoration:none}
     <div class="board-wrap">
       <div class="board-bar">
         <div class="sec-head"><div><h2>Pipeline Board</h2><p>Live view of every active mortgage file across all stages</p></div></div>
-        <div class="legend">
-          <span><i style="background:var(--success)"></i>0–3 days · Healthy</span>
-          <span><i style="background:var(--warning)"></i>4–7 days · Watch</span>
-          <span><i style="background:var(--danger)"></i>8+ days · Needs attention</span>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <select class="f-dd-btn" id="pipeMonth" style="padding-right:10px"></select>
+          <button class="f-dd-btn" id="monthlyToggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span>Monthly Pipeline</span></button>
+          <div class="legend hide-md">
+            <span><i style="background:var(--success)"></i>0–3 days</span>
+            <span><i style="background:var(--warning)"></i>4–7 days</span>
+            <span><i style="background:var(--danger)"></i>8+ days</span>
+          </div>
         </div>
       </div>
       <div class="board" id="board"></div>
@@ -575,7 +582,9 @@ function buildKPIs(){
 }
 
 /* ---------- filters ---------- */
-const state={search:'',advisor:null,bank:null,priority:null,source:null,range:null,stage:null};
+const state={search:'',advisor:null,bank:null,priority:null,source:null,range:null,stage:null,monthlyOnly:false,pipelineMonth:'June 2026'};
+/* seed a few leads as already committed to the current month's pipeline */
+const PIPE_MONTHS=['June 2026','May 2026','April 2026','March 2026'];
 const FILTER_DEFS={
   advisor:{label:'Advisor',opts:ADVISORS},
   bank:{label:'Bank',opts:BANKS},
@@ -628,6 +637,7 @@ function passFilters(l){
   if(state.source&&l.source!==state.source)return false;
   if(state.stage&&l.stage!==state.stage)return false;
   if(!inRange(l.created))return false;
+  if(state.monthlyOnly&&l.pipelineMonth!==state.pipelineMonth)return false;
   return true;
 }
 
@@ -663,7 +673,7 @@ function cardHTML(l){
   return `<div class="lcard ${prClass(l.priority)}" data-id="${l.id}" tabindex="0">
     <div class="lc-top">
       <span class="lc-avatar">${ini(l.name)}</span>
-      <span class="lc-name"><b>${l.name}</b><span>${l.id}</span></span>
+      <span class="lc-name"><b>${l.name}</b><span>${l.id}</span>${l.pipelineMonth?`<span class="pipe-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>${l.pipelineMonth} Pipeline</span>`:''}</span>
       <span class="pr-tag ${prClass(l.priority)}">${l.priority}</span>
     </div>
     <div class="lc-money">
@@ -680,6 +690,7 @@ function cardHTML(l){
       <button class="lc-act" data-act="wa" title="WhatsApp Customer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${IC.wa}</svg></button>
       <button class="lc-act" data-act="stage" title="Update Stage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${IC.stage}</svg></button>
       <button class="lc-act" data-act="note" title="Add Note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${IC.note}</svg></button>
+      <button class="lc-act ${l.pipelineMonth?'added':''}" data-act="pipeline" title="${l.pipelineMonth?'In '+l.pipelineMonth+' pipeline':'Add to Monthly Pipeline'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4"/></svg></button>
     </div>
   </div>`;
 }
@@ -696,6 +707,12 @@ function bindCards(){
       else if(act==='call')toast('Calling customer…');
       else if(act==='wa')toast('Opening WhatsApp…');
       else if(act==='note')toast('Note composer — '+id);
+      else if(act==='pipeline'){
+        const l=LEADS.find(x=>x.id===id);
+        if(l.pipelineMonth===state.pipelineMonth){l.pipelineMonth=null;toast(`${l.name} removed from ${state.pipelineMonth} pipeline`);}
+        else{l.pipelineMonth=state.pipelineMonth;toast(`${l.name} added to ${state.pipelineMonth} pipeline`);}
+        renderBoard();
+      }
     });
     card.addEventListener('keydown',e=>{if(e.key==='Enter'){location.href=`lead-detail.html?id=${id}`;}});
   });
@@ -824,6 +841,17 @@ let tTimer;
 function toast(msg){$('#toastMsg').textContent=msg;$('#toast').classList.add('show');clearTimeout(tTimer);tTimer=setTimeout(()=>$('#toast').classList.remove('show'),2400);}
 
 /* init */
+/* ---------- monthly pipeline controls ---------- */
+LEADS.forEach((l,i)=>{if(i%4===0&&l.stage!=='Disbursed'&&l.stage!=='Declined')l.pipelineMonth=PIPE_MONTHS[i%PIPE_MONTHS.length];});
+$('#pipeMonth').innerHTML=PIPE_MONTHS.map(m=>`<option${m===state.pipelineMonth?' selected':''}>${m}</option>`).join('');
+$('#pipeMonth').addEventListener('change',e=>{state.pipelineMonth=e.target.value;renderBoard();});
+$('#monthlyToggle').addEventListener('click',()=>{
+  state.monthlyOnly=!state.monthlyOnly;
+  $('#monthlyToggle').classList.toggle('on',state.monthlyOnly);
+  $('#monthlyToggle').querySelector('span').textContent=state.monthlyOnly?`${state.pipelineMonth} Pipeline`:'Monthly Pipeline';
+  renderBoard();
+});
+
 buildKPIs();renderBoard();buildHealth();buildAttention();buildPerf();buildFeed();
 </script>
 </body>

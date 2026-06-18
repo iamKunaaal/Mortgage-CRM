@@ -292,6 +292,36 @@ a{color:inherit;text-decoration:none}
 .toast.show{opacity:1;transform:none}
 .toast svg{width:15px;height:15px;color:#4ADE80}
 .scrim{position:fixed;inset:0;background:rgba(15,23,42,.35);z-index:55;opacity:0;pointer-events:none;transition:opacity .25s}
+.wf-clickable{cursor:pointer;border-radius:9px;transition:background .13s}
+.wf-clickable:hover{background:var(--blue-50)}
+.td-scrim{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:90;opacity:0;pointer-events:none;transition:opacity .2s;display:grid;place-items:center;padding:20px}
+.td-scrim.show{opacity:1;pointer-events:auto}
+.td-modal{background:#fff;border-radius:16px;box-shadow:var(--sh-lg);width:100%;max-width:460px;transform:translateY(12px) scale(.98);transition:transform .22s cubic-bezier(.4,0,.2,1)}
+.td-scrim.show .td-modal{transform:none}
+.td-h{padding:18px 20px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;gap:12px}
+.td-h .ic{width:38px;height:38px;border-radius:10px;background:var(--blue-50);color:var(--primary);display:grid;place-items:center;flex-shrink:0}
+.td-h .ic svg{width:18px;height:18px}
+.td-h b{font-size:14.5px;font-weight:700;display:block}
+.td-h span{font-size:12px;color:var(--text-3)}
+.td-h .x{margin-left:auto;width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--text-3)}
+.td-h .x:hover{background:var(--bg);color:var(--text)}
+.td-body{padding:18px 20px}
+.td-drop{border:1.5px dashed #CBD5E1;border-radius:12px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .16s;background:#FCFDFE}
+.td-drop:hover,.td-drop.drag{border-color:var(--primary);background:var(--blue-50)}
+.td-drop.has{border-style:solid;border-color:var(--success);background:#FAFFFB;cursor:default}
+.td-drop .di{width:38px;height:38px;border-radius:11px;background:var(--blue-50);color:var(--primary);display:grid;place-items:center;margin:0 auto 9px}
+.td-drop.has .di{background:#EDFAF1;color:var(--success)}
+.td-drop .di svg{width:18px;height:18px}
+.td-drop b{font-size:13px;font-weight:700;display:block}
+.td-drop p{font-size:11.5px;color:var(--text-3);margin-top:3px}
+.td-file{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;font-size:12px;font-weight:600;color:var(--text-2)}
+.td-file button{color:var(--danger);font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px}
+.td-status{margin-top:14px;padding:12px 14px;border-radius:11px;display:flex;gap:10px;align-items:flex-start;font-size:12.5px;line-height:1.5}
+.td-status.pend{background:#FEF7EC;border:1px solid #F6E2BD;color:#92400E}
+.td-status.done{background:#EDFAF1;border:1px solid #C8EAD3;color:#15803D}
+.td-status svg{width:16px;height:16px;flex-shrink:0;margin-top:1px}
+.td-status b{font-weight:700}
+.td-foot{padding:14px 20px;border-top:1px solid var(--border-soft);display:flex;gap:9px;justify-content:flex-end}
 .scrim.show{opacity:1;pointer-events:auto}
 @media (max-width:1280px){.detail-layout{grid-template-columns:1fr}.rail{position:static;display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}}
 @media (max-width:1100px){.track{flex-wrap:wrap}.t-seg{min-width:18%}}
@@ -550,7 +580,7 @@ a{color:inherit;text-decoration:none}
           <div class="r-row"><label>Property Value</label><b id="rProp"></b></div>
           <div class="r-row"><label>Loan Amount</label><b id="rLoan"></b></div>
           <div class="r-row"><label>LTV</label><b id="rLtv"></b></div>
-          <div class="r-row"><label>Preferred Bank</label><b id="rBank"></b></div>
+          <div class="r-row"><label>Preferred Bank(s)</label><b id="rBank" style="text-align:right;max-width:170px"></b></div>
           <div class="r-row"><label>Lead Source</label><b id="rSource"></b></div>
           <div class="r-row"><label>Created</label><b id="rCreated"></b></div>
           <div class="r-row"><label>Last Activity</label><b id="rAct"></b></div>
@@ -578,6 +608,31 @@ a{color:inherit;text-decoration:none}
 </div>
 </div>
 
+<!-- TITLE DEED MODAL -->
+<div class="td-scrim" id="tdScrim">
+  <div class="td-modal" role="dialog" aria-modal="true">
+    <div class="td-h">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 15l2 2 4-4"/></svg></span>
+      <div><b>Property Transfer — Upload Title Deed</b><span id="tdSub"></span></div>
+      <button class="x" id="tdClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="td-body">
+      <div class="td-drop" id="tdDrop">
+        <span class="di"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg></span>
+        <b>Upload Title Deed</b>
+        <p>Drag &amp; drop or click to browse · PDF, JPG, PNG</p>
+        <div class="td-file" style="display:none"><span id="tdFileName"></span><button type="button" id="tdRemove">Remove</button></div>
+        <input type="file" id="tdInput" accept=".pdf,.jpg,.jpeg,.png" style="display:none">
+      </div>
+      <div class="td-status" id="tdStatus" style="display:none"></div>
+    </div>
+    <div class="td-foot">
+      <button class="btn btn-ghost" id="tdCancel">Cancel</button>
+      <button class="btn btn-primary" id="tdSubmit">Submit Title Deed</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span id="toastMsg"></span></div>
 
 <script>
@@ -599,7 +654,9 @@ const STAGES={
  'Logged In':['#E0F2FE','#0369A1'],'Under Review':['#EDE9FE','#6D28D9'],'Pre-Approved':['#DBEAFE','#1D4ED8'],
  'Valuation':['#FCE7F3','#BE185D'],'Valuation Received':['#FAE8FF','#A21CAF'],'FOL Initiated':['#E0E7FF','#4338CA'],
  'FOL Issued':['#CCFBF1','#0F766E'],'FOL Signing Fixed':['#D1FAE5','#047857'],'FOL Signed':['#DCFCE7','#15803D'],
- 'Under Disbursement':['#ECFCCB','#4D7C0F'],'Disbursed':['#EDFAF1','#16A34A'],'Declined':['#FEE2E2','#DC2626']
+ 'Under Disbursement':['#ECFCCB','#4D7C0F'],'Disbursed':['#EDFAF1','#16A34A'],
+ 'Property Transfer Scheduled':['#E0F2FE','#0369A1'],'Property Transfer':['#FEF3E2','#B45309'],'Property Transferred':['#DCFCE7','#15803D'],
+ 'Declined':['#FEE2E2','#DC2626']
 };
 const STAGE_ORDER=Object.keys(STAGES);
 const ADVISORS=['Fatima Rahman','John Mathews','Daniel Roy','Priya Nair','Ahmed Saleh','Sara Lopez'];
@@ -673,7 +730,8 @@ const MILESTONES=[
   {t:'Bank Review',stages:['Logged In','Under Review','Pre-Approved']},
   {t:'Valuation',stages:['Valuation','Valuation Received']},
   {t:'Offer Letter',stages:['FOL Initiated','FOL Issued','FOL Signing Fixed','FOL Signed']},
-  {t:'Disbursement',stages:['Under Disbursement','Disbursed']}
+  {t:'Disbursement',stages:['Under Disbursement','Disbursed']},
+  {t:'Property Transfer',stages:['Property Transfer Scheduled','Property Transfer','Property Transferred']}
 ];
 const declined=L.stage==='Declined';
 const sIdx=STAGE_ORDER.indexOf(L.stage);
@@ -688,7 +746,7 @@ $('#trackPct').textContent=declined?'Declined':`Stage ${sIdx+1} of ${STAGE_ORDER
 if(declined){$('#trackPct').style.color='var(--danger)';}
 
 /* ---------- detailed workflow checklist ---------- */
-const UPDATERS=['Operations Manager','Fatima Rahman (Advisor)','Operations Manager','Bank Desk','Operations Manager','Sales Director','Operations Manager','Bank Desk','Operations Manager','Bank Desk','Operations Manager','Fatima Rahman (Advisor)','Finance Team','Finance Team','Operations Manager'];
+const UPDATERS=['Operations Manager','Fatima Rahman (Advisor)','Operations Manager','Bank Desk','Operations Manager','Sales Director','Operations Manager','Bank Desk','Operations Manager','Bank Desk','Operations Manager','Fatima Rahman (Advisor)','Finance Team','Finance Team','Operations Manager','Fatima Rahman (Advisor)','Manager Approval','Bank Desk'];
 function stageDate(i){const d=new Date(L.created);d.setDate(d.getDate()+i*2+(i%3));return fmtD(d);}
 const CHECK='<path d="M20 6 9 17l-5-5"/>',DOT_CUR='<circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/>',X='<path d="M18 6 6 18M6 6l12 12"/>';
 $('#wfList').innerHTML=STAGE_ORDER.map((s,i)=>{
@@ -698,11 +756,13 @@ $('#wfList').innerHTML=STAGE_ORDER.map((s,i)=>{
   const meta=st==='done'?`Completed ${stageDate(i)} · ${UPDATERS[i]}`:
              st==='cur'?`In progress since ${stageDate(i)} · ${UPDATERS[i]}`:
              st==='declined'?`Declined ${stageDate(sIdx)} · Bank Desk`:'Pending';
-  return `<div class="wf-item ${st}">
+  const isTransfer=s==='Property Transfer';
+  return `<div class="wf-item ${st}${isTransfer?' wf-clickable':''}" ${isTransfer?'data-transfer="1"':''}>
     <span class="wf-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${st==='done'?CHECK:st==='cur'?DOT_CUR:st==='declined'?X:''}</svg></span>
-    <div><b>${s}${st==='cur'?'<span class="cur-tag">Current</span>':''}</b><span>${meta}</span></div>
+    <div><b>${s}${st==='cur'?'<span class="cur-tag">Current</span>':''}${isTransfer?'<span class="cur-tag" style="background:#FEF3E2;color:#B45309">Upload Title Deed</span>':''}</b><span>${meta}</span></div>
   </div>`;
 }).join('');
+$$('#wfList [data-transfer]').forEach(el=>el.addEventListener('click',()=>openTitleDeed()));
 $('#wfToggle').addEventListener('click',()=>{
   $('#wfToggle').classList.toggle('open');
   $('#wfList').classList.toggle('show');
@@ -824,16 +884,14 @@ $('#docList').innerHTML=DOCS.map(d=>`<div class="doc-row">
 /* ---------- application tracking ---------- */
 const subDate=new Date(L.created);subDate.setDate(subDate.getDate()+4);
 const procDays=Math.max(1,Math.round((new Date(2026,5,12)-subDate)/864e5));
+const ALL_BANKS=['Emirates NBD','FAB','ADCB','Mashreq','DIB','HSBC'];
+const submittedBanks=[L.bank,...ALL_BANKS.filter(b=>b!==L.bank)].slice(0,2+(sIdx%3)); // 2-4 banks
 const APP_TRACK=[
-  ['Preferred Bank',L.bank,'Customer choice'],
-  ['Current Bank',L.bank,'Application active'],
-  ['Application No.','APP-'+L.id.slice(3)+'-26','Bank reference'],
+  ['Preferred Bank(s)',submittedBanks.join(', '),'Submitted to '+submittedBanks.length+' banks'],
   ['Submitted Date',fmtD(subDate),'Via bank portal'],
   ['Current Status',L.stage,'Synced today 9:00 AM'],
-  ['Decision Date',sIdx>=5?fmtD(new Date(subDate.getTime()+5*864e5)):'Awaited','Pre-approval decision'],
   ['Processing Days',procDays+' days','Since submission'],
-  ['Bank Officer',['Khalid Rashid','Maya Joseph','Arun Varghese'][sIdx%3],L.bank+' · Mortgage desk'],
-  ['SLA Status',procDays>14?'Breached':'On track',procDays>14?'Escalation recommended':'Within bank SLA']
+  ['Bank Officer',['Khalid Rashid','Maya Joseph','Arun Varghese'][sIdx%3],submittedBanks[0]+' · Mortgage desk']
 ];
 $('#appTrack').innerHTML=APP_TRACK.map(a=>`<div class="info-cell"><label>${a[0]}</label><b>${a[1]}</b><span>${a[2]}</span></div>`).join('');
 $('#appRemarks').textContent=sIdx>=5
@@ -903,12 +961,54 @@ $('#addNote').addEventListener('click',()=>{
 $('#rProp').textContent=fmtAED(L.propVal);
 $('#rLoan').textContent=fmtAED(L.loan);
 $('#rLtv').textContent=ltv+'%';
-$('#rBank').textContent=L.bank;
+$('#rBank').textContent=submittedBanks.join(', ');
 $('#rSource').textContent=L.source;
 $('#rCreated').textContent=fmtD(L.created);
 $('#rAct').textContent=L.act;
 $('#advAvatar').textContent=ini(L.advisor);
 $('#advName').textContent=L.advisor;
+
+/* ---------- title deed / property transfer workflow ---------- */
+let tdFile=null;
+function openTitleDeed(){
+  $('#tdSub').textContent=`${L.name} · ${L.id}`;
+  $('#tdScrim').classList.add('show');
+}
+function closeTitleDeed(){$('#tdScrim').classList.remove('show');}
+(function(){
+  const drop=$('#tdDrop'),inp=$('#tdInput'),fileRow=$('#tdFile'),pEl=drop.querySelector('p');
+  function setFile(f){
+    if(!f)return;tdFile=f;
+    drop.classList.add('has');pEl.style.display='none';
+    fileRow.style.display='flex';$('#tdFileName').textContent=f.name;
+  }
+  drop.addEventListener('click',e=>{if(!drop.classList.contains('has')&&e.target.id!=='tdRemove')inp.click();});
+  inp.addEventListener('change',()=>setFile(inp.files[0]));
+  drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('drag');});
+  drop.addEventListener('dragleave',()=>drop.classList.remove('drag'));
+  drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('drag');setFile(e.dataTransfer.files[0]);});
+  $('#tdRemove').addEventListener('click',e=>{e.stopPropagation();tdFile=null;inp.value='';drop.classList.remove('has');pEl.style.display='';fileRow.style.display='none';});
+  $('#tdClose').addEventListener('click',closeTitleDeed);
+  $('#tdCancel').addEventListener('click',closeTitleDeed);
+  $('#tdScrim').addEventListener('click',e=>{if(e.target===$('#tdScrim'))closeTitleDeed();});
+  $('#tdSubmit').addEventListener('click',()=>{
+    if(!tdFile){toast('Please upload the Title Deed first');return;}
+    // advisor submits → status Verification Pending, sent to Manager
+    const st=$('#tdStatus');st.style.display='flex';st.className='td-status pend';
+    st.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><div><b>Verification Pending</b> — Title Deed submitted by ${L.advisor}. Advisor role complete. Sent to Manager for review.</div>`;
+    $('#tdSubmit').textContent='Approve as Manager';
+    $('#tdSubmit').onclick=()=>{
+      // manager approves → Property Transferred (green)
+      st.className='td-status done';
+      st.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><div><b>Property Transferred</b> — Title Deed approved by Manager. Property transfer complete.</div>`;
+      $('#tdSubmit').style.display='none';
+      // reflect on the stage badge
+      const sb=$('#stageBadge'),stg=$('#stageTxt');
+      if(sb&&stg){sb.style.background='#DCFCE7';sb.style.color='#15803D';stg.textContent='Property Transferred';}
+      toast('Property Transferred — approved by Manager');
+    };
+  });
+})();
 
 /* toast */
 let tTimer;

@@ -361,6 +361,8 @@ a{color:inherit;text-decoration:none}
     <div class="h-actions">
       <button class="btn btn-ghost hide-md"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>This Month<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:11px"><path d="m6 9 6 6 6-6"/></svg></button>
       <button class="btn btn-ghost hide-md"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export</button>
+      <button class="btn btn-ghost hide-md" id="importBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>Import Leads</button>
+      <input type="file" id="importFile" accept=".xlsx,.xls,.csv" style="display:none">
       <button class="btn btn-ghost hide-md"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 3 5-6"/></svg>Report</button>
       <a class="btn btn-primary" href="create-lead.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Create Lead</a>
       <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot"></span></button>
@@ -532,6 +534,25 @@ $$('[data-toggle]').forEach(b=>b.addEventListener('click',()=>{
 }));
 document.querySelector('.nav-group').classList.add('open');
 
+/* import leads */
+(function(){
+  const btn=document.getElementById('importBtn'),file=document.getElementById('importFile');
+  if(!btn)return;
+  function flash(msg){
+    const t=document.createElement('div');
+    t.textContent=msg;
+    t.style.cssText='position:fixed;bottom:26px;right:26px;background:#0F172A;color:#fff;font-size:12.5px;font-weight:600;padding:11px 16px;border-radius:11px;box-shadow:0 12px 32px -8px rgba(15,23,42,.18);z-index:95;opacity:0;transform:translateY(10px);transition:all .25s';
+    document.body.appendChild(t);requestAnimationFrame(()=>{t.style.opacity='1';t.style.transform='none';});
+    setTimeout(()=>{t.style.opacity='0';t.style.transform='translateY(10px)';setTimeout(()=>t.remove(),300);},2600);
+  }
+  btn.addEventListener('click',()=>file.click());
+  file.addEventListener('change',()=>{
+    const f=file.files[0];if(!f)return;
+    flash(`Importing “${f.name}” — leads will be added to the funnel`);
+    file.value='';
+  });
+})();
+
 /* greeting */
 (()=>{const h=new Date().getHours();
 $('#greeting').textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+', Kunal';})();
@@ -560,10 +581,10 @@ const IC={
 const KPIS=[
   {label:'Total Leads',val:468,ic:'users',d:'+8.2%',pos:true,note:'vs May',s:[28,34,30,41,38,46,44,52,49,57,61,68]},
   {label:'New Leads Today',val:23,ic:'plus',d:'+12',pos:true,note:'since 9:00 AM',s:[4,6,5,9,8,11,10,14,13,17,19,23]},
-  {label:'Pre-Approvals',val:33,ic:'shield',d:'+5.4%',pos:true,note:'in 14-day window',s:[18,21,19,24,22,27,25,29,28,31,30,33]},
   {label:'Applications Submitted',val:14,ic:'file',d:'−2.1%',pos:false,note:'6 awaiting documents',s:[19,17,18,15,17,14,16,13,15,14,15,14]},
-  {label:'Loans Approved',val:40,ic:'check',d:'+18.1%',pos:true,note:'AED 38.6M value',s:[21,24,23,28,26,31,30,34,33,37,38,40]},
-  {label:'Loans Disbursed',val:29,ic:'home',d:'+9.6%',pos:true,note:'AED 31.2M value',s:[15,18,17,20,19,23,22,25,24,27,26,29]},
+  {label:'Pre-Approval',val:33,ic:'shield',d:'+5.4%',pos:true,note:'in 14-day window',s:[18,21,19,24,22,27,25,29,28,31,30,33]},
+  {label:'Loan Disbursed',val:29,ic:'home',d:'+9.6%',pos:true,note:'AED 31.2M value',s:[15,18,17,20,19,23,22,25,24,27,26,29]},
+  {label:'Pending Title Deed',val:7,ic:'file',d:'+3',pos:false,note:'awaiting transfer',s:[3,4,4,5,5,6,6,7,6,7,7,7]},
   {label:'Revenue This Month',val:'4.82',suf:'M',pre:'AED ',ic:'cash',d:'+12.4%',pos:true,note:'AED 4.29M in May',s:[2.8,3.1,2.9,3.4,3.3,3.8,3.6,4.1,4.0,4.4,4.6,4.82]},
   {label:'Net Profit',val:'3.40',suf:'M',pre:'AED ',ic:'trend',d:'+14.2%',pos:true,note:'70.5% margin',s:[1.9,2.2,2.0,2.4,2.3,2.7,2.6,2.9,2.8,3.1,3.2,3.4]}
 ];

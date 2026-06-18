@@ -422,6 +422,10 @@ a{color:inherit;text-decoration:none}
             <div class="field"><input type="text" inputmode="numeric" id="fIncome" data-money><label>Monthly Income (AED)</label></div>
             <div class="field"><input type="number" min="0" step="0.5" id="fYears"><label>Years of Employment</label></div>
             <div class="combo full" id="cIndustry" data-label="Industry"></div>
+            <!-- self-employed only -->
+            <div class="field se-only" style="display:none"><input type="text" id="fCompany"><label>Company Name</label></div>
+            <div class="field se-only" style="display:none"><input type="text" inputmode="numeric" id="fTurnover" data-money><label>Annual Turnover (AED)</label></div>
+            <div class="field se-only full" style="display:none"><input type="number" min="0" step="0.5" id="fBizYears"><label>Length of Business (Years)</label></div>
           </div>
         </section>
 
@@ -432,10 +436,10 @@ a{color:inherit;text-decoration:none}
             <div><h2>Property Information</h2><p>Property and financing requirements.</p></div>
           </div>
           <div class="fgrid">
-            <div class="field"><input type="text" inputmode="numeric" id="fPropVal" data-money data-sum="prop"><label>Property Value (AED) *</label><span class="f-hint" id="dpHint"></span></div>
-            <div class="field"><input type="text" inputmode="numeric" id="fDown" data-money><label>Down Payment (AED)</label><span class="f-hint" id="dpPct"></span></div>
-            <div class="field"><input type="text" inputmode="numeric" id="fLoan" data-money data-sum="loan"><label>Loan Requirement (AED) *</label><span class="f-hint" id="loanHint">Auto-calculated from value − down payment. Editable.</span></div>
-            <div class="field"><input type="text" id="fLtv" readonly class="filled"><label>LTV (Loan-to-Value)</label><span class="f-hint" id="ltvHint">Auto-calculated from loan ÷ property value.</span></div>
+            <div class="field"><input type="text" inputmode="numeric" id="fPropVal" data-money data-sum="prop"><label>Property Value (AED) *</label></div>
+            <div class="field"><input type="number" inputmode="numeric" id="fLtv" min="0" max="100" step="1" value="80" class="filled"><label>LTV (%) *</label><span class="f-hint">Loan-to-Value ratio</span></div>
+            <div class="field"><input type="text" inputmode="numeric" id="fLoan" data-money data-sum="loan"><label>Loan Amount (AED)</label><span class="f-hint" id="loanHint">Auto = LTV % × property value</span></div>
+            <div class="field"><input type="text" inputmode="numeric" id="fDown" data-money><label>Down Payment (AED)</label><span class="f-hint" id="dpPct">Auto = remaining %</span></div>
             <div class="combo" id="cPropType" data-label="Property Type"></div>
             <div class="combo full" id="cArea" data-label="Preferred Area"></div>
           </div>
@@ -448,7 +452,7 @@ a{color:inherit;text-decoration:none}
             <div><h2>Bank Preferences</h2><p>Preferred lender and financing structure.</p></div>
           </div>
           <div class="fgrid">
-            <div class="combo" id="cBank" data-label="Preferred Bank"></div>
+            <div class="combo multi" id="cBank" data-label="Preferred Bank(s)"></div>
             <div class="pill-wrap">
               <label class="t">Bank Type</label>
               <div class="pill-row" data-single id="bankTypePills">
@@ -590,7 +594,7 @@ const PROP_TYPES=['Apartment','Villa','Townhouse','Off-Plan'];
 const AREAS=['Dubai Marina','Downtown Dubai','Dubai Hills Estate','Palm Jumeirah','Jumeirah Village Circle','Business Bay','Arabian Ranches','Emirates Hills','Dubai Creek Harbour','Jumeirah Lake Towers','Al Barsha','Mirdif','Town Square','Damac Hills','Bluewaters Island'];
 const BANKS=['Emirates NBD','FAB','ADCB','Mashreq','DIB','HSBC','RAKBANK','Standard Chartered','Emirates Islamic','CBD','ADIB'];
 const ADVISORS=['Fatima Rahman','John Mathews','Daniel Roy','Priya Nair','Ahmed Saleh','Sara Lopez'];
-const SOURCES=['Google Ads','Meta Ads','Referral Partner','Website','Walk-in'];
+const SOURCES=['Google Ads','Meta Ads','Referral Partner','Website','Walk-in','Cold Calling'];
 const ini=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
 
 const comboState={};
@@ -627,13 +631,12 @@ buildCombo('cEmpType',EMP_TYPES);
 buildCombo('cIndustry',INDUSTRIES);
 buildCombo('cPropType',PROP_TYPES);
 buildCombo('cArea',AREAS);
-buildCombo('cBank',BANKS);
 buildCombo('cAdvisor',ADVISORS);
 buildCombo('cSource',SOURCES);
 
 /* ---------- multi-select combo (referral partners) ---------- */
 const PARTNERS=['Provident Real Estate','Betterhomes','Espace Real Estate','Allsopp & Allsopp','Haus & Haus','Driven Properties','fäm Properties','Metropolitan Premium','Wasl Properties','Emaar Sales Desk'];
-const multiState={cPartners:[]};
+const multiState={cPartners:[],cBank:[]};
 function buildMultiCombo(id,opts){
   const c=document.getElementById(id),label=c.dataset.label;
   c.innerHTML=`<button type="button" class="combo-btn"><span class="ms-chips"><span class="val ph">·</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></button>
@@ -669,6 +672,7 @@ function buildMultiCombo(id,opts){
   refreshBtn();renderList();
 }
 buildMultiCombo('cPartners',PARTNERS);
+buildMultiCombo('cBank',BANKS);
 document.addEventListener('click',()=>$$('.combo.open').forEach(o=>o.classList.remove('open')));
 
 /* ---------- pills ---------- */
@@ -700,43 +704,58 @@ function renderTags(){
 }
 
 /* ---------- uploads ---------- */
-const DOCS=[
-  {k:'passport',t:'Passport',ic:'<rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M9 17h6"/>'},
-  {k:'visa',t:'Visa',ic:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/>'},
-  {k:'eid',t:'Emirates ID',ic:'<rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8.5" cy="11" r="2.2"/><path d="M14 9h5M14 13h5M5.5 16.5c.6-1.5 1.7-2.2 3-2.2s2.4.7 3 2.2"/>'},
-  {k:'bank',t:'Bank Statement',ic:'<path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/>'},
-  {k:'payslip',t:'Payslip',ic:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4M9 9h1"/>'},
-  {k:'salary',t:'Salary Certificate',ic:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>'}
+const DOC_IC={
+  passport:'<rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M9 17h6"/>',
+  visa:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/>',
+  eid:'<rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8.5" cy="11" r="2.2"/><path d="M14 9h5M14 13h5M5.5 16.5c.6-1.5 1.7-2.2 3-2.2s2.4.7 3 2.2"/>',
+  doc:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>',
+  bank:'<path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/>'
+};
+const DOCS_SALARIED=[
+  {t:'Passport',ic:'passport'},{t:'Visa',ic:'visa'},{t:'Emirates ID',ic:'eid'},
+  {t:'Bank Statement',ic:'bank'},{t:'Payslip',ic:'doc'},{t:'Salary Certificate',ic:'doc'}
 ];
-$('#upGrid').innerHTML=DOCS.map(d=>`
-  <div class="up-zone" data-k="${d.k}">
-    <span class="up-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d.ic}</svg></span>
-    <b>${d.t}</b>
-    <p>Drag &amp; drop or click to browse · PDF, JPG, PNG</p>
-    <div class="up-file" style="display:none"><span></span><em></em><button type="button">Remove</button></div>
-    <input type="file" accept=".pdf,.jpg,.jpeg,.png">
-  </div>`).join('');
+const DOCS_SELF=[
+  {t:'Passport Copy',ic:'passport'},{t:'Visa Copy',ic:'visa'},{t:'Emirates ID (Front & Back)',ic:'eid'},
+  {t:'Trade Licence',ic:'doc'},{t:'MOA (with amendments)',ic:'doc'},{t:'Company Bank Statements (12 mo)',ic:'bank'},
+  {t:'Personal Bank Statements (12 mo)',ic:'bank'},{t:'Company Profile',ic:'doc'},{t:'Office Tenancy Contract',ic:'doc'},
+  {t:'5 Sales & 5 Purchase Invoices',ic:'doc'},{t:'Employee List',ic:'doc'},{t:'VAT Return (1 Year)',ic:'doc'},{t:'AECB Report',ic:'doc'}
+];
 const fmtSize=b=>b>1048576?(b/1048576).toFixed(1)+' MB':(b/1024).toFixed(0)+' KB';
-$$('.up-zone').forEach(z=>{
-  const inp=z.querySelector('input[type=file]'),fileRow=z.querySelector('.up-file'),p=z.querySelector('p');
-  function setFile(f){
-    if(!f)return;
-    z.classList.add('has-file');p.style.display='none';
-    fileRow.style.display='flex';
-    fileRow.querySelector('span').textContent=f.name;
-    fileRow.querySelector('em').textContent=fmtSize(f.size);
-    toast(`${f.name} attached`);
-  }
-  z.addEventListener('click',e=>{if(!z.classList.contains('has-file')&&e.target.tagName!=='BUTTON')inp.click();});
-  inp.addEventListener('change',()=>setFile(inp.files[0]));
-  z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('drag');});
-  z.addEventListener('dragleave',()=>z.classList.remove('drag'));
-  z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('drag');setFile(e.dataTransfer.files[0]);});
-  fileRow.querySelector('button').addEventListener('click',e=>{
-    e.stopPropagation();inp.value='';
-    z.classList.remove('has-file');p.style.display='';fileRow.style.display='none';
+let currentDocSet='salaried';
+function renderDocs(set){
+  currentDocSet=set;
+  const list=set==='self'?DOCS_SELF:DOCS_SALARIED;
+  $('#upGrid').innerHTML=list.map((d,i)=>`
+    <div class="up-zone" data-k="d${i}">
+      <span class="up-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${DOC_IC[d.ic]}</svg></span>
+      <b>${d.t}</b>
+      <p>Drag &amp; drop or click to browse · PDF, JPG, PNG</p>
+      <div class="up-file" style="display:none"><span></span><em></em><button type="button">Remove</button></div>
+      <input type="file" accept=".pdf,.jpg,.jpeg,.png">
+    </div>`).join('');
+  $$('#upGrid .up-zone').forEach(z=>{
+    const inp=z.querySelector('input[type=file]'),fileRow=z.querySelector('.up-file'),p=z.querySelector('p');
+    function setFile(f){
+      if(!f)return;
+      z.classList.add('has-file');p.style.display='none';
+      fileRow.style.display='flex';
+      fileRow.querySelector('span').textContent=f.name;
+      fileRow.querySelector('em').textContent=fmtSize(f.size);
+      toast(`${f.name} attached`);
+    }
+    z.addEventListener('click',e=>{if(!z.classList.contains('has-file')&&e.target.tagName!=='BUTTON')inp.click();});
+    inp.addEventListener('change',()=>setFile(inp.files[0]));
+    z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('drag');});
+    z.addEventListener('dragleave',()=>z.classList.remove('drag'));
+    z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('drag');setFile(e.dataTransfer.files[0]);});
+    fileRow.querySelector('button').addEventListener('click',e=>{
+      e.stopPropagation();inp.value='';
+      z.classList.remove('has-file');p.style.display='';fileRow.style.display='none';
+    });
   });
-});
+}
+renderDocs('salaried');
 
 /* ---------- notes ---------- */
 $('#addNote').addEventListener('click',()=>{
@@ -783,32 +802,38 @@ function update(){
     else pRow.style.display='none';
   }
 
+  /* self-employed: extra fields + different document checklist */
+  const isSelf=comboState['cEmpType']==='Self-Employed';
+  $$('.se-only').forEach(el=>el.style.display=isSelf?'':'none');
+  const wantSet=isSelf?'self':'salaried';
+  if(wantSet!==currentDocSet)renderDocs(wantSet);
+
   const pr=$('#prPills .on')?.textContent||'Medium';
   const [bg,fg]=PR_COLORS[pr];
   const pb=$('#sumPriority');pb.textContent=pr;pb.style.background=bg;pb.style.color=fg;
 
-  /* down payment helpers */
-  if(prop&&down){$('#dpPct').textContent=`Down payment = ${Math.round(down/prop*100)}% of property value`;}
-  else $('#dpPct').textContent='';
-  if(prop&&down&&!$('#fLoan').dataset.touched){
-    const auto=Math.max(prop-down,0);
-    $('#fLoan').value=auto?auto.toLocaleString('en-US'):'';
-    syncFloat($('#fLoan'));
-    setSum('sumLoan',fmt(auto));
+  /* LTV-driven auto-calc: Loan = LTV% × value, Down Payment = remaining */
+  let ltv=parseFloat($('#fLtv').value);
+  if(isNaN(ltv))ltv=0; if(ltv>100)ltv=100; if(ltv<0)ltv=0;
+  if(prop){
+    const loanCalc=Math.round(prop*ltv/100);
+    const downCalc=prop-loanCalc;
+    $('#fLoan').value=loanCalc?loanCalc.toLocaleString('en-US'):'';
+    $('#fDown').value=downCalc?downCalc.toLocaleString('en-US'):'';
+    syncFloat($('#fLoan'));syncFloat($('#fDown'));
+    $('#dpPct').textContent=`Auto = ${100-ltv}% of property value`;
+    setSum('sumLoan',fmt(loanCalc));
+  }else{
+    $('#fLoan').value='';$('#fDown').value='';
+    syncFloat($('#fLoan'));syncFloat($('#fDown'));
   }
-
-  /* LTV = loan ÷ property value */
-  const loanNow=moneyVal('#fLoan');
-  if(prop&&loanNow){$('#fLtv').value=Math.round(loanNow/prop*100)+'%';}
-  else $('#fLtv').value='';
-  syncFloat($('#fLtv'));
 
   /* completion: required + key optional fields */
   const checks=[
     !!name, !!$('#fMobile').value.trim(), !!$('#fEmail').value.trim(), !!comboState['cNat'],
     !!$('#fEmployer').value.trim(), !!comboState['cEmpType'], !!moneyVal('#fIncome'),
     !!prop, !!moneyVal('#fLoan'), !!comboState['cPropType'], !!comboState['cArea'],
-    !!comboState['cBank'], !!comboState['cAdvisor'], !!comboState['cSource']
+    !!multiState.cBank.length, !!comboState['cAdvisor'], !!comboState['cSource']
   ];
   const pct=Math.round(checks.filter(Boolean).length/checks.length*100);
   $('#progPct').textContent=pct+'%';
