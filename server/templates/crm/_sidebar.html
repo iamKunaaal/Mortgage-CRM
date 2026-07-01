@@ -1,0 +1,63 @@
+<aside class="sidebar" id="sidebar" aria-label="Primary navigation">
+  <div class="brand">
+    <div class="brand-mark"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M3 11.5 12 4l9 7.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10.5V20h4.5v-5h3v5H18v-9.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div><div class="brand-name">Mortgage CRM</div><div class="brand-sub">{{ request.user.role_label }}</div></div>
+  </div>
+  <nav class="nav" id="nav">
+    <div class="nav-label">Overview</div>
+    <a class="nav-item {% if active_nav == 'Dashboard' %}active{% endif %}" href="{% url 'dashboard' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</a>
+
+    {% if 'Leads' in allowed or 'Tasks' in allowed %}<div class="nav-label">Sales Pipeline</div>{% endif %}
+    {% if 'Leads' in allowed %}<div class="nav-group {% if active_nav == 'Leads' %}open{% endif %}">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Leads{% if lead_count %}<span class="nav-count">{{ lead_count }}</span>{% endif %}<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub">
+        <a class="nav-item {% if active_sub == 'lead_list' %}active{% endif %}" href="{% url 'lead_list' %}">{% if request.user.role == 'ADVISOR' %}My Leads{% else %}All Leads{% endif %}</a>
+        <a class="nav-item {% if active_sub == 'lead_pipeline' %}active{% endif %}" href="{% url 'lead_pipeline' %}">Lead Pipeline</a>
+        <a class="nav-item {% if active_sub == 'lead_sources' %}active{% endif %}" href="{% url 'lead_sources' %}">Lead Sources</a>
+        <a class="nav-item {% if active_sub == 'lost_leads' %}active{% endif %}" href="{% url 'lost_leads' %}">Lost Leads</a>
+      </div>
+    </div>{% endif %}
+    {% if 'Tasks' in allowed %}<div class="nav-group {% if active_nav == 'Tasks' %}open{% endif %}">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>Tasks<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub">
+        <a class="nav-item {% if active_sub == 'task_list' %}active{% endif %}" href="{% url 'task_list' %}">All Tasks</a>
+        <a class="nav-item {% if active_sub == 'overdue_tasks' %}active{% endif %}" href="{% url 'overdue_tasks' %}">Overdue Tasks</a>
+      </div>
+    </div>{% endif %}
+
+    {% if 'Banks' in allowed or 'Advisors' in allowed or 'Referral Partners' in allowed %}<div class="nav-label">Network</div>{% endif %}
+    {% if 'Banks' in allowed %}<div class="nav-group {% if active_nav == 'Banks' %}open{% endif %}">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg>Banks<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><a class="nav-item {% if active_nav == 'Banks' %}active{% endif %}" href="{% url 'bank_list' %}">All Banks</a></div>
+    </div>{% endif %}
+    {% if 'Advisors' in allowed %}<div class="nav-group {% if active_nav == 'Advisors' %}open{% endif %}">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Advisors<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><a class="nav-item {% if active_nav == 'Advisors' %}active{% endif %}" href="{% url 'advisor_list' %}">All Advisors</a></div>
+    </div>{% endif %}
+    {% if 'Referral Partners' in allowed %}<div class="nav-group {% if active_nav == 'Referral Partners' %}open{% endif %}">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>Referral Partners<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><a class="nav-item {% if active_nav == 'Referral Partners' %}active{% endif %}" href="{% url 'partner_list' %}">All Partners</a></div>
+    </div>{% endif %}
+
+    {% if 'Documents' in allowed %}<div class="nav-label">Operations</div>
+    <div class="nav-group {% if active_nav == 'Documents' %}open{% endif %}">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>Documents<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><a class="nav-item {% if active_nav == 'Documents' %}active{% endif %}" href="{% url 'document_list' %}">All Documents</a></div>
+    </div>{% endif %}
+
+    {% if 'Finance' in allowed or 'Reports' in allowed %}<div class="nav-label">Finance &amp; Insights</div>{% endif %}
+    {% if 'Finance' in allowed %}<a class="nav-item {% if active_nav == 'Finance' %}active{% endif %}" href="{% url 'finance' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 12h.01M18 12h.01"/></svg>Finance</a>{% endif %}
+    {% if 'Reports' in allowed %}<a class="nav-item {% if active_nav == 'Reports' %}active{% endif %}" href="{% url 'reports' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 3 5-6"/></svg>Reports &amp; Analytics</a>{% endif %}
+
+    {% if 'Users' in allowed or 'Settings' in allowed %}<div class="nav-label">Administration</div>{% endif %}
+    {% if 'Users' in allowed %}<div class="nav-group {% if active_nav == 'Users' or active_nav == 'Settings' %}open{% endif %}">
+      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>User Management<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="nav-sub"><a class="nav-item {% if active_nav == 'Users' %}active{% endif %}" href="{% url 'user_list' %}">Users</a><a class="nav-item {% if active_nav == 'Settings' %}active{% endif %}" href="{% url 'role_list' %}">Roles &amp; Permissions</a></div>
+    </div>{% endif %}
+    {% if 'Settings' in allowed %}<a class="nav-item {% if active_nav == 'SettingsPage' %}active{% endif %}" href="{% url 'settings_view' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</a>{% endif %}
+  </nav>
+  <div class="sidebar-foot">
+    <a class="user-card" href="{% url 'logout' %}" title="Sign out"><span class="avatar">{{ request.user.initials }}</span><span><b>{{ request.user.get_full_name|default:request.user.username }}</b><span>{{ request.user.role_label }} · Sign out</span></span></a>
+  </div>
+</aside>
+<div class="scrim" id="scrim"></div>

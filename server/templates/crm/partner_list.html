@@ -315,68 +315,7 @@ canvas{display:block;width:100%}
 </head>
 <body>
 <div class="app">
-<!-- ============ SIDEBAR ============ -->
-<aside class="sidebar" id="sidebar" aria-label="Primary navigation">
-  <div class="brand">
-    <div class="brand-mark"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M3 11.5 12 4l9 7.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10.5V20h4.5v-5h3v5H18v-9.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-    <div><div class="brand-name">Mortgage CRM</div><div class="brand-sub">Operations Console</div></div>
-  </div>
-  <nav class="nav" id="nav">
-    <div class="nav-label">Overview</div>
-    <a class="nav-item" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</a>
-
-    <div class="nav-label">Sales Pipeline</div>
-    <div class="nav-group">
-      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Leads<span class="nav-count">468</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
-      <div class="nav-sub"><a class="nav-item" href="all-leads.html">All Leads</a><a class="nav-item" href="lead-pipeline.html">Lead Pipeline</a><a class="nav-item" href="lead-sources.html">Lead Sources</a><a class="nav-item" href="lost-leads.html">Lost Leads</a></div>
-    </div>
-    <div class="nav-group">
-      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>Tasks<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
-      <div class="nav-sub"><a class="nav-item" href="all-tasks.html">All Tasks</a><a class="nav-item" href="overdue-tasks.html">Overdue Tasks</a></div>
-    </div>
-
-    <div class="nav-label">Network</div>
-    <div class="nav-group">
-      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg>Banks<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
-      <div class="nav-sub"><a class="nav-item" href="all-banks.html">All Banks</a></div>
-    </div>
-    <div class="nav-group">
-      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Advisors<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
-      <div class="nav-sub"><a class="nav-item" href="all-advisors.html">All Advisors</a></div>
-    </div>
-    <div class="nav-group open">
-      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>Referral Partners<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
-      <div class="nav-sub"><a class="nav-item active" href="all-referral-partners.html">All Partners</a></div>
-    </div>
-
-    <div class="nav-label">Operations</div>
-    <div class="nav-group">
-      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>Documents<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
-      <div class="nav-sub"><a class="nav-item" href="all-documents.html">All Documents</a></div>
-    </div>
-
-    <div class="nav-label">Finance &amp; Insights</div>
-    <div class="nav-group">
-      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 12h.01M18 12h.01"/></svg>Finance<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
-      <div class="nav-sub"><button class="nav-item">Revenue</button><button class="nav-item">Advisor Commissions</button><button class="nav-item">Referral Commissions</button><button class="nav-item">VAT</button><button class="nav-item">Net Profit</button></div>
-    </div>
-    <div class="nav-group">
-      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 3 5-6"/></svg>Reports &amp; Analytics<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
-      <div class="nav-sub"><button class="nav-item">Revenue Reports</button><button class="nav-item">Lead Reports</button><button class="nav-item">Advisor Reports</button><button class="nav-item">Bank Reports</button><button class="nav-item">Referral Reports</button></div>
-    </div>
-
-    <div class="nav-label">Administration</div>
-    <div class="nav-group">
-      <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>User Management<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
-      <div class="nav-sub"><a class="nav-item" href="users.html">Users</a><a class="nav-item" href="roles.html">Roles &amp; Permissions</a></div>
-    </div>
-    <a class="nav-item" href="settings.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</a>
-  </nav>
-  <div class="sidebar-foot">
-    <button class="user-card"><span class="avatar">KP</span><span><b>Kunal Darji</b><span>Super Admin</span></span></button>
-  </div>
-</aside>
-<div class="scrim" id="scrim"></div>
+{% include 'crm/_sidebar.html' %}
 
 <!-- ============ MAIN ============ -->
 <div class="main">
@@ -403,8 +342,8 @@ canvas{display:block;width:100%}
       </div>
       <div class="actions">
         <button class="btn btn-ghost" id="refreshBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>Refresh</button>
-        <button class="btn btn-ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export Partners</button>
-        <button class="btn btn-primary" id="addBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Add Partner</button>
+        <a class="btn btn-ghost" href="{% url 'partner_export' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export Partners</a>
+        <a class="btn btn-primary" href="{% url 'partner_create' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Add Partner</a>
       </div>
     </div>
 
@@ -494,10 +433,6 @@ canvas{display:block;width:100%}
 <!-- ROW MENU -->
 <div class="menu-pop" id="rowMenu">
   <button class="primary" data-act="view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>View Partner</button>
-  <button data-act="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>Edit Partner</button>
-  <button data-act="leads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>View Referred Leads</button>
-  <div class="menu-sep"></div>
-  <button data-act="toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"/></svg><span class="tgl-lbl">Activate / Deactivate</span></button>
 </div>
 
 <!-- ADD / EDIT MODAL -->
@@ -525,7 +460,7 @@ canvas{display:block;width:100%}
       <div class="fld req"><label>Passport Number *</label><input type="text" id="fPassport" placeholder="e.g. A1234567"><span class="err">Required</span></div>
 
       <div class="grp-label full">Bank Account Details</div>
-      <div class="fld req"><label>Bank Name *</label><input type="text" id="fBank" placeholder="e.g. Emirates NBD"><span class="err">Required</span></div>
+      <div class="fld req"><label>Bank Name *</label><input type="text" id="fBank" placeholder="Bank name"><span class="err">Required</span></div>
       <div class="fld req"><label>Account Number *</label><input type="text" id="fAcct" placeholder="Account number"><span class="err">Required</span></div>
       <div class="fld req full"><label>IBAN Number *</label><input type="text" id="fIban" placeholder="AE00 0000 0000 0000 0000 000"><span class="err">Required</span></div>
 
@@ -589,7 +524,9 @@ canvas{display:block;width:100%}
 
 <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span id="toastMsg"></span></div>
 
+{{ data|json_script:"page-data" }}
 <script>
+const D=JSON.parse(document.getElementById('page-data').textContent);
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 
 /* sidebar */
@@ -604,19 +541,8 @@ $$('[data-toggle]').forEach(b=>b.addEventListener('click',()=>{
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#globalSearch')?.focus();}});
 
 /* ---------- partner data ---------- */
-const PT_TYPES=['Real Estate Agency','Property Consultant','Developer','Financial Consultant','Corporate Partner','Insurance Partner','Independent Agent'];
-let PARTNERS=[
-  {name:'Provident RE',company:'Provident Real Estate',type:'Real Estate Agency',contact:'Rami Haddad',phone:'+971 4 123 4567',email:'rami@providentre.ae',leads:86,approved:38,disbursed:31,revenue:8400000,status:'Active'},
-  {name:'Betterhomes',company:'Betterhomes LLC',type:'Real Estate Agency',contact:'Sofia Rossi',phone:'+971 4 222 8899',email:'sofia@betterhomes.ae',leads:74,approved:30,disbursed:27,revenue:6900000,status:'Active'},
-  {name:'Allsopp & Allsopp',company:'Allsopp & Allsopp Group',type:'Real Estate Agency',contact:'James Allsopp',phone:'+971 4 333 1212',email:'james@allsopp.ae',leads:68,approved:27,disbursed:24,revenue:5700000,status:'Active'},
-  {name:'Espace RE',company:'Espace Real Estate',type:'Property Consultant',contact:'Lina Chedid',phone:'+971 4 444 5656',email:'lina@espace.ae',leads:54,approved:21,disbursed:18,revenue:4200000,status:'Active'},
-  {name:'Property Finder',company:'Property Finder Partner',type:'Corporate Partner',contact:'Omar Aziz',phone:'+971 4 555 7878',email:'omar@pf.ae',leads:62,approved:22,disbursed:16,revenue:3900000,status:'Active'},
-  {name:'Bayut Partner',company:'Bayut Referral Network',type:'Corporate Partner',contact:'Huda Salem',phone:'+971 4 666 9090',email:'huda@bayut.ae',leads:48,approved:16,disbursed:12,revenue:2800000,status:'Active'},
-  {name:'Damac Desk',company:'Damac Referral Desk',type:'Developer',contact:'Tariq Mansour',phone:'+971 4 777 3434',email:'tariq@damac.ae',leads:41,approved:18,disbursed:15,revenue:4600000,status:'Active'},
-  {name:'Sobha Realty',company:'Sobha Realty',type:'Developer',contact:'Anita Desai',phone:'+971 4 888 1267',email:'anita@sobha.ae',leads:37,approved:15,disbursed:13,revenue:3700000,status:'On Hold'},
-  {name:'Danube',company:'Danube Properties',type:'Developer',contact:'Faisal Rahim',phone:'+971 4 999 5623',email:'faisal@danube.ae',leads:29,approved:9,disbursed:7,revenue:1900000,status:'Active'},
-  {name:'Azizi',company:'Azizi Developments',type:'Developer',contact:'Grace Okafor',phone:'+971 4 101 2323',email:'grace@azizi.ae',leads:22,approved:6,disbursed:4,revenue:1100000,status:'Inactive'}
-];
+const PT_TYPES=D.pt_types;
+let PARTNERS=D.partners;
 const COMM_RATE=0.005; // 0.5% of revenue payable to partner
 function conv(p){return p.leads?Math.round(p.approved/p.leads*100):0;}
 function commission(p){return Math.round(p.revenue*COMM_RATE);}
@@ -626,14 +552,7 @@ function convColor(c){return c>=40?'var(--success)':c>=28?'var(--primary)':c>=18
 
 /* ---------- KPIs ---------- */
 function buildKPIs(){
-  const KPIS=[
-    {l:'Total Partners',v:'34',d:'+3 this quarter',cls:'mut',ic:'',svg:'<path d="M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>',s:[28,29,30,31,32,33,33,34]},
-    {l:'Active Partners',v:'28',d:'82% active',cls:'pos',ic:'green',svg:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>',s:[22,23,24,25,26,27,27,28]},
-    {l:'Referral Leads',v:'612',d:'+11.2%',cls:'pos',ic:'',svg:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>',s:[5,6,6,7,7,8,8,9]},
-    {l:'Approved Cases',v:'198',d:'+7.1%',cls:'pos',ic:'green',svg:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',s:[4,5,5,6,6,7,7,8]},
-    {l:'Disbursed Cases',v:'153',d:'+9.4%',cls:'pos',ic:'green',svg:'<path d="M3 11.5 12 4l9 7.5"/><path d="M6 10.5V20h4.5v-5h3v5H18v-9.5"/>',s:[3,4,4,5,5,6,6,7]},
-    {l:'Commission Payable',v:'AED 428K',d:'+8.8%',cls:'pos',ic:'',svg:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/>',s:[4,5,5,6,7,7,8,9]}
-  ];
+  const KPIS=D.kpis.map(k=>({l:k.l,v:k.v,d:'',cls:'mut',ic:k.ic,svg:k.svg,s:[0,0,0,0,0,0,0,0]}));
   const spark=(d)=>{const w=54,h=22,max=Math.max(...d),min=Math.min(...d);
     const pts=d.map((v,i)=>`${(i/(d.length-1))*w},${h-3-((v-min)/(max-min||1))*(h-6)}`).join(' ');
     return `<svg class="spark" viewBox="0 0 ${w} ${h}"><polyline points="${pts}" fill="none" stroke="#05448B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/></svg>`;};
@@ -727,8 +646,6 @@ function renderTable(){
   $$('.tbl th.sortable').forEach(th=>th.querySelector('.s-ic').textContent=th.dataset.k===state.sortK?(state.sortDir===1?'▲':'▼'):'');
   $$('#ptBody .kebab').forEach(k=>k.addEventListener('click',e=>{
     e.stopPropagation();const m=$('#rowMenu'),r=k.getBoundingClientRect();
-    const p=PARTNERS.find(x=>x.name===k.dataset.name);
-    m.querySelector('.tgl-lbl').textContent=p.status==='Inactive'?'Activate Partner':'Deactivate Partner';
     m.classList.add('show');m.dataset.name=k.dataset.name;
     const mw=188,mh=m.offsetHeight||220;let x=r.right-mw,y=r.bottom+6;
     if(y+mh>innerHeight-12)y=r.top-mh-6;m.style.left=Math.max(8,x)+'px';m.style.top=y+'px';
@@ -742,9 +659,7 @@ $('#rowMenu').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
   const name=$('#rowMenu').dataset.name,p=PARTNERS.find(x=>x.name===name),act=b.dataset.act;
   if(act==='view'){openView(p);$('#rowMenu').classList.remove('show');return;}
-  if(act==='edit'){openModal(p);$('#rowMenu').classList.remove('show');return;}
-  if(act==='toggle'){p.status=p.status==='Inactive'?'Active':'Inactive';buildKPIs();renderTable();buildLeaders();buildPerf();drawCmp();toast(`${name} ${p.status==='Inactive'?'deactivated':'activated'}`);$('#rowMenu').classList.remove('show');return;}
-  toast(`Viewing referred leads — ${name}`);$('#rowMenu').classList.remove('show');
+  $('#rowMenu').classList.remove('show');
 });
 
 /* ---------- leaderboard ---------- */
@@ -803,13 +718,7 @@ function rr(ctx,x,y,w,h,r){r=Math.min(r,w/2,h/2);if(h<=0)return;ctx.beginPath();
 $('#cmpMetric').addEventListener('change',e=>{cmpMetric=e.target.value;drawCmp();});
 
 /* ---------- activity feed ---------- */
-const FEED=[
-  {ic:'',svg:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>',h:'<b>Provident Real Estate</b> referred <b>Ahmed Khan</b>',t:'12 mins ago'},
-  {ic:'',svg:'<path d="M12 5v14M5 12h14"/>',h:'<b>Betterhomes</b> generated a new mortgage lead',t:'28 mins ago'},
-  {ic:'ok',svg:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>',h:'<b>Damac Referral Desk</b> closed a successful deal',t:'1 hour ago'},
-  {ic:'ok',svg:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',h:'<b>Sobha Realty</b> referral approved by bank',t:'Today'},
-  {ic:'',svg:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/>',h:'Commission of <b>AED 42K</b> marked payable to <b>Provident RE</b>',t:'Today'}
-];
+const FEED=[];
 function buildFeed(){
   $('#feed').innerHTML=FEED.map(f=>`<div class="feed-item">
     <span class="feed-ic ${f.ic}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${f.svg}</svg></span>
@@ -817,7 +726,7 @@ function buildFeed(){
 }
 
 /* ---------- view modal ---------- */
-const REFERRED={'Provident RE':['Ahmed Khan','Omar Khalil','Aisha Verma'],'Betterhomes':['Marcus Lee','Rania Saeed'],'Allsopp & Allsopp':['Karan Shah','Nora Aziz']};
+const REFERRED={};
 function openView(p){
   $('#vAvatar').textContent=ini(p.name);
   $('#vName').textContent=p.company;
@@ -880,7 +789,7 @@ function openModal(p){
   $('#ptModal').classList.add('show');
 }
 function closeModal(){$('#ptModal').classList.remove('show');editing=null;}
-$('#addBtn').addEventListener('click',()=>openModal(null));
+$('#addBtn')?.addEventListener('click',()=>openModal(null));
 $('#mClose').addEventListener('click',closeModal);
 $('#mCancel').addEventListener('click',closeModal);
 $('#ptModal').addEventListener('click',e=>{if(e.target===$('#ptModal'))closeModal();});

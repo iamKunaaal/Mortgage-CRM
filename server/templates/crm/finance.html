@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Finance — Mortgage CRM{% endblock %}
+{% block page_title %}Finance{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Finance</h1><p>Revenue, commissions and net profit from disbursed loans.</p></div><div class="actions"><a class="btn btn-ghost" href="{% url 'finance_export' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export CSV</a></div></div>
+
+<div class="kpi-grid k6">
+  <div class="kpi"><div class="kpi-top"><label>Disbursed Volume</label><span class="kpi-ic green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/></svg></span></div><div class="val" style="font-size:19px">AED {{ kpis.revenue|floatformat:0 }}</div></div>
+  <div class="kpi"><div class="kpi-top"><label>Gross Revenue</label><span class="kpi-ic green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span></div><div class="val" style="font-size:19px">AED {{ kpis.commission|floatformat:0 }}</div></div>
+  <div class="kpi"><div class="kpi-top"><label>Advisor Commission</label><span class="kpi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span></div><div class="val" style="font-size:19px">AED {{ kpis.commission|floatformat:0 }}</div></div>
+  <div class="kpi"><div class="kpi-top"><label>Referral Commission</label><span class="kpi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg></span></div><div class="val" style="font-size:19px">AED {{ kpis.referral|floatformat:0 }}</div></div>
+  <div class="kpi"><div class="kpi-top"><label>VAT (5%)</label><span class="kpi-ic amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14 20 3M6 4h6M9 4v6M14 20h4M16 18v4"/></svg></span></div><div class="val" style="font-size:19px">AED {{ kpis.vat|floatformat:0 }}</div></div>
+  <div class="kpi"><div class="kpi-top"><label>Net Profit</label><span class="kpi-ic green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span></div><div class="val" style="font-size:19px">AED {{ kpis.net|floatformat:0 }}</div></div>
+</div>
+
+<div class="card"><div class="card-body" style="color:var(--text-3);font-size:12.5px">
+  Figures derived from <b>{{ kpis.disbursed_loans }}</b> disbursed loan(s). Commission rates are indicative (0.6% gross, 0.3% referral, 5% VAT) — configurable later.
+</div></div>
+{% endblock %}

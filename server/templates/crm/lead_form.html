@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mortgage CRM — Create New Lead</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#05448B;
+  --primary-h:#0B5AB3;
+  --blue-2:#2D6CB0;
+  --blue-3:#7FA6CF;
+  --blue-50:#F0F5FB;
+  --blue-100:#DEEAF6;
+  --bg:#F7F9FC; --card:#FFFFFF;
+  --text:#0F172A; --text-2:#64748B; --text-3:#94A3B8;
+  --border:#E2E8F0; --border-soft:#EEF2F7;
+  --success:#16A34A; --warning:#B45309; --danger:#DC2626;
+  --r:14px;
+  --sh-xs:0 1px 2px rgba(15,23,42,.05);
+  --sh-sm:0 1px 3px rgba(15,23,42,.06),0 1px 2px rgba(15,23,42,.04);
+  --sh-md:0 4px 12px -2px rgba(15,23,42,.08);
+  --sh-lg:0 12px 32px -8px rgba(15,23,42,.18);
+  --sb:256px;
+  --font:'Inter',system-ui,-apple-system,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+a{color:inherit;text-decoration:none}
+::selection{background:var(--blue-100)}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* ---------- shell ---------- */
+.app{display:flex;min-height:100vh}
+.main{flex:1;min-width:0;margin-left:var(--sb)}
+
+/* ---------- sidebar ---------- */
+.sidebar{position:fixed;inset:0 auto 0 0;width:var(--sb);background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:60;transition:transform .28s cubic-bezier(.4,0,.2,1)}
+.brand{display:flex;align-items:center;gap:11px;padding:20px 20px 16px}
+.brand-mark{width:36px;height:36px;border-radius:10px;background:var(--primary);display:grid;place-items:center;flex-shrink:0}
+.brand-name{font-weight:700;font-size:15px;letter-spacing:-.015em;color:var(--text)}
+.brand-sub{font-size:11px;color:var(--text-3);font-weight:500}
+.nav{flex:1;overflow-y:auto;padding:6px 12px 16px;scrollbar-width:thin;scrollbar-color:#D7DEE8 transparent}
+.nav::-webkit-scrollbar{width:5px}
+.nav::-webkit-scrollbar-thumb{background:#D7DEE8;border-radius:4px}
+.nav-label{font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--text-3);padding:18px 12px 7px;margin-top:2px}
+.nav-label:first-child{margin-top:0;padding-top:8px}
+.nav-item{display:flex;align-items:center;gap:11px;width:100%;padding:8.5px 11px;border-radius:9px;color:#3F4C61;font-size:13.5px;font-weight:500;text-align:left;transition:background .13s,color .13s;position:relative}
+.nav-item svg{width:17px;height:17px;flex-shrink:0;color:var(--text-2);transition:color .13s}
+.nav-item:hover{background:#F3F6FA;color:var(--text)}
+.nav-item:hover svg{color:var(--text)}
+.nav-item.active{background:var(--blue-50);color:var(--primary);font-weight:600}
+.nav-item.active svg{color:var(--primary)}
+.nav-item.active::before{content:"";position:absolute;left:-12px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--primary)}
+.nav-item .chev{margin-left:auto;width:13px;height:13px;color:var(--text-3);transition:transform .22s cubic-bezier(.4,0,.2,1)}
+.nav-group{margin-bottom:1px}
+.nav-group.open>.nav-item{color:var(--text)}
+.nav-group.open>.nav-item svg{color:var(--text)}
+.nav-group.open .chev{transform:rotate(90deg);color:var(--primary)}
+.nav-sub{overflow:hidden;max-height:0;transition:max-height .3s cubic-bezier(.4,0,.2,1);padding-left:4px;margin-left:18px;border-left:1px solid var(--border-soft)}
+.nav-group.open .nav-sub{max-height:320px}
+.nav-sub .nav-item{padding:6.5px 11px 6.5px 22px;font-size:12.75px;color:var(--text-2);font-weight:500;border-radius:7px;margin:1px 0}
+.nav-sub .nav-item:hover{color:var(--text);background:#F3F6FA}
+.nav-sub .nav-item.active{background:var(--blue-50);color:var(--primary);font-weight:600}
+.nav-sub .nav-item.active::before{display:none}
+.nav-count{margin-left:auto;font-size:11px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--blue-50);color:var(--primary)}
+.sidebar-foot{padding:12px;border-top:1px solid var(--border-soft)}
+.user-card{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;transition:background .13s;width:100%;text-align:left}
+.user-card:hover{background:#F3F6FA}
+.user-card b{display:block;font-size:13px;font-weight:600}
+.user-card span{font-size:11.5px;color:var(--text-3)}
+.avatar{width:32px;height:32px;border-radius:9px;background:var(--primary);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
+
+/* ---------- header ---------- */
+.header{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;padding:13px 28px;background:rgba(255,255,255,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.hamburger{display:none;width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:#fff;place-items:center}
+.page-title{font-size:15px;font-weight:700;letter-spacing:-.01em;margin-right:6px}
+.h-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+.icon-btn{width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:#fff;display:grid;place-items:center;color:var(--text-2);position:relative;transition:all .14s}
+.icon-btn:hover{color:var(--text);border-color:#CBD5E1;background:var(--bg)}
+.icon-btn svg{width:16px;height:16px}
+.dot{position:absolute;top:8px;right:8px;width:6px;height:6px;border-radius:50%;background:var(--danger);border:1.5px solid #fff}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:9px;font-size:13px;font-weight:600;transition:all .14s;white-space:nowrap}
+.btn svg{width:15px;height:15px}
+.btn-ghost{background:#fff;border:1px solid var(--border);color:var(--text-2)}
+.btn-ghost:hover{color:var(--text);border-color:#CBD5E1;background:var(--bg)}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:var(--sh-xs)}
+.btn-primary:hover{background:var(--primary-h)}
+.btn-outline{background:#fff;border:1.5px solid var(--primary);color:var(--primary)}
+.btn-outline:hover{background:var(--blue-50)}
+
+/* ---------- content ---------- */
+.content{padding:24px 28px 64px;max-width:1280px;width:100%;margin:0 auto}
+.crumbs{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:500;color:var(--text-3);margin-bottom:8px}
+.crumbs a:hover{color:var(--primary)}
+.crumbs .sep{font-size:10px}
+.crumbs .cur{color:var(--text-2);font-weight:600}
+.page-head h1{font-size:21px;font-weight:700;letter-spacing:-.02em}
+.page-head p{color:var(--text-2);font-size:13.5px;margin-top:3px}
+
+/* stepper */
+.stepper{display:flex;gap:4px;margin:18px 0 22px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:6px;box-shadow:var(--sh-xs);overflow-x:auto;scrollbar-width:none}
+.stepper::-webkit-scrollbar{display:none}
+.step{display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:8px;font-size:12px;font-weight:600;color:var(--text-3);white-space:nowrap;transition:all .18s;flex-shrink:0}
+.step i{width:18px;height:18px;border-radius:6px;display:grid;place-items:center;font-size:10px;font-style:normal;font-weight:700;background:var(--border-soft);color:var(--text-3);transition:all .18s}
+.step:hover{color:var(--text-2);background:var(--bg)}
+.step.cur{background:var(--blue-50);color:var(--primary)}
+.step.cur i{background:var(--primary);color:#fff}
+.step.done i{background:#EDFAF1;color:var(--success)}
+
+/* layout */
+.lead-layout{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start}
+.form-col{display:flex;flex-direction:column;gap:16px;min-width:0}
+
+/* form cards */
+.fcard{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-xs);padding:22px 24px;animation:rise .4s ease both;position:relative;z-index:1}
+.fcard:has(.combo.open){z-index:45}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.fcard-h{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.fcard-ic{width:36px;height:36px;border-radius:10px;background:var(--blue-50);color:var(--primary);display:grid;place-items:center;flex-shrink:0}
+.fcard-ic svg{width:17px;height:17px}
+.fcard-h h2{font-size:14.5px;font-weight:700;letter-spacing:-.01em}
+.fcard-h p{font-size:12px;color:var(--text-2);margin-top:1px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fgrid .full{grid-column:1/-1}
+
+/* floating-label fields */
+.field{position:relative}
+.field input,.field textarea{width:100%;padding:21px 13px 7px;border-radius:10px;border:1px solid var(--border);background:#fff;font:inherit;font-size:13.5px;color:var(--text);transition:border-color .15s,box-shadow .15s}
+.field textarea{resize:vertical;min-height:90px;padding-top:24px}
+.field label{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--text-3);font-weight:500;pointer-events:none;transition:all .15s ease}
+.field.ta label{top:20px;transform:none}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(5,68,139,.10)}
+.field input:focus+label,.field input.filled+label,.field input[type=date]+label,
+.field textarea:focus+label,.field textarea.filled+label{top:8px;transform:none;font-size:10.5px;font-weight:600;color:var(--primary);letter-spacing:.02em}
+.field input[type=date]:not(:focus)+label{color:var(--text-3)}
+.field input.filled:not(:focus)+label,.field textarea.filled:not(:focus)+label{color:var(--text-3)}
+.field.err input,.field.err textarea{border-color:var(--danger)}
+.field.err input:focus{box-shadow:0 0 0 3px rgba(220,38,38,.10)}
+.f-msg{font-size:11px;font-weight:500;color:var(--danger);margin-top:4px;display:none}
+.field.err .f-msg{display:block}
+.f-hint{font-size:11px;color:var(--text-3);margin-top:4px}
+.prefix-field input{padding-left:58px}
+.prefix{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:600;color:var(--text-2);pointer-events:none;border-right:1px solid var(--border-soft);padding-right:8px}
+
+/* combo (searchable dropdown) */
+.combo{position:relative}
+.combo-btn{width:100%;display:flex;align-items:center;gap:8px;padding:21px 13px 7px;border-radius:10px;border:1px solid var(--border);background:#fff;font-size:13.5px;color:var(--text);text-align:left;transition:all .15s;min-height:50.5px}
+.combo-btn .ph{color:transparent}
+.combo-btn .val{font-weight:500}
+.combo-btn:focus,.combo.open .combo-btn{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(5,68,139,.10)}
+.combo>label{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--text-3);font-weight:500;pointer-events:none;transition:all .15s ease;z-index:1}
+.combo.has-val>label,.combo.open>label{top:8px;transform:none;font-size:10.5px;font-weight:600;letter-spacing:.02em}
+.combo.open>label{color:var(--primary)}
+.combo .chev{margin-left:auto;width:13px;height:13px;color:var(--text-3);transition:transform .18s;flex-shrink:0}
+.combo.open .chev{transform:rotate(180deg)}
+.combo-pop{position:absolute;top:calc(100% + 6px);left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:11px;box-shadow:var(--sh-lg);padding:6px;z-index:30;opacity:0;transform:translateY(-4px);pointer-events:none;transition:all .15s}
+.combo.open .combo-pop{opacity:1;transform:none;pointer-events:auto}
+.combo-pop input{width:100%;padding:8px 11px;border-radius:8px;border:1px solid var(--border);background:var(--bg);font:inherit;font-size:12.5px;margin-bottom:5px}
+.combo-pop input:focus{outline:none;background:#fff;border-color:var(--primary)}
+.combo-list{max-height:198px;overflow-y:auto;scrollbar-width:thin}
+.combo-list button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:7.5px 10px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--text-2);transition:background .12s}
+.combo-list button:hover{background:var(--bg);color:var(--text)}
+.combo-list button.sel{background:var(--blue-50);color:var(--primary);font-weight:600}
+.combo-list .p-avatar{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font-size:9.5px;font-weight:700;background:var(--blue-50);color:var(--primary);flex-shrink:0}
+/* multi-select combo */
+.combo.multi .combo-btn{align-items:flex-start;flex-wrap:wrap;gap:6px;min-height:50.5px}
+.combo .ms-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;flex:1;min-width:0}
+.combo .ms-chips .chip{display:inline-flex;align-items:center;gap:6px;background:var(--blue-50);color:var(--primary);font-size:11.5px;font-weight:600;padding:3px 6px 3px 9px;border-radius:99px}
+.combo .ms-chips .chip button{width:15px;height:15px;border-radius:50%;display:grid;place-items:center;color:var(--primary);opacity:.65;font-size:12px;line-height:1}
+.combo .ms-chips .chip button:hover{opacity:1;background:var(--blue-100)}
+.combo-list .ms-check{margin-left:auto;width:15px;height:15px;flex-shrink:0;color:var(--primary)}
+.combo-empty{font-size:12px;color:var(--text-3);text-align:center;padding:12px}
+
+/* pills */
+.pill-row{display:flex;gap:8px;flex-wrap:wrap}
+.pill-wrap label.t{display:block;font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:7px}
+.pill{padding:8px 15px;border-radius:9px;border:1px solid var(--border);background:#fff;font-size:12.5px;font-weight:600;color:var(--text-2);transition:all .14s}
+.pill:hover{border-color:#CBD5E1;color:var(--text)}
+.pill.on{background:var(--blue-50);border-color:var(--primary);color:var(--primary)}
+.pill.p-high.on{background:#FEE2E2;border-color:var(--danger);color:var(--danger)}
+.pill.p-med.on{background:#FEF3E2;border-color:var(--warning);color:var(--warning)}
+.pill.p-low.on{background:#EDFAF1;border-color:var(--success);color:var(--success)}
+
+/* tags */
+.tag-box{display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#fff;cursor:text;transition:all .15s;min-height:46px;align-items:center}
+.tag-box:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px rgba(5,68,139,.10)}
+.tag-box input{flex:1;min-width:110px;border:none;font:inherit;font-size:13px;padding:3px}
+.tag-box input:focus{outline:none}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--blue-50);color:var(--primary);font-size:11.5px;font-weight:600;padding:4px 7px 4px 10px;border-radius:99px;animation:chipIn .15s ease}
+@keyframes chipIn{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+.chip button{width:15px;height:15px;border-radius:50%;display:grid;place-items:center;color:var(--primary);opacity:.65;font-size:12px;line-height:1}
+.chip button:hover{opacity:1;background:var(--blue-100)}
+
+/* uploads */
+.up-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.up-zone{border:1.5px dashed #CBD5E1;border-radius:12px;padding:18px 14px;text-align:center;transition:all .16s;cursor:pointer;background:#FCFDFE}
+.up-zone:hover{border-color:var(--primary);background:var(--blue-50)}
+.up-zone.drag{border-color:var(--primary);background:var(--blue-50);transform:scale(1.01)}
+.up-zone.has-file{border-style:solid;border-color:var(--success);background:#FAFFFB;cursor:default}
+.up-ic{width:34px;height:34px;border-radius:10px;background:var(--blue-50);color:var(--primary);display:grid;place-items:center;margin:0 auto 8px}
+.up-zone.has-file .up-ic{background:#EDFAF1;color:var(--success)}
+.up-ic svg{width:16px;height:16px}
+.up-zone b{font-size:12.5px;font-weight:700;display:block}
+.up-zone p{font-size:11px;color:var(--text-3);margin-top:2px}
+.up-file{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:6px}
+.up-file span{font-size:11.5px;font-weight:600;color:var(--text-2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.up-file em{font-size:10.5px;color:var(--text-3);font-style:normal}
+.up-file button{color:var(--danger);font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px}
+.up-file button:hover{background:#FEF2F2}
+.up-zone input[type=file]{display:none}
+
+/* notes timeline */
+.note-composer{display:flex;gap:11px}
+.note-composer .p-avatar{width:32px;height:32px;border-radius:9px;background:var(--primary);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
+.note-box{flex:1}
+.note-box textarea{width:100%;min-height:84px;padding:12px 13px;border-radius:10px;border:1px solid var(--border);font:inherit;font-size:13px;resize:vertical;transition:all .15s}
+.note-box textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(5,68,139,.10)}
+.note-actions{display:flex;justify-content:flex-end;margin-top:8px}
+.note-list{margin-top:18px;display:flex;flex-direction:column}
+.note-item{display:flex;gap:11px;position:relative;padding-bottom:16px}
+.note-item::before{content:"";position:absolute;left:15px;top:36px;bottom:0;width:1.5px;background:var(--border-soft)}
+.note-item:last-child::before{display:none}
+.note-item .p-avatar{width:32px;height:32px;border-radius:9px;background:var(--blue-50);color:var(--primary);font-size:11px;font-weight:700;display:grid;place-items:center;flex-shrink:0;z-index:1}
+.note-body{flex:1;background:var(--bg);border:1px solid var(--border-soft);border-radius:11px;padding:10px 13px}
+.note-body .meta{display:flex;justify-content:space-between;gap:10px;margin-bottom:3px}
+.note-body .meta b{font-size:12px;font-weight:700}
+.note-body .meta time{font-size:10.5px;color:var(--text-3)}
+.note-body p{font-size:12.5px;color:var(--text-2);line-height:1.5;white-space:pre-wrap}
+
+/* summary panel */
+.summary{position:sticky;top:76px;display:flex;flex-direction:column;gap:14px}
+.sum-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-xs);overflow:hidden}
+.sum-head{background:var(--primary);color:#fff;padding:16px 18px}
+.sum-head label{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#A9C4E2}
+.sum-head .name{font-size:17px;font-weight:700;letter-spacing:-.015em;margin-top:3px;min-height:24px}
+.sum-body{padding:14px 18px 16px}
+.sum-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8.5px 0;border-bottom:1px solid var(--border-soft)}
+.sum-row:last-child{border-bottom:none}
+.sum-row label{font-size:11.5px;font-weight:600;color:var(--text-3)}
+.sum-row b{font-size:12.5px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.sum-row b.empty-v{color:var(--text-3);font-weight:500}
+.sum-row .pr-badge{font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:99px}
+.prog-wrap{padding:13px 18px 16px;border-top:1px solid var(--border-soft)}
+.prog-top{display:flex;justify-content:space-between;margin-bottom:7px}
+.prog-top label{font-size:11px;font-weight:600;color:var(--text-2)}
+.prog-top b{font-size:11px;font-weight:700;color:var(--primary);font-variant-numeric:tabular-nums}
+.prog-bar{height:6px;border-radius:99px;background:var(--border-soft);overflow:hidden}
+.prog-bar i{display:block;height:100%;border-radius:99px;background:var(--primary);width:0;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.sum-tip{background:var(--blue-50);border:1px solid var(--blue-100);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--primary);line-height:1.55}
+.sum-tip b{font-weight:700}
+
+/* action bar */
+.action-bar{position:sticky;bottom:0;z-index:35;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-md);padding:12px 16px;display:flex;align-items:center;gap:9px;margin-top:2px}
+.action-bar .spacer{flex:1}
+.draft-note{font-size:11.5px;color:var(--text-3)}
+
+/* toast */
+.toast{position:fixed;bottom:26px;right:26px;background:#0F172A;color:#fff;font-size:12.5px;font-weight:600;padding:11px 16px;border-radius:11px;box-shadow:var(--sh-lg);z-index:90;opacity:0;transform:translateY(10px);transition:all .25s;display:flex;align-items:center;gap:9px}
+.toast.show{opacity:1;transform:none}
+.toast svg{width:15px;height:15px;color:#4ADE80}
+
+/* scrim + responsive */
+.scrim{position:fixed;inset:0;background:rgba(15,23,42,.35);z-index:55;opacity:0;pointer-events:none;transition:opacity .25s}
+.scrim.show{opacity:1;pointer-events:auto}
+@media (max-width:1160px){
+  .lead-layout{grid-template-columns:1fr}
+  .summary{position:static}
+}
+@media (max-width:960px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0);box-shadow:20px 0 50px rgba(15,23,42,.2)}
+  .main{margin-left:0}
+  .hamburger{display:grid}
+  .hide-md{display:none}
+}
+@media (max-width:660px){
+  .content{padding:16px 14px 40px}
+  .header{padding:10px 14px}
+  .fgrid,.up-grid{grid-template-columns:1fr}
+  .hide-sm{display:none}
+  .action-bar{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+<div class="app">
+{% include 'crm/_sidebar.html' %}
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+  <header class="header">
+    <button class="hamburger" id="hamburger" aria-label="Open navigation"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0F172A" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+    <span class="page-title">{{ title }}</span>
+    <div class="h-actions">
+      <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot"></span></button>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="crumbs">
+      <a href="{% url 'dashboard' %}">Dashboard</a><span class="sep">›</span>
+      <a href="{% url 'lead_list' %}">Leads</a><span class="sep">›</span>
+      <span class="cur">{{ title }}</span>
+    </div>
+    <div class="page-head">
+      <h1>{{ title }}</h1>
+      <p>Capture customer details and start the mortgage journey.</p>
+    </div>
+
+    <!-- STEPPER -->
+    <div class="stepper" id="stepper">
+      <button type="button" class="step cur" data-go="sec1"><i>1</i>Personal</button>
+      <button type="button" class="step" data-go="sec2"><i>2</i>Employment</button>
+      <button type="button" class="step" data-go="sec3"><i>3</i>Property</button>
+      <button type="button" class="step" data-go="sec4"><i>4</i>Bank</button>
+      <button type="button" class="step" data-go="sec5"><i>5</i>Assignment</button>
+      <button type="button" class="step" data-go="sec6"><i>6</i>Documents</button>
+      <button type="button" class="step" data-go="sec7"><i>7</i>Notes</button>
+    </div>
+
+    <div class="lead-layout">
+      <!-- ============ FORM ============ -->
+      <form class="form-col" method="post" action="" id="leadForm">
+        {% csrf_token %}
+        {% for err in form.non_field_errors %}<div style="grid-column:1/-1;color:var(--danger);font-size:12px;font-weight:600;margin-bottom:4px">{{ err }}</div>{% endfor %}
+        <!-- hidden fields synced from decorative combos/pills -->
+        <input type="hidden" name="nationality" id="hNationality" value="{{ form.nationality.value|default:'' }}">
+        <input type="hidden" name="advisor" id="hAdvisor" value="{{ form.advisor.value|default:'' }}">
+        <input type="hidden" name="bank" id="hBank" value="{{ form.bank.value|default:'' }}">
+        <input type="hidden" name="source" id="hSource" value="{{ form.source.value|default:'Website' }}">
+        <input type="hidden" name="stage" id="hStage" value="{{ form.stage.value|default:'Lead Received' }}">
+        <input type="hidden" name="priority" id="hPriority" value="{{ form.priority.value|default:'Medium' }}">
+
+        <!-- SECTION 1 -->
+        <section class="fcard" id="sec1">
+          <div class="fcard-h">
+            <span class="fcard-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>
+            <div><h2>Personal Information</h2><p>Basic identity and contact details of the customer.</p></div>
+          </div>
+          <div class="fgrid">
+            <div class="field full"><input type="text" name="name" id="fName" data-req data-sum="name" value="{{ form.name.value|default:'' }}"><label>Full Name *</label><span class="f-msg">Full name is required.</span></div>
+            <div class="field prefix-field"><span class="prefix">+971</span><input type="tel" name="mobile" id="fMobile" data-req style="padding-left:58px" value="{{ form.mobile.value|default:'' }}"><label style="left:58px">Mobile Number *</label><span class="f-msg">Enter a valid UAE mobile (e.g. 50 123 4567).</span></div>
+            <div class="field"><input type="email" name="email" id="fEmail" data-req value="{{ form.email.value|default:'' }}"><label>Email Address *</label><span class="f-msg">Enter a valid email address.</span></div>
+            <div class="combo" id="cNat" data-label="Nationality"></div>
+            <div class="field"><input type="date" class="filled" id="fDob"><label>Date of Birth</label></div>
+            <div class="pill-wrap full">
+              <label class="t">UAE Residency Status</label>
+              <div class="pill-row" data-single id="resPills">
+                <button type="button" class="pill">UAE National</button>
+                <button type="button" class="pill on">UAE Resident</button>
+                <button type="button" class="pill">Non-Resident</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION 2 -->
+        <section class="fcard" id="sec2">
+          <div class="fcard-h">
+            <span class="fcard-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
+            <div><h2>Employment Information</h2><p>Income and employment profile used for affordability checks.</p></div>
+          </div>
+          <div class="fgrid">
+            <div class="field"><input type="text" id="fEmployer"><label>Employer Name</label></div>
+            <div class="combo" id="cEmpType" data-label="Employment Type"></div>
+            <div class="field"><input type="text" inputmode="numeric" id="fIncome" data-money><label>Monthly Income (AED)</label></div>
+            <div class="field"><input type="number" min="0" step="0.5" id="fYears"><label>Years of Employment</label></div>
+            <div class="combo full" id="cIndustry" data-label="Industry"></div>
+            <!-- self-employed only -->
+            <div class="field se-only" style="display:none"><input type="text" id="fCompany"><label>Company Name</label></div>
+            <div class="field se-only" style="display:none"><input type="text" inputmode="numeric" id="fTurnover" data-money><label>Annual Turnover (AED)</label></div>
+            <div class="field se-only full" style="display:none"><input type="number" min="0" step="0.5" id="fBizYears"><label>Length of Business (Years)</label></div>
+          </div>
+        </section>
+
+        <!-- SECTION 3 -->
+        <section class="fcard" id="sec3">
+          <div class="fcard-h">
+            <span class="fcard-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11.5 12 4l9 7.5"/><path d="M6 10.5V20h4.5v-5h3v5H18v-9.5"/></svg></span>
+            <div><h2>Property Information</h2><p>Property and financing requirements.</p></div>
+          </div>
+          <div class="fgrid">
+            <div class="field"><input type="text" name="property_value" inputmode="numeric" id="fPropVal" data-money data-sum="prop" value="{{ form.property_value.value|default:'' }}"><label>Property Value (AED) *</label></div>
+            <div class="field"><input type="number" name="ltv" inputmode="numeric" id="fLtv" min="0" max="100" step="1" value="{{ form.ltv.value|default:80 }}" class="filled"><label>LTV (%) *</label><span class="f-hint">Loan-to-Value ratio</span></div>
+            <div class="field"><input type="text" name="loan_amount" inputmode="numeric" id="fLoan" data-money data-sum="loan" value="{{ form.loan_amount.value|default:'' }}"><label>Loan Amount (AED)</label><span class="f-hint" id="loanHint">Auto = LTV % × property value</span></div>
+            <div class="field"><input type="text" inputmode="numeric" id="fDown" data-money><label>Down Payment (AED)</label><span class="f-hint" id="dpPct">Auto = remaining %</span></div>
+            <div class="combo" id="cPropType" data-label="Property Type"></div>
+            <div class="combo full" id="cArea" data-label="Preferred Area"></div>
+          </div>
+        </section>
+
+        <!-- SECTION 4 -->
+        <section class="fcard" id="sec4">
+          <div class="fcard-h">
+            <span class="fcard-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg></span>
+            <div><h2>Bank Preferences</h2><p>Preferred lender and financing structure.</p></div>
+          </div>
+          <div class="fgrid">
+            <div class="combo multi" id="cBank" data-label="Preferred Bank(s)"></div>
+            <div class="pill-wrap">
+              <label class="t">Bank Type</label>
+              <div class="pill-row" data-single id="bankTypePills">
+                <button type="button" class="pill">Conventional</button>
+                <button type="button" class="pill">Islamic</button>
+              </div>
+            </div>
+            <div class="field ta full"><textarea id="fBankNotes"></textarea><label>Special Notes</label></div>
+          </div>
+        </section>
+
+        <!-- SECTION 5 -->
+        <section class="fcard" id="sec5">
+          <div class="fcard-h">
+            <span class="fcard-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m17 11 2 2 4-4"/></svg></span>
+            <div><h2>Lead Assignment</h2><p>Route the lead to the right advisor and tag for reporting.</p></div>
+          </div>
+          <div class="fgrid">
+            <div class="combo" id="cAdvisor" data-label="Assign Advisor" data-avatars data-sum="advisor"></div>
+            <div class="combo" id="cSource" data-label="Lead Source" data-sum="source"></div>
+            <div class="full" id="partnerField" style="display:none">
+              <div class="combo multi" id="cPartners" data-label="Referral Partner(s)"></div>
+            </div>
+            <div class="pill-wrap full">
+              <label class="t">Priority</label>
+              <div class="pill-row" data-single id="prPills">
+                <button type="button" class="pill p-high">High</button>
+                <button type="button" class="pill p-med on">Medium</button>
+                <button type="button" class="pill p-low">Low</button>
+              </div>
+            </div>
+            <div class="full">
+              <label class="t" style="display:block;font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:7px">Tags</label>
+              <div class="tag-box" id="tagBox"><input type="text" id="tagInput" placeholder="Type a tag and press Enter…"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION 6 -->
+        <section class="fcard" id="sec6">
+          <div class="fcard-h">
+            <span class="fcard-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15h6"/></svg></span>
+            <div><h2>Documents</h2><p>Upload customer documents — drag &amp; drop or click to browse.</p></div>
+          </div>
+          <div class="up-grid" id="upGrid"></div>
+        </section>
+
+        <!-- SECTION 7 -->
+        <section class="fcard" id="sec7">
+          <div class="fcard-h">
+            <span class="fcard-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+            <div><h2>Internal Notes</h2><p>Context for the team — visible internally only.</p></div>
+          </div>
+          <div class="note-composer">
+            <span class="p-avatar">KP</span>
+            <div class="note-box">
+              <textarea id="noteText" placeholder="Add an internal note about this lead…"></textarea>
+              <div class="note-actions"><button type="button" class="btn btn-ghost" id="addNote"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Add Note</button></div>
+            </div>
+          </div>
+          <div class="note-list" id="noteList"></div>
+        </section>
+
+        <!-- ACTION BAR -->
+        <div class="action-bar">
+          <a class="btn btn-ghost" href="{% url 'lead_list' %}">Cancel</a>
+          <button type="button" class="btn btn-ghost" id="fillRandom" style="border-color:#F59E0B;color:#B45309" title="Temporary: fill the form with random test data">⚡ Fill Random (test)</button>
+          <span class="draft-note hide-sm" id="draftNote"></span>
+          <span class="spacer"></span>
+          <button type="button" class="btn btn-ghost" id="saveDraft"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>Save Draft</button>
+          <button type="submit" class="btn btn-outline" id="createAssign">Create &amp; Assign</button>
+          <button type="submit" class="btn btn-primary" id="createLead"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>{{ title }}</button>
+        </div>
+      </form>
+
+      <!-- ============ SUMMARY ============ -->
+      <aside class="summary">
+        <div class="sum-card">
+          <div class="sum-head">
+            <label>Lead Summary</label>
+            <div class="name" id="sumName">New Customer</div>
+          </div>
+          <div class="sum-body">
+            <div class="sum-row"><label>Loan Requirement</label><b class="empty-v" id="sumLoan">—</b></div>
+            <div class="sum-row"><label>Property Value</label><b class="empty-v" id="sumProp">—</b></div>
+            <div class="sum-row"><label>Advisor</label><b class="empty-v" id="sumAdvisor">Unassigned</b></div>
+            <div class="sum-row"><label>Source</label><b class="empty-v" id="sumSource">—</b></div>
+            <div class="sum-row" id="sumPartnerRow" style="display:none"><label>Referral Partner(s)</label><b id="sumPartner" style="max-width:165px;white-space:normal">—</b></div>
+            <div class="sum-row"><label>Priority</label><span class="pr-badge" id="sumPriority" style="background:#FEF3E2;color:#B45309">Medium</span></div>
+          </div>
+          <div class="prog-wrap">
+            <div class="prog-top"><label>Profile completion</label><b id="progPct">0%</b></div>
+            <div class="prog-bar"><i id="progBar"></i></div>
+          </div>
+        </div>
+        <div class="sum-tip">
+          <b>Tip:</b> Leads with complete income and property details get pre-approved <b>2.3× faster</b>. Upload the salary certificate to speed up bank submission.
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
+</div>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span id="toastMsg"></span></div>
+
+{{ data|json_script:"page-data" }}
+<script>
+const D=JSON.parse(document.getElementById('page-data').textContent);
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+
+/* sidebar */
+const sidebar=$('#sidebar'),scrim=$('#scrim');
+$('#hamburger').addEventListener('click',()=>{sidebar.classList.add('open');scrim.classList.add('show')});
+scrim.addEventListener('click',()=>{sidebar.classList.remove('open');scrim.classList.remove('show')});
+$$('[data-toggle]').forEach(b=>b.addEventListener('click',()=>{
+  const g=b.closest('.nav-group'),was=g.classList.contains('open');
+  $$('.nav-group.open').forEach(o=>o!==g&&o.classList.remove('open'));
+  g.classList.toggle('open',!was);
+}));
+
+/* ---------- floating labels ---------- */
+function syncFloat(el){el.classList.toggle('filled',!!el.value)}
+$$('.field input,.field textarea').forEach(el=>{
+  syncFloat(el);
+  el.addEventListener('input',()=>{syncFloat(el);el.closest('.field').classList.remove('err');update();});
+});
+
+/* money formatting */
+$$('[data-money]').forEach(el=>el.addEventListener('input',()=>{
+  const raw=el.value.replace(/[^\d]/g,'');
+  el.value=raw?(+raw).toLocaleString('en-US'):'';
+  syncFloat(el);
+}));
+const moneyVal=el=>+($(el).value.replace(/[^\d]/g,''))||0;
+
+/* ---------- combos ---------- */
+const NATS=['United Arab Emirates','India','United Kingdom','Egypt','Pakistan','Russia','China','Lebanon','Jordan','Philippines','Nigeria','USA','Germany','Italy','Spain','South Africa','Saudi Arabia','France','Canada','Australia'];
+const EMP_TYPES=['Salaried','Self-Employed','Business Owner'];
+const INDUSTRIES=['Banking & Finance','Real Estate','Technology','Healthcare','Government','Oil & Gas','Aviation','Education','Hospitality','Retail','Construction','Legal','Media','Logistics'];
+const PROP_TYPES=['Apartment','Villa','Townhouse','Off-Plan'];
+const AREAS=['Dubai Marina','Downtown Dubai','Dubai Hills Estate','Palm Jumeirah','Jumeirah Village Circle','Business Bay','Arabian Ranches','Emirates Hills','Dubai Creek Harbour','Jumeirah Lake Towers','Al Barsha','Mirdif','Town Square','Damac Hills','Bluewaters Island'];
+/* real DB-backed lookups */
+const ADVISOR_MAP={}; D.advisors.forEach(a=>ADVISOR_MAP[a.name]=a.pk);
+const BANK_MAP={}; D.banks.forEach(b=>BANK_MAP[b.name]=b.pk);
+const BANKS=D.banks.map(b=>b.name);
+const ADVISORS=D.advisors.map(a=>a.name);
+const SOURCES=D.sources;
+const ini=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+
+const comboState={};
+function buildCombo(id,opts){
+  const c=document.getElementById(id),label=c.dataset.label,av=c.hasAttribute('data-avatars');
+  c.innerHTML=`<button type="button" class="combo-btn"><span class="val ph">·</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></button>
+    <label>${label}</label>
+    <div class="combo-pop"><input type="text" placeholder="Search…"><div class="combo-list"></div></div>`;
+  const btn=c.querySelector('.combo-btn'),pop=c.querySelector('.combo-pop'),list=c.querySelector('.combo-list'),si=pop.querySelector('input');
+  function renderList(q=''){
+    const f=opts.filter(o=>o.toLowerCase().includes(q.toLowerCase()));
+    list.innerHTML=f.length?f.map(o=>`<button type="button" data-v="${o}" class="${comboState[id]===o?'sel':''}">${av?`<span class="p-avatar">${ini(o)}</span>`:''}${o}</button>`).join(''):`<div class="combo-empty">No results for “${q}”</div>`;
+    list.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+      comboState[id]=b.dataset.v;
+      btn.querySelector('.val').textContent=b.dataset.v;
+      btn.querySelector('.val').classList.remove('ph');
+      c.classList.add('has-val');c.classList.remove('open');
+      update();
+    }));
+  }
+  btn.addEventListener('click',e=>{
+    e.stopPropagation();
+    const was=c.classList.contains('open');
+    $$('.combo.open').forEach(o=>o.classList.remove('open'));
+    c.classList.toggle('open',!was);
+    if(!was){si.value='';renderList();setTimeout(()=>si.focus(),60);}
+  });
+  si.addEventListener('input',()=>renderList(si.value));
+  si.addEventListener('click',e=>e.stopPropagation());
+  renderList();
+}
+buildCombo('cNat',NATS);
+buildCombo('cEmpType',EMP_TYPES);
+buildCombo('cIndustry',INDUSTRIES);
+buildCombo('cPropType',PROP_TYPES);
+buildCombo('cArea',AREAS);
+buildCombo('cAdvisor',ADVISORS);
+buildCombo('cSource',SOURCES);
+
+/* ---------- multi-select combo (referral partners) ---------- */
+const PARTNERS=D.partners||[];
+const multiState={cPartners:[],cBank:[]};
+function buildMultiCombo(id,opts){
+  const c=document.getElementById(id),label=c.dataset.label;
+  c.innerHTML=`<button type="button" class="combo-btn"><span class="ms-chips"><span class="val ph">·</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></button>
+    <label>${label}</label>
+    <div class="combo-pop"><input type="text" placeholder="Search partners…"><div class="combo-list"></div></div>`;
+  const btn=c.querySelector('.combo-btn'),pop=c.querySelector('.combo-pop'),list=c.querySelector('.combo-list'),si=pop.querySelector('input'),chips=c.querySelector('.ms-chips');
+  function refreshBtn(){
+    const sel=multiState[id];
+    chips.innerHTML=sel.length?sel.map(p=>`<span class="chip">${p}<button type="button" data-rm="${p}" aria-label="Remove ${p}">×</button></span>`).join(''):'<span class="val ph">·</span>';
+    c.classList.toggle('has-val',sel.length>0);
+    chips.querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click',e=>{
+      e.stopPropagation();multiState[id]=multiState[id].filter(x=>x!==b.dataset.rm);refreshBtn();renderList(si.value);update();
+    }));
+  }
+  function renderList(q=''){
+    const sel=multiState[id];
+    const f=opts.filter(o=>o.toLowerCase().includes(q.toLowerCase()));
+    list.innerHTML=f.length?f.map(o=>`<button type="button" data-v="${o}" class="${sel.includes(o)?'sel':''}">${o}${sel.includes(o)?'<svg class="ms-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>':''}</button>`).join(''):`<div class="combo-empty">No results for “${q}”</div>`;
+    list.querySelectorAll('button').forEach(b=>b.addEventListener('click',e=>{
+      e.stopPropagation();const v=b.dataset.v;
+      if(multiState[id].includes(v))multiState[id]=multiState[id].filter(x=>x!==v);else multiState[id].push(v);
+      refreshBtn();renderList(si.value);update();
+    }));
+  }
+  btn.addEventListener('click',e=>{
+    e.stopPropagation();const was=c.classList.contains('open');
+    $$('.combo.open').forEach(o=>o.classList.remove('open'));
+    c.classList.toggle('open',!was);
+    if(!was){si.value='';renderList();setTimeout(()=>si.focus(),60);}
+  });
+  si.addEventListener('input',()=>renderList(si.value));
+  si.addEventListener('click',e=>e.stopPropagation());
+  refreshBtn();renderList();
+}
+buildMultiCombo('cPartners',PARTNERS);
+buildMultiCombo('cBank',BANKS);
+document.addEventListener('click',()=>$$('.combo.open').forEach(o=>o.classList.remove('open')));
+
+/* ---------- preselect combos from Django initial values (edit mode) ---------- */
+function presetCombo(id,val){
+  if(!val)return;
+  const c=document.getElementById(id);if(!c)return;
+  comboState[id]=val;
+  const v=c.querySelector('.val');if(v){v.textContent=val;v.classList.remove('ph');}
+  c.classList.add('has-val');
+}
+function presetMulti(id,val){
+  if(!val)return;
+  const c=document.getElementById(id);if(!c)return;
+  multiState[id]=[val];
+  const chips=c.querySelector('.ms-chips');
+  if(chips)chips.innerHTML=`<span class="chip">${val}<button type="button" data-rm="${val}">×</button></span>`;
+  c.classList.add('has-val');
+}
+(function initEdit(){
+  const I=D.init||{};
+  presetCombo('cNat',I.nationality);
+  presetCombo('cAdvisor',I.advisor_name);
+  presetCombo('cSource',I.source);
+  presetMulti('cBank',I.bank_name);
+  if(I.priority){$$('#prPills .pill').forEach(p=>p.classList.toggle('on',p.textContent.trim()===I.priority));}
+})();
+
+/* ---------- pills ---------- */
+$$('[data-single]').forEach(row=>row.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',()=>{
+  row.querySelectorAll('.pill').forEach(x=>x.classList.remove('on'));
+  p.classList.add('on');update();
+})));
+
+/* ---------- tags ---------- */
+const tags=[];
+const tagBox=$('#tagBox'),tagInput=$('#tagInput');
+tagBox.addEventListener('click',()=>tagInput.focus());
+tagInput.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&tagInput.value.trim()){
+    e.preventDefault();
+    const t=tagInput.value.trim();
+    if(!tags.includes(t)){tags.push(t);renderTags();}
+    tagInput.value='';
+  }else if(e.key==='Backspace'&&!tagInput.value&&tags.length){tags.pop();renderTags();}
+});
+function renderTags(){
+  tagBox.querySelectorAll('.chip').forEach(c=>c.remove());
+  tags.forEach((t,i)=>{
+    const c=document.createElement('span');c.className='chip';
+    c.innerHTML=`${t}<button type="button" aria-label="Remove ${t}">×</button>`;
+    c.querySelector('button').addEventListener('click',()=>{tags.splice(i,1);renderTags();});
+    tagBox.insertBefore(c,tagInput);
+  });
+}
+
+/* ---------- uploads ---------- */
+const DOC_IC={
+  passport:'<rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M9 17h6"/>',
+  visa:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/>',
+  eid:'<rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8.5" cy="11" r="2.2"/><path d="M14 9h5M14 13h5M5.5 16.5c.6-1.5 1.7-2.2 3-2.2s2.4.7 3 2.2"/>',
+  doc:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>',
+  bank:'<path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/>'
+};
+const DOCS_SALARIED=[
+  {t:'Passport',ic:'passport'},{t:'Visa',ic:'visa'},{t:'Emirates ID',ic:'eid'},
+  {t:'Bank Statement',ic:'bank'},{t:'Payslip',ic:'doc'},{t:'Salary Certificate',ic:'doc'}
+];
+const DOCS_SELF=[
+  {t:'Passport Copy',ic:'passport'},{t:'Visa Copy',ic:'visa'},{t:'Emirates ID (Front & Back)',ic:'eid'},
+  {t:'Trade Licence',ic:'doc'},{t:'MOA (with amendments)',ic:'doc'},{t:'Company Bank Statements (12 mo)',ic:'bank'},
+  {t:'Personal Bank Statements (12 mo)',ic:'bank'},{t:'Company Profile',ic:'doc'},{t:'Office Tenancy Contract',ic:'doc'},
+  {t:'5 Sales & 5 Purchase Invoices',ic:'doc'},{t:'Employee List',ic:'doc'},{t:'VAT Return (1 Year)',ic:'doc'},{t:'AECB Report',ic:'doc'}
+];
+const fmtSize=b=>b>1048576?(b/1048576).toFixed(1)+' MB':(b/1024).toFixed(0)+' KB';
+let currentDocSet='salaried';
+function renderDocs(set){
+  currentDocSet=set;
+  const list=set==='self'?DOCS_SELF:DOCS_SALARIED;
+  $('#upGrid').innerHTML=list.map((d,i)=>`
+    <div class="up-zone" data-k="d${i}">
+      <span class="up-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${DOC_IC[d.ic]}</svg></span>
+      <b>${d.t}</b>
+      <p>Drag &amp; drop or click to browse · PDF, JPG, PNG</p>
+      <div class="up-file" style="display:none"><span></span><em></em><button type="button">Remove</button></div>
+      <input type="file" accept=".pdf,.jpg,.jpeg,.png">
+    </div>`).join('');
+  $$('#upGrid .up-zone').forEach(z=>{
+    const inp=z.querySelector('input[type=file]'),fileRow=z.querySelector('.up-file'),p=z.querySelector('p');
+    function setFile(f){
+      if(!f)return;
+      z.classList.add('has-file');p.style.display='none';
+      fileRow.style.display='flex';
+      fileRow.querySelector('span').textContent=f.name;
+      fileRow.querySelector('em').textContent=fmtSize(f.size);
+      toast(`${f.name} attached`);
+    }
+    z.addEventListener('click',e=>{if(!z.classList.contains('has-file')&&e.target.tagName!=='BUTTON')inp.click();});
+    inp.addEventListener('change',()=>setFile(inp.files[0]));
+    z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('drag');});
+    z.addEventListener('dragleave',()=>z.classList.remove('drag'));
+    z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('drag');setFile(e.dataTransfer.files[0]);});
+    fileRow.querySelector('button').addEventListener('click',e=>{
+      e.stopPropagation();inp.value='';
+      z.classList.remove('has-file');p.style.display='';fileRow.style.display='none';
+    });
+  });
+}
+renderDocs('salaried');
+
+/* ---------- notes ---------- */
+$('#addNote').addEventListener('click',()=>{
+  const t=$('#noteText').value.trim();if(!t)return;
+  const d=document.createElement('div');d.className='note-item';
+  const time=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  d.innerHTML=`<span class="p-avatar">KP</span>
+    <div class="note-body"><div class="meta"><b>Kunal Darji</b><time>Today · ${time}</time></div><p></p></div>`;
+  d.querySelector('p').textContent=t;
+  $('#noteList').prepend(d);
+  $('#noteText').value='';
+  toast('Note added');
+});
+
+/* ---------- live summary + progress ---------- */
+const PR_COLORS={High:['#FEE2E2','#DC2626'],Medium:['#FEF3E2','#B45309'],Low:['#EDFAF1','#16A34A']};
+function update(){
+  const name=$('#fName').value.trim();
+  $('#sumName').textContent=name||'New Customer';
+
+  /* sync decorative combos/pills into real Django form fields */
+  $('#hNationality').value=comboState['cNat']||'';
+  $('#hAdvisor').value=comboState['cAdvisor']?(ADVISOR_MAP[comboState['cAdvisor']]||''):'';
+  $('#hBank').value=multiState.cBank.length?(BANK_MAP[multiState.cBank[0]]||''):'';
+  $('#hSource').value=comboState['cSource']||'Website';
+  {
+    const prNow=$('#prPills .on')?.textContent?.trim()||'Medium';
+    $('#hPriority').value=prNow;
+  }
+
+  const loan=moneyVal('#fLoan'),prop=moneyVal('#fPropVal'),down=moneyVal('#fDown');
+  const fmt=v=>v?'AED '+(v>=1e6?(v/1e6).toFixed(2)+'M':v.toLocaleString('en-US')):null;
+  setSum('sumLoan',fmt(loan));
+  setSum('sumProp',fmt(prop));
+  setSum('sumAdvisor',comboState['cAdvisor']||null,'Unassigned');
+  setSum('sumSource',comboState['cSource']||null);
+
+  /* show referral partner multi-select only when source = Referral Partner */
+  const isRef=comboState['cSource']==='Referral Partner';
+  const pf=$('#partnerField');
+  if(pf){
+    pf.style.display=isRef?'':'none';
+    if(!isRef&&multiState.cPartners.length){
+      multiState.cPartners=[];
+      const chips=$('#cPartners .ms-chips');
+      if(chips)chips.innerHTML='<span class="val ph">·</span>';
+      $('#cPartners').classList.remove('has-val');
+    }
+  }
+  /* referral partners in summary */
+  const pRow=$('#sumPartnerRow');
+  if(pRow){
+    if(isRef&&multiState.cPartners.length){pRow.style.display='';$('#sumPartner').textContent=multiState.cPartners.join(', ');}
+    else pRow.style.display='none';
+  }
+
+  /* self-employed: extra fields + different document checklist */
+  const isSelf=comboState['cEmpType']==='Self-Employed';
+  $$('.se-only').forEach(el=>el.style.display=isSelf?'':'none');
+  const wantSet=isSelf?'self':'salaried';
+  if(wantSet!==currentDocSet)renderDocs(wantSet);
+
+  const pr=$('#prPills .on')?.textContent||'Medium';
+  const [bg,fg]=PR_COLORS[pr];
+  const pb=$('#sumPriority');pb.textContent=pr;pb.style.background=bg;pb.style.color=fg;
+
+  /* LTV-driven auto-calc: Loan = LTV% × value, Down Payment = remaining */
+  let ltv=parseFloat($('#fLtv').value);
+  if(isNaN(ltv))ltv=0; if(ltv>100)ltv=100; if(ltv<0)ltv=0;
+  if(prop){
+    const loanCalc=Math.round(prop*ltv/100);
+    const downCalc=prop-loanCalc;
+    $('#fLoan').value=loanCalc?loanCalc.toLocaleString('en-US'):'';
+    $('#fDown').value=downCalc?downCalc.toLocaleString('en-US'):'';
+    syncFloat($('#fLoan'));syncFloat($('#fDown'));
+    $('#dpPct').textContent=`Auto = ${100-ltv}% of property value`;
+    setSum('sumLoan',fmt(loanCalc));
+  }else{
+    $('#fLoan').value='';$('#fDown').value='';
+    syncFloat($('#fLoan'));syncFloat($('#fDown'));
+  }
+
+  /* completion: required + key optional fields */
+  const checks=[
+    !!name, !!$('#fMobile').value.trim(), !!$('#fEmail').value.trim(), !!comboState['cNat'],
+    !!$('#fEmployer').value.trim(), !!comboState['cEmpType'], !!moneyVal('#fIncome'),
+    !!prop, !!moneyVal('#fLoan'), !!comboState['cPropType'], !!comboState['cArea'],
+    !!multiState.cBank.length, !!comboState['cAdvisor'], !!comboState['cSource']
+  ];
+  const pct=Math.round(checks.filter(Boolean).length/checks.length*100);
+  $('#progPct').textContent=pct+'%';
+  $('#progBar').style.width=pct+'%';
+}
+function setSum(id,val,emptyText='—'){
+  const el=document.getElementById(id);
+  el.textContent=val||emptyText;
+  el.classList.toggle('empty-v',!val);
+}
+$('#fLoan').addEventListener('input',()=>{$('#fLoan').dataset.touched='1';});
+update();
+
+/* ---------- validation ---------- */
+function validate(){
+  let ok=true,first=null;
+  const reqs=[
+    {el:'#fName',test:v=>v.trim().length>1},
+    {el:'#fMobile',test:v=>/^[\d\s]{7,}$/.test(v.trim())},
+    {el:'#fEmail',test:v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim())},
+    {el:'#fPropVal',test:v=>moneyVal('#fPropVal')>0},
+    {el:'#fLoan',test:v=>moneyVal('#fLoan')>0}
+  ];
+  reqs.forEach(r=>{
+    const el=$(r.el),f=el.closest('.field');
+    const valid=r.test(el.value);
+    f.classList.toggle('err',!valid);
+    if(!valid){ok=false;first=first||f;}
+  });
+  if(first)first.scrollIntoView({behavior:'smooth',block:'center'});
+  return ok;
+}
+$$('[data-req]').forEach(el=>el.addEventListener('blur',()=>{
+  if(el.value)el.closest('.field').classList.remove('err');
+}));
+
+/* ---------- actions: real Django submit ---------- */
+$('#leadForm').addEventListener('submit',e=>{
+  update();
+  if(!validate()){e.preventDefault();toast('Please complete the required fields');return;}
+  /* strip thousands separators so DecimalField accepts the numbers */
+  ['#fPropVal','#fLoan'].forEach(sel=>{const el=$(sel);if(el)el.value=el.value.replace(/[^\d.]/g,'');});
+});
+$('#saveDraft').addEventListener('click',()=>{
+  const time=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  $('#draftNote').textContent='Draft saved at '+time;
+  toast('Draft saved');
+});
+
+/* ---------- TEMP: one-click random test data ---------- */
+(function(){
+  const btn=$('#fillRandom'); if(!btn) return;
+  const NAMES=['Rania Saeed','Omar Haddad','Priya Nair','Daniel Roy','Aisha Verma','Karan Shah','Leila Aziz','Marcus Lee','Sana Iqbal','Yousef Ali','Nora Aziz','Hassan Qadir'];
+  const EMPLOYERS=['Emirates Group','ADNOC','Majid Al Futtaim','Etisalat','DP World','Emaar','Dubai Holding'];
+  const pick=a=>a[Math.floor(Math.random()*a.length)];
+  const ri=(lo,hi)=>Math.floor(Math.random()*(hi-lo+1))+lo;
+  function setF(sel,val){const el=$(sel);if(!el)return;el.value=val;el.dispatchEvent(new Event('input',{bubbles:true}));}
+  btn.addEventListener('click',()=>{
+    const nm=pick(NAMES);
+    setF('#fName',nm);
+    setF('#fMobile','5'+ri(0,6)+' '+ri(100,999)+' '+ri(1000,9999));
+    setF('#fEmail',nm.toLowerCase().replace(/[^a-z]+/g,'.')+ri(1,99)+'@example.com');
+    setF('#fPropVal',String(ri(80,450)*10000));
+    setF('#fLtv',String(pick([65,70,75,80,85])));
+    presetCombo('cNat',pick(NATS));
+    if(typeof ADVISORS!=='undefined'&&ADVISORS.length)presetCombo('cAdvisor',pick(ADVISORS));
+    presetCombo('cSource',pick(SOURCES));
+    if(typeof BANKS!=='undefined'&&BANKS.length)presetMulti('cBank',pick(BANKS));
+    const emp=$('#fEmployer');if(emp)setF('#fEmployer',pick(EMPLOYERS));
+    const prs=$$('#prPills .pill');
+    if(prs.length){prs.forEach(p=>p.classList.remove('on'));pick(prs).classList.add('on');}
+    update();
+    toast('Random test data filled — review & submit');
+  });
+})();
+
+/* ---------- stepper / scroll-spy ---------- */
+const steps=$$('.step'),secs=$$('.fcard[id]');
+steps.forEach(s=>s.addEventListener('click',()=>{
+  document.getElementById(s.dataset.go).scrollIntoView({behavior:'smooth',block:'start'});
+}));
+const spy=new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      const i=secs.indexOf(e.target);
+      steps.forEach((s,j)=>{
+        s.classList.toggle('cur',j===i);
+        s.classList.toggle('done',j<i);
+      });
+    }
+  });
+},{rootMargin:'-20% 0px -65% 0px'});
+secs.forEach(s=>spy.observe(s));
+
+/* toast */
+let tTimer;
+function toast(msg){
+  $('#toastMsg').textContent=msg;
+  $('#toast').classList.add('show');
+  clearTimeout(tTimer);tTimer=setTimeout(()=>$('#toast').classList.remove('show'),2400);
+}
+</script>
+</body>
+</html>

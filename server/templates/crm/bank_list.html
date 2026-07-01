@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mortgage CRM — All Banks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#05448B;--primary-h:#0B5AB3;--blue-2:#2D6CB0;--blue-3:#7FA6CF;
+  --blue-50:#F0F5FB;--blue-100:#DEEAF6;
+  --bg:#F7F9FC;--card:#FFFFFF;
+  --text:#0F172A;--text-2:#64748B;--text-3:#94A3B8;
+  --border:#E2E8F0;--border-soft:#EEF2F7;
+  --success:#16A34A;--warning:#B45309;--danger:#DC2626;
+  --r:14px;
+  --sh-xs:0 1px 2px rgba(15,23,42,.05);
+  --sh-sm:0 1px 3px rgba(15,23,42,.06),0 1px 2px rgba(15,23,42,.04);
+  --sh-md:0 4px 12px -2px rgba(15,23,42,.08);
+  --sh-lg:0 12px 32px -8px rgba(15,23,42,.18);
+  --sb:256px;
+  --font:'Inter',system-ui,-apple-system,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+a{color:inherit;text-decoration:none}
+::selection{background:var(--blue-100)}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+.app{display:flex;min-height:100vh}
+.main{flex:1;min-width:0;margin-left:var(--sb)}
+
+/* sidebar */
+.sidebar{position:fixed;inset:0 auto 0 0;width:var(--sb);background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:60;transition:transform .28s cubic-bezier(.4,0,.2,1)}
+.brand{display:flex;align-items:center;gap:11px;padding:20px 20px 16px}
+.brand-mark{width:36px;height:36px;border-radius:10px;background:var(--primary);display:grid;place-items:center;flex-shrink:0}
+.brand-name{font-weight:700;font-size:15px;letter-spacing:-.015em;color:var(--text)}
+.brand-sub{font-size:11px;color:var(--text-3);font-weight:500}
+.nav{flex:1;overflow-y:auto;padding:6px 12px 16px;scrollbar-width:thin;scrollbar-color:#D7DEE8 transparent}
+.nav::-webkit-scrollbar{width:5px}
+.nav::-webkit-scrollbar-thumb{background:#D7DEE8;border-radius:4px}
+.nav-label{font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--text-3);padding:18px 12px 7px;margin-top:2px}
+.nav-label:first-child{margin-top:0;padding-top:8px}
+.nav-item{display:flex;align-items:center;gap:11px;width:100%;padding:8.5px 11px;border-radius:9px;color:#3F4C61;font-size:13.5px;font-weight:500;text-align:left;transition:background .13s,color .13s;position:relative}
+.nav-item svg{width:17px;height:17px;flex-shrink:0;color:var(--text-2);transition:color .13s}
+.nav-item:hover{background:#F3F6FA;color:var(--text)}
+.nav-item:hover svg{color:var(--text)}
+.nav-item.active{background:var(--blue-50);color:var(--primary);font-weight:600}
+.nav-item.active svg{color:var(--primary)}
+.nav-item.active::before{content:"";position:absolute;left:-12px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--primary)}
+.nav-item .chev{margin-left:auto;width:13px;height:13px;color:var(--text-3);transition:transform .22s cubic-bezier(.4,0,.2,1)}
+.nav-group{margin-bottom:1px}
+.nav-group.open>.nav-item{color:var(--text)}
+.nav-group.open>.nav-item svg{color:var(--text)}
+.nav-group.open .chev{transform:rotate(90deg);color:var(--primary)}
+.nav-sub{overflow:hidden;max-height:0;transition:max-height .3s cubic-bezier(.4,0,.2,1);padding-left:4px;margin-left:18px;border-left:1px solid var(--border-soft)}
+.nav-group.open .nav-sub{max-height:320px}
+.nav-sub .nav-item{padding:6.5px 11px 6.5px 22px;font-size:12.75px;color:var(--text-2);font-weight:500;border-radius:7px;margin:1px 0}
+.nav-sub .nav-item:hover{color:var(--text);background:#F3F6FA}
+.nav-sub .nav-item.active{background:var(--blue-50);color:var(--primary);font-weight:600}
+.nav-sub .nav-item.active::before{display:none}
+.nav-count{margin-left:auto;font-size:11px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--blue-50);color:var(--primary)}
+.sidebar-foot{padding:12px;border-top:1px solid var(--border-soft)}
+.user-card{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;transition:background .13s;width:100%;text-align:left}
+.user-card:hover{background:#F3F6FA}
+.user-card b{display:block;font-size:13px;font-weight:600}
+.user-card span{font-size:11.5px;color:var(--text-3)}
+.avatar{width:32px;height:32px;border-radius:9px;background:var(--primary);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
+
+/* header */
+.header{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;padding:13px 28px;background:rgba(255,255,255,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.hamburger{display:none;width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:#fff;place-items:center}
+.page-title{font-size:15px;font-weight:700;letter-spacing:-.01em;margin-right:6px}
+.search{flex:1;max-width:400px;position:relative}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--text-3)}
+.search input{width:100%;padding:8.5px 64px 8.5px 36px;border-radius:10px;border:1px solid var(--border);background:var(--bg);font:inherit;font-size:13.5px;transition:all .15s}
+.search input::placeholder{color:var(--text-3)}
+.search input:focus{outline:none;background:#fff;border-color:var(--primary);box-shadow:0 0 0 3px rgba(5,68,139,.10)}
+.kbd{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:10.5px;font-weight:600;color:var(--text-3);border:1px solid var(--border);background:#fff;border-radius:5px;padding:1px 6px}
+.h-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+.icon-btn{width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:#fff;display:grid;place-items:center;color:var(--text-2);position:relative;transition:all .14s}
+.icon-btn:hover{color:var(--text);border-color:#CBD5E1;background:var(--bg)}
+.icon-btn svg{width:16px;height:16px}
+.dot{position:absolute;top:8px;right:8px;width:6px;height:6px;border-radius:50%;background:var(--danger);border:1.5px solid #fff}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8.5px 14px;border-radius:9px;font-size:13px;font-weight:600;transition:all .14s;white-space:nowrap}
+.btn svg{width:15px;height:15px}
+.btn-ghost{background:#fff;border:1px solid var(--border);color:var(--text-2)}
+.btn-ghost:hover{color:var(--text);border-color:#CBD5E1;background:var(--bg)}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:var(--sh-xs)}
+.btn-primary:hover{background:var(--primary-h)}
+
+/* content */
+.content{padding:24px 28px 48px;display:flex;flex-direction:column;gap:18px;max-width:1620px;width:100%;margin:0 auto}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.page-head h1{font-size:21px;font-weight:700;letter-spacing:-.02em}
+.page-head p{color:var(--text-2);font-size:13.5px;margin-top:3px;max-width:640px}
+.page-head .actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px 15px 12px;box-shadow:var(--sh-xs);transition:box-shadow .16s,border-color .16s}
+.kpi:hover{box-shadow:var(--sh-md);border-color:#D4DDE8}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.kpi-ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--blue-50);color:var(--primary)}
+.kpi-ic.green{background:#EDFAF1;color:var(--success)}
+.kpi-ic svg{width:14px;height:14px}
+.kpi label{font-size:11.5px;font-weight:600;color:var(--text-2);display:block}
+.kpi .val{font-size:22px;font-weight:700;letter-spacing:-.025em;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi-foot{display:flex;align-items:flex-end;justify-content:space-between;margin-top:6px;gap:6px}
+.delta{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700}
+.delta svg{width:10px;height:10px}
+.delta.pos{color:var(--success)}.delta.neg{color:var(--danger)}.delta.mut{color:var(--text-3)}
+.spark{width:54px;height:22px;flex-shrink:0}
+
+/* filter bar */
+.filter-bar{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-xs);padding:12px 14px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.f-search{position:relative;flex:1;min-width:200px}
+.f-search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-3)}
+.f-search input{width:100%;padding:8px 12px 8px 33px;border-radius:9px;border:1px solid var(--border);background:var(--bg);font:inherit;font-size:13px;transition:all .15s}
+.f-search input:focus{outline:none;background:#fff;border-color:var(--primary);box-shadow:0 0 0 3px rgba(5,68,139,.10)}
+.f-dd{position:relative}
+.f-dd-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:9px;border:1px solid var(--border);background:#fff;font-size:12.5px;font-weight:600;color:var(--text-2);transition:all .14s;white-space:nowrap}
+.f-dd-btn:hover{border-color:#CBD5E1;color:var(--text)}
+.f-dd-btn.on{border-color:var(--primary);color:var(--primary);background:var(--blue-50)}
+.f-dd-btn svg{width:12px;height:12px;color:var(--text-3);transition:transform .18s}
+.f-dd.open .f-dd-btn svg{transform:rotate(180deg)}
+.f-dd-menu{position:absolute;top:calc(100% + 6px);left:0;min-width:190px;background:#fff;border:1px solid var(--border);border-radius:11px;box-shadow:var(--sh-lg);padding:5px;z-index:40;opacity:0;transform:translateY(-4px);pointer-events:none;transition:all .15s;max-height:300px;overflow-y:auto}
+.f-dd.open .f-dd-menu{opacity:1;transform:none;pointer-events:auto}
+.f-dd-menu button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:7.5px 10px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--text-2);transition:background .12s}
+.f-dd-menu button:hover{background:var(--bg);color:var(--text)}
+.f-dd-menu button.sel{background:var(--blue-50);color:var(--primary);font-weight:600}
+.clear-btn{font-size:12.5px;font-weight:600;color:var(--text-3);padding:8px 10px;border-radius:9px;transition:all .14s}
+.clear-btn:hover{color:var(--danger);background:#FEF2F2}
+
+/* cards */
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-xs);min-width:0}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 20px 0}
+.card-h h3{font-size:14px;font-weight:700;letter-spacing:-.008em}
+.card-h .sub{font-size:12px;color:var(--text-2);margin-top:1px}
+.card-body{padding:14px 20px 18px}
+.link-btn{font-size:12px;font-weight:600;color:var(--primary);padding:4px 9px;border-radius:7px;transition:background .14s}
+.link-btn:hover{background:var(--blue-50)}
+
+/* table */
+.tbl-wrap{overflow-x:auto;border-radius:0 0 var(--r) var(--r)}
+.tbl{width:100%;border-collapse:collapse;min-width:1100px}
+.tbl thead th{position:sticky;top:0;background:#FAFCFE;z-index:5;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);text-align:left;padding:11px 13px;border-bottom:1px solid var(--border);white-space:nowrap;user-select:none}
+.tbl thead th.sortable{cursor:pointer}
+.tbl thead th.sortable:hover{color:var(--text)}
+.tbl thead th.r,.tbl td.r{text-align:right}
+.tbl thead th .s-ic{margin-left:4px;font-size:9px;opacity:.6}
+.tbl td{padding:12px 13px;border-bottom:1px solid var(--border-soft);font-size:12.5px;vertical-align:middle;white-space:nowrap}
+.tbl tbody tr{transition:background .12s}
+.tbl tbody tr:hover{background:#FAFCFE}
+.tbl tr:last-child td{border-bottom:none}
+.num{font-variant-numeric:tabular-nums;font-weight:600}
+.bank-cell{display:flex;align-items:center;gap:11px}
+.bank-ic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;flex-shrink:0;font-size:11.5px;font-weight:800;color:#fff}
+.bank-cell b{display:block;font-size:12.5px;font-weight:600}
+.bank-cell span{font-size:10.5px;color:var(--text-3)}
+.tag{display:inline-flex;font-size:10.5px;font-weight:600;padding:2.5px 9px;border-radius:7px;background:var(--bg);color:var(--text-2);border:1px solid var(--border-soft)}
+.tag.islamic{background:#EDFAF1;color:var(--success);border-color:#D1FAE5}
+.tag.conv{background:var(--blue-50);color:var(--blue-2);border-color:var(--blue-100)}
+.ratio{display:flex;align-items:center;gap:8px;min-width:118px}
+.ratio b{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;width:34px}
+.ratio .bar{flex:1;height:6px;border-radius:99px;background:var(--border-soft);overflow:hidden}
+.ratio .bar i{display:block;height:100%;border-radius:99px}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:99px}
+.status i{width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block}
+.status.active{background:#EDFAF1;color:var(--success)}
+.status.partner{background:var(--blue-50);color:var(--primary)}
+.status.inactive{background:#F1F5F9;color:var(--text-3)}
+.kebab{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--text-3);transition:all .13s}
+.kebab:hover{background:var(--blue-50);color:var(--primary)}
+.kebab svg{width:15px;height:15px}
+.menu-pop{position:fixed;min-width:182px;background:#fff;border:1px solid var(--border);border-radius:11px;box-shadow:var(--sh-lg);padding:5px;z-index:80;display:none}
+.menu-pop.show{display:block;animation:popIn .14s ease}
+@keyframes popIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.menu-pop button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:7.5px 10px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--text-2);transition:background .12s}
+.menu-pop button:hover{background:var(--bg);color:var(--text)}
+.menu-pop button.primary{color:var(--primary);font-weight:600}
+.menu-pop svg{width:13.5px;height:13.5px}
+.menu-sep{height:1px;background:var(--border-soft);margin:4px 6px}
+
+/* layout rows */
+.row2{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+
+/* leaderboard */
+.lead-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.lead-card{border:1px solid var(--border-soft);border-radius:12px;padding:15px;background:var(--bg);transition:all .15s;position:relative;overflow:hidden}
+.lead-card:hover{background:#fff;border-color:var(--border);box-shadow:var(--sh-xs)}
+.lead-card .rank{position:absolute;top:13px;right:14px;font-size:12px;font-weight:800;color:var(--text-3)}
+.lead-card.gold{background:linear-gradient(135deg,#FFFBEB,#fff);border-color:#FCE9B6}
+.lead-card .lc-h{display:flex;align-items:center;gap:10px;margin-bottom:13px}
+.lead-card .bank-ic{width:36px;height:36px}
+.lead-card b.nm{font-size:13.5px;font-weight:700}
+.lead-card .lc-stats{display:flex;flex-direction:column;gap:8px}
+.lead-card .ls-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.lead-card .ls-row label{font-size:11px;font-weight:600;color:var(--text-3)}
+.lead-card .ls-row b{font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.donut-legend{flex:1;min-width:140px;display:flex;flex-direction:column;gap:8px}
+.donut-legend .dl{display:flex;align-items:center;gap:9px;font-size:12px}
+.donut-legend .dl i{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.donut-legend .dl b{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums}
+.donut-legend .dl span{color:var(--text-2)}
+canvas{display:block;width:100%}
+.chart-legend{display:flex;gap:14px;flex-wrap:wrap}
+.chart-legend span{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--text-2)}
+.chart-legend i{width:9px;height:9px;border-radius:3px;display:inline-block}
+
+/* activity feed */
+.feed{display:flex;flex-direction:column;max-height:360px;overflow-y:auto;padding-right:4px;scrollbar-width:thin}
+.feed::-webkit-scrollbar{width:5px}
+.feed::-webkit-scrollbar-thumb{background:#D7DEE8;border-radius:4px}
+.feed-item{display:flex;gap:11px;position:relative;padding-bottom:15px}
+.feed-item::before{content:"";position:absolute;left:14px;top:31px;bottom:0;width:1.5px;background:var(--border-soft)}
+.feed-item:last-child{padding-bottom:0}
+.feed-item:last-child::before{display:none}
+.feed-ic{width:29px;height:29px;border-radius:9px;display:grid;place-items:center;flex-shrink:0;z-index:1;background:var(--blue-50);color:var(--primary)}
+.feed-ic.ok{background:#EDFAF1;color:var(--success)}
+.feed-ic svg{width:13px;height:13px}
+.feed-body p{font-size:12.3px;line-height:1.45}
+.feed-body p b{font-weight:600}
+.feed-body time{font-size:10.5px;color:var(--text-3)}
+
+/* modal */
+.modal-scrim{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:85;opacity:0;pointer-events:none;transition:opacity .2s;display:grid;place-items:center;padding:20px;overflow-y:auto}
+.modal-scrim.show{opacity:1;pointer-events:auto}
+.modal{background:#fff;border-radius:16px;box-shadow:var(--sh-lg);width:100%;max-width:520px;transform:translateY(12px) scale(.98);transition:transform .22s cubic-bezier(.4,0,.2,1);margin:auto}
+.modal-scrim.show .modal{transform:none}
+.modal-h{padding:18px 22px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;gap:12px}
+.modal-h .m-ic{width:36px;height:36px;border-radius:10px;background:var(--blue-50);color:var(--primary);display:grid;place-items:center;flex-shrink:0}
+.modal-h .m-ic svg{width:17px;height:17px}
+.modal-h b{font-size:15px;font-weight:700;display:block}
+.modal-h span{font-size:12px;color:var(--text-3)}
+.modal-h .x{margin-left:auto;width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--text-3)}
+.modal-h .x:hover{background:var(--bg);color:var(--text)}
+.modal-body{padding:18px 22px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fld{display:flex;flex-direction:column;gap:6px}
+.fld.full{grid-column:1/-1}
+.fld label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-3)}
+.fld input,.fld select,.fld textarea{padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:#fff;font:inherit;font-size:13px;color:var(--text);transition:all .15s}
+.fld textarea{resize:vertical;min-height:64px}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(5,68,139,.10)}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--border-soft);display:flex;gap:9px;justify-content:flex-end}
+
+/* toast / scrim / responsive */
+.toast{position:fixed;bottom:26px;right:26px;background:#0F172A;color:#fff;font-size:12.5px;font-weight:600;padding:11px 16px;border-radius:11px;box-shadow:var(--sh-lg);z-index:95;opacity:0;transform:translateY(10px);transition:all .25s;display:flex;align-items:center;gap:9px}
+.toast.show{opacity:1;transform:none}
+.toast svg{width:15px;height:15px;color:#4ADE80}
+.scrim{position:fixed;inset:0;background:rgba(15,23,42,.35);z-index:55;opacity:0;pointer-events:none;transition:opacity .25s}
+.scrim.show{opacity:1;pointer-events:auto}
+@media (max-width:1400px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:1100px){.row2{grid-template-columns:1fr}.lead-grid{grid-template-columns:1fr}}
+@media (max-width:960px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0);box-shadow:20px 0 50px rgba(15,23,42,.2)}
+  .main{margin-left:0}.hamburger{display:grid}.hide-md{display:none}
+}
+@media (max-width:660px){
+  .content{padding:16px 14px 40px}.header{padding:10px 14px}
+  .kpi-grid{grid-template-columns:1fr 1fr}.hide-sm{display:none}
+  .modal-body{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+{% include 'crm/_sidebar.html' %}
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+  <header class="header">
+    <button class="hamburger" id="hamburger" aria-label="Open navigation"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0F172A" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+    <span class="page-title hide-sm">All Banks</span>
+    <div class="search hide-sm">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="globalSearch" type="text" placeholder="Search leads, applications, banks…" aria-label="Global search">
+      <span class="kbd">⌘K</span>
+    </div>
+    <div class="h-actions">
+      <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot"></span></button>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <!-- PAGE HEAD -->
+    <div class="page-head">
+      <div>
+        <h1>All Banks</h1>
+        <p>Manage partner banks, monitor performance and track mortgage application activity.</p>
+      </div>
+      <div class="actions">
+        <button class="btn btn-ghost" id="refreshBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>Refresh</button>
+        <a class="btn btn-ghost" href="{% url 'bank_export' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export Banks</a>
+        <button class="btn btn-primary" id="addBankBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Add Bank</button>
+      </div>
+    </div>
+
+    <!-- KPI -->
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar" id="filterBar">
+      <div class="f-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="bankSearch" placeholder="Search bank name…">
+      </div>
+      <div class="f-dd" data-filter="status"></div>
+      <div class="f-dd" data-filter="type"></div>
+      <div class="f-dd" data-filter="ratio"></div>
+      <div class="f-dd" data-filter="apps"></div>
+      <div class="f-dd" data-filter="sort"></div>
+      <button class="clear-btn" id="clearFilters">✕&nbsp; Clear Filters</button>
+    </div>
+
+    <!-- BANKS TABLE -->
+    <div class="card">
+      <div class="card-h"><div><h3>Bank Directory</h3><div class="sub">All banks available in the CRM — the master source for lending partners</div></div><span class="tag" id="tblCount"></span></div>
+      <div class="tbl-wrap">
+        <table class="tbl" id="bankTable">
+          <thead><tr>
+            <th class="sortable" data-k="name">Bank Name<span class="s-ic"></span></th>
+            <th>Type</th>
+            <th>Contact Person</th>
+            <th class="sortable r" data-k="leads">Active Leads<span class="s-ic"></span></th>
+            <th class="sortable r" data-k="approved">Approved<span class="s-ic"></span></th>
+            <th class="sortable r" data-k="disbursed">Disbursed<span class="s-ic"></span></th>
+            <th class="sortable r" data-k="ratio">Approval Ratio<span class="s-ic"></span></th>
+            <th class="sortable r" data-k="revenue">Revenue<span class="s-ic"></span></th>
+            <th>Status</th>
+            <th style="width:44px"></th>
+          </tr></thead>
+          <tbody id="bankBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TOP PERFORMING -->
+    <div class="card">
+      <div class="card-h"><div><h3>Top Performing Banks</h3><div class="sub">Ranked by approval ratio, disbursements and revenue</div></div></div>
+      <div class="card-body"><div class="lead-grid" id="leadGrid"></div></div>
+    </div>
+
+    <!-- COMPARISON + DONUT -->
+    <div class="row2">
+      <div class="card">
+        <div class="card-h"><div><h3>Bank Performance Comparison</h3><div class="sub">Applications, approvals, disbursements &amp; revenue across top banks</div></div>
+          <div class="chart-legend hide-sm">
+            <span><i style="background:#05448B"></i>Applications</span>
+            <span><i style="background:#2D6CB0"></i>Approvals</span>
+            <span><i style="background:#7FA6CF"></i>Disbursed</span>
+            <span><i style="background:#16A34A"></i>Revenue (AED K)</span>
+          </div>
+        </div>
+        <div class="card-body"><canvas id="cmpChart" width="1100" height="300" style="height:300px"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><div><h3>Bank Type Distribution</h3><div class="sub">Conventional vs Islamic</div></div></div>
+        <div class="card-body">
+          <div class="donut-wrap">
+            <canvas id="donut" width="320" height="320" style="width:160px;height:160px;flex-shrink:0"></canvas>
+            <div class="donut-legend" id="donutLegend"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIVITY -->
+    <div class="card">
+      <div class="card-h"><div><h3>Recent Bank Activity</h3><div class="sub">Latest changes across lending partners</div></div></div>
+      <div class="card-body"><div class="feed" id="feed"></div></div>
+    </div>
+
+  </main>
+</div>
+</div>
+
+<!-- ROW MENU -->
+<div class="menu-pop" id="rowMenu">
+  <button class="primary" data-act="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>Edit Bank</button>
+  <button data-act="toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"/></svg><span class="tgl-lbl">Activate / Deactivate</span></button>
+</div>
+
+<!-- ADD / EDIT MODAL -->
+<div class="modal-scrim" id="bankModal">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-h">
+      <span class="m-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg></span>
+      <div><b id="modalTitle">Add Bank</b><span id="modalSub">Register a new lending partner</span></div>
+      <button class="x" id="mClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <form id="bankForm" method="post">
+    {% csrf_token %}
+    <div class="modal-body">
+      <div class="fld full"><label>Bank Name</label><input type="text" id="fName" name="name" placeholder="e.g. Dubai Islamic Bank"></div>
+      <div class="fld"><label>Bank Type</label><select id="fType" name="bank_type"><option>Conventional</option><option>Islamic</option></select></div>
+      <div class="fld"><label>Status</label><select id="fStatus" name="status"><option>Active</option><option>Partner</option><option>Inactive</option></select></div>
+      <div class="fld"><label>Contact Person</label><input type="text" id="fContact" name="contact_person" placeholder="Full name"></div>
+      <div class="fld"><label>Commission %</label><input type="number" id="fComm" step="0.1" min="0" placeholder="e.g. 1.1"></div>
+      <div class="fld"><label>Email</label><input type="email" id="fEmail" placeholder="name@bank.com"></div>
+      <div class="fld"><label>Phone</label><input type="tel" id="fPhone" placeholder="+971 4 000 0000"></div>
+      <div class="fld full"><label>Notes</label><textarea id="fNotes" placeholder="Internal notes about this bank…"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-ghost" id="mCancel">Cancel</button>
+      <button type="button" class="btn btn-primary" id="mSave">Save Bank</button>
+    </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span id="toastMsg"></span></div>
+
+{{ data|json_script:"page-data" }}
+<script>
+const D=JSON.parse(document.getElementById('page-data').textContent);
+const BANK_PK={ {% for r in banks %}"{{ r.obj.name|escapejs }}":{{ r.obj.pk }}{% if not forloop.last %},{% endif %}{% endfor %} };
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+
+/* sidebar */
+const sidebar=$('#sidebar'),scrim=$('#scrim');
+$('#hamburger').addEventListener('click',()=>{sidebar.classList.add('open');scrim.classList.add('show')});
+scrim.addEventListener('click',()=>{sidebar.classList.remove('open');scrim.classList.remove('show')});
+$$('[data-toggle]').forEach(b=>b.addEventListener('click',()=>{
+  const g=b.closest('.nav-group'),was=g.classList.contains('open');
+  $$('.nav-group.open').forEach(o=>o!==g&&o.classList.remove('open'));
+  g.classList.toggle('open',!was);
+}));
+document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#globalSearch')?.focus();}});
+
+/* ---------- bank data ---------- */
+const BANK_COL={};
+function abbr(n){
+  return n.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();
+}
+let BANKS=D.banks;
+/* approval ratio computed: approved / submitted */
+function ratio(b){return Math.round(b.approved/b.submitted*100);}
+const fmtAED=v=>v>=1e6?'AED '+(v/1e6).toFixed(2)+'M':'AED '+(v/1e3).toFixed(0)+'K';
+const fmtN=v=>v.toLocaleString('en-US');
+function ratColor(r){return r>=85?'var(--success)':r>=70?'var(--primary)':r>=55?'var(--warning)':'var(--danger)';}
+
+/* ---------- KPIs ---------- */
+function buildKPIs(){
+  const totalBanks=18, activeBanks=BANKS.filter(b=>b.status!=='Inactive').length+5, partnerBanks=BANKS.filter(b=>b.status==='Partner').length+8;
+  const activeApps=BANKS.reduce((s,b)=>s+b.submitted,0);
+  const approved=BANKS.reduce((s,b)=>s+b.approved,0);
+  const revenue=BANKS.reduce((s,b)=>s+b.revenue,0);
+  const KPIS=D.kpis;
+  const spark=(d,neg)=>{const w=54,h=22,max=Math.max(...d),min=Math.min(...d);
+    const pts=d.map((v,i)=>`${(i/(d.length-1))*w},${h-3-((v-min)/(max-min||1))*(h-6)}`).join(' ');
+    return `<svg class="spark" viewBox="0 0 ${w} ${h}"><polyline points="${pts}" fill="none" stroke="${neg?'#DC2626':'#05448B'}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/></svg>`;};
+  const arrow=cls=>cls==='neg'?'M7 7l10 10M17 17H9M17 17V9':cls==='pos'?'M7 17 17 7M17 7H9M17 7v8':'M5 12h14';
+  $('#kpiGrid').innerHTML=KPIS.map(k=>`
+    <div class="kpi">
+      <div class="kpi-top"><label>${k.l}</label><span class="kpi-ic ${k.ic}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${k.svg}</svg></span></div>
+      <div class="kpi-foot"><div class="val">${k.v}</div>${spark(k.s,false)}</div>
+      <div class="kpi-foot" style="margin-top:4px"><span class="delta ${k.cls==='pos'?'pos':k.cls==='neg'?'neg':'mut'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="${arrow(k.cls)}"/></svg>${k.d}</span></div>
+    </div>`).join('');
+}
+
+/* ---------- filters ---------- */
+const state={search:'',status:null,type:null,ratio:null,apps:null,sort:'Revenue (high → low)',sortK:'revenue',sortDir:-1};
+const FILTER_DEFS={
+  status:{label:'Status',opts:['Active','Partner','Inactive']},
+  type:{label:'Bank Type',opts:['Conventional','Islamic']},
+  ratio:{label:'Approval Ratio',opts:['80%+','70–80%','Below 70%']},
+  apps:{label:'Applications',opts:['50+','25–50','Under 25']},
+  sort:{label:'Sort By',opts:['Revenue (high → low)','Approval Ratio','Active Leads','Bank Name']}
+};
+$$('.f-dd').forEach(dd=>{
+  const k=dd.dataset.filter,def=FILTER_DEFS[k];
+  dd.innerHTML=`<button class="f-dd-btn"><span class="lbl">${def.label}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></button>
+    <div class="f-dd-menu">${def.opts.map(o=>`<button data-v="${o}">${o}</button>`).join('')}</div>`;
+  const btn=dd.querySelector('.f-dd-btn');
+  btn.addEventListener('click',e=>{e.stopPropagation();const was=dd.classList.contains('open');$$('.f-dd.open').forEach(o=>o.classList.remove('open'));dd.classList.toggle('open',!was);});
+  dd.querySelectorAll('.f-dd-menu button').forEach(ob=>ob.addEventListener('click',()=>{
+    const v=ob.dataset.v;
+    if(k==='sort'){state.sort=v;const map={'Revenue (high → low)':['revenue',-1],'Approval Ratio':['ratio',-1],'Active Leads':['leads',-1],'Bank Name':['name',1]};[state.sortK,state.sortDir]=map[v];}
+    else{const same=state[k]===v;state[k]=same?null:v;}
+    dd.querySelectorAll('.f-dd-menu button').forEach(x=>x.classList.toggle('sel',x.dataset.v===(k==='sort'?state.sort:state[k])));
+    btn.classList.toggle('on',k==='sort'?true:!!state[k]);btn.querySelector('.lbl').textContent=(k==='sort'?state.sort:state[k])||def.label;
+    dd.classList.remove('open');renderTable();
+  }));
+});
+document.addEventListener('click',()=>$$('.f-dd.open').forEach(o=>o.classList.remove('open')));
+$('#bankSearch').addEventListener('input',e=>{state.search=e.target.value.toLowerCase();renderTable();});
+$('#clearFilters').addEventListener('click',()=>{
+  state.search='';$('#bankSearch').value='';state.status=state.type=state.ratio=state.apps=null;
+  state.sort='Revenue (high → low)';state.sortK='revenue';state.sortDir=-1;
+  $$('.f-dd').forEach(dd=>{const k=dd.dataset.filter;dd.querySelector('.f-dd-btn').classList.remove('on');dd.querySelector('.lbl').textContent=FILTER_DEFS[k].label;dd.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));});
+  renderTable();
+});
+
+/* ---------- table ---------- */
+const STC={Active:'active',Partner:'partner',Inactive:'inactive'};
+function filtered(){
+  return BANKS.filter(b=>{
+    if(state.search&&![b.name,b.contact,b.type].join(' ').toLowerCase().includes(state.search))return false;
+    if(state.status&&b.status!==state.status)return false;
+    if(state.type&&b.type!==state.type)return false;
+    if(state.ratio){const r=ratio(b);if(state.ratio==='80%+'&&!(r>=80))return false;if(state.ratio==='70–80%'&&!(r>=70&&r<80))return false;if(state.ratio==='Below 70%'&&!(r<70))return false;}
+    if(state.apps){const a=b.submitted;if(state.apps==='50+'&&!(a>=50))return false;if(state.apps==='25–50'&&!(a>=25&&a<50))return false;if(state.apps==='Under 25'&&!(a<25))return false;}
+    return true;
+  }).sort((a,b)=>{
+    let va,vb;
+    if(state.sortK==='ratio'){va=ratio(a);vb=ratio(b);}
+    else if(state.sortK==='leads'){va=a.submitted;vb=b.submitted;}
+    else{va=a[state.sortK];vb=b[state.sortK];}
+    if(typeof va==='string'){va=va.toLowerCase();vb=vb.toLowerCase();}
+    if(va<vb)return -1*state.sortDir;if(va>vb)return 1*state.sortDir;return 0;
+  });
+}
+function renderTable(){
+  const rows=filtered();
+  $('#tblCount').textContent=rows.length+' banks';
+  $('#bankBody').innerHTML=rows.length?rows.map(b=>{
+    const r=ratio(b);
+    return `<tr>
+      <td><div class="bank-cell"><span class="bank-ic" style="background:${BANK_COL[b.name]||'#05448B'}">${abbr(b.name)}</span><div><b>${b.name}</b><span>${b.type} bank</span></div></div></td>
+      <td><span class="tag ${b.type==='Islamic'?'islamic':'conv'}">${b.type}</span></td>
+      <td style="color:var(--text-2)">${b.contact}</td>
+      <td class="r num">${b.submitted}</td>
+      <td class="r num">${b.approved}</td>
+      <td class="r num">${b.disbursed}</td>
+      <td class="r"><div class="ratio"><b style="color:${ratColor(r)}">${r}%</b><span class="bar"><i style="width:${r}%;background:${ratColor(r)}"></i></span></div></td>
+      <td class="r num">${fmtAED(b.revenue)}</td>
+      <td><span class="status ${STC[b.status]}"><i></i>${b.status}</span></td>
+      <td><button class="kebab" data-name="${b.name}" aria-label="Actions"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button></td>
+    </tr>`;}).join(''):`<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-3)">No banks match your filters.</td></tr>`;
+  $$('.tbl th.sortable').forEach(th=>th.querySelector('.s-ic').textContent=th.dataset.k===state.sortK?(state.sortDir===1?'▲':'▼'):'');
+  $$('#bankBody .kebab').forEach(k=>k.addEventListener('click',e=>{
+    e.stopPropagation();const m=$('#rowMenu'),r=k.getBoundingClientRect();
+    const bk=BANKS.find(x=>x.name===k.dataset.name);
+    m.querySelector('.tgl-lbl').textContent=bk.status==='Inactive'?'Activate Bank':'Deactivate Bank';
+    m.classList.add('show');m.dataset.name=k.dataset.name;
+    const mw=186,mh=m.offsetHeight||230;let x=r.right-mw,y=r.bottom+6;
+    if(y+mh>innerHeight-12)y=r.top-mh-6;m.style.left=Math.max(8,x)+'px';m.style.top=y+'px';
+  }));
+}
+$$('.tbl th.sortable').forEach(th=>th.addEventListener('click',()=>{
+  const k=th.dataset.k;if(state.sortK===k)state.sortDir*=-1;else{state.sortK=k;state.sortDir=1;}renderTable();
+}));
+document.addEventListener('click',()=>$('#rowMenu').classList.remove('show'));
+$('#rowMenu').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const name=$('#rowMenu').dataset.name,bk=BANKS.find(x=>x.name===name);
+  const act=b.dataset.act;
+  $('#rowMenu').classList.remove('show');
+  if(act==='edit'){openModal(bk);return;}
+  if(act==='toggle'){
+    const pk=BANK_PK[name];
+    if(!pk){toast('Cannot toggle — unknown bank');return;}
+    if(!confirm(`${bk.status==='Inactive'?'Activate':'Deactivate'} ${name}?`))return;
+    postForm(`/banks/${pk}/toggle/`);
+    return;
+  }
+});
+function postForm(action){
+  const f=document.createElement('form');f.method='post';f.action=action;
+  const t=document.createElement('input');t.type='hidden';t.name='csrfmiddlewaretoken';
+  t.value=$('#bankForm [name=csrfmiddlewaretoken]').value;f.appendChild(t);
+  document.body.appendChild(f);f.submit();
+}
+
+/* ---------- leaderboard ---------- */
+function buildLeaders(){
+  const top=[...BANKS].sort((a,b)=>b.revenue-a.revenue).slice(0,3);
+  $('#leadGrid').innerHTML=top.map((b,i)=>`
+    <div class="lead-card ${i===0?'gold':''}">
+      <span class="rank">#${i+1}</span>
+      <div class="lc-h"><span class="bank-ic" style="background:${BANK_COL[b.name]||'#05448B'}">${abbr(b.name)}</span><b class="nm">${b.name}</b></div>
+      <div class="lc-stats">
+        <div class="ls-row"><label>Approval Ratio</label><b style="color:${ratColor(ratio(b))}">${ratio(b)}%</b></div>
+        <div class="ls-row"><label>Disbursed Loans</label><b>${b.disbursed}</b></div>
+        <div class="ls-row"><label>Revenue</label><b>${fmtAED(b.revenue)}</b></div>
+      </div>
+    </div>`).join('');
+}
+
+/* ---------- donut ---------- */
+function drawDonut(){
+  const cv=$('#donut'),ctx=cv.getContext('2d'),cx=160,cy=160,rO=150,rI=92;
+  const conv=BANKS.filter(b=>b.type==='Conventional').length, isl=BANKS.filter(b=>b.type==='Islamic').length;
+  const segs=[{name:'Conventional',val:conv,col:'#05448B'},{name:'Islamic',val:isl,col:'#16A34A'}];
+  const total=conv+isl||1;let a=-Math.PI/2;
+  ctx.clearRect(0,0,320,320);
+  segs.forEach(sg=>{const ang=sg.val/total*Math.PI*2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,rO,a,a+ang);ctx.closePath();ctx.fillStyle=sg.col;ctx.fill();a+=ang;});
+  ctx.beginPath();ctx.arc(cx,cy,rI,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+  ctx.fillStyle='#0F172A';ctx.font='700 36px Inter';ctx.textAlign='center';ctx.fillText(total,cx,cy-2);
+  ctx.fillStyle='#94A3B8';ctx.font='600 15px Inter';ctx.fillText('BANKS',cx,cy+22);
+  $('#donutLegend').innerHTML=segs.map(sg=>`<div class="dl"><i style="background:${sg.col}"></i><span>${sg.name} Banks</span><b>${sg.val}</b></div>`).join('');
+}
+
+/* ---------- comparison bar ---------- */
+function drawCmp(){
+  const cv=$('#cmpChart'),ctx=cv.getContext('2d');
+  const W=cv.width=cv.clientWidth*2,H=600;cv.height=H;
+  const data=[...BANKS].sort((a,b)=>b.revenue-a.revenue).slice(0,6);
+  const pad={l:20,r:20,t:30,b:64},gw=(W-pad.l-pad.r)/data.length;
+  const maxL=Math.max(...data.map(d=>Math.max(d.submitted,d.approved,d.disbursed,d.revenue/4000)));
+  const series=[['submitted','#05448B'],['approved','#2D6CB0'],['disbursed','#7FA6CF'],['revK','#16A34A']];
+  data.forEach(d=>d.revK=d.revenue/4000);
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='#EEF2F7';ctx.lineWidth=2;
+  for(let i=0;i<=4;i++){const y=pad.t+(H-pad.t-pad.b)*i/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();}
+  data.forEach((d,i)=>{
+    const x=pad.l+i*gw,group=gw*0.7,bw=group/4;
+    series.forEach((s,j)=>{
+      const v=d[s[0]],bh=v/maxL*(H-pad.t-pad.b),bx=x+gw*0.15+j*bw,by=H-pad.b-bh;
+      ctx.fillStyle=s[1];rr(ctx,bx+1,by,bw-2,bh,3);
+    });
+    ctx.fillStyle='#64748B';ctx.font='600 19px Inter';ctx.textAlign='center';
+    ctx.fillText(abbr(d.name),x+gw/2,H-pad.b+30);
+  });
+}
+function rr(ctx,x,y,w,h,r){r=Math.min(r,w/2,h/2);if(h<=0)return;ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,0);ctx.arcTo(x,y+h,x,y,0);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();ctx.fill();}
+
+/* ---------- activity feed ---------- */
+const FEED=D.feed;
+function buildFeed(){
+  $('#feed').innerHTML=FEED.map(f=>`<div class="feed-item">
+    <span class="feed-ic ${f.ic}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${f.svg}</svg></span>
+    <div class="feed-body"><p>${f.h}</p><time>${f.t}</time></div></div>`).join('');
+}
+
+/* ---------- add / edit modal ---------- */
+let editing=null;
+function openModal(bank){
+  editing=bank||null;
+  $('#modalTitle').textContent=bank?'Edit Bank':'Add Bank';
+  $('#modalSub').textContent=bank?'Update lending partner details':'Register a new lending partner';
+  $('#fName').value=bank?bank.name:'';$('#fName').readOnly=!!bank;
+  $('#fType').value=bank?bank.type:'Conventional';
+  $('#fStatus').value=bank?bank.status:'Active';
+  $('#fContact').value=bank?bank.contact:'';
+  $('#fComm').value=bank?(bank.comm||1.1):'';
+  $('#fEmail').value=bank?(bank.email||''):'';
+  $('#fPhone').value=bank?(bank.phone||''):'';
+  $('#fNotes').value=bank?(bank.notes||''):'';
+  $('#bankModal').classList.add('show');
+}
+function closeModal(){$('#bankModal').classList.remove('show');editing=null;}
+$('#addBankBtn').addEventListener('click',()=>openModal(null));
+$('#mClose').addEventListener('click',closeModal);
+$('#mCancel').addEventListener('click',closeModal);
+$('#bankModal').addEventListener('click',e=>{if(e.target===$('#bankModal'))closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+$('#mSave').addEventListener('click',()=>{
+  const name=$('#fName').value.trim();
+  if(!name){toast('Bank name is required');return;}
+  const form=$('#bankForm');
+  if(editing){
+    const pk=BANK_PK[editing.name];
+    if(!pk){toast('Cannot edit — unknown bank');return;}
+    form.action="/banks/"+pk+"/edit/";
+  }else{
+    form.action="{% url 'bank_create' %}";
+  }
+  form.submit();
+});
+
+/* actions */
+$('#refreshBtn').addEventListener('click',()=>{init();toast('Banks refreshed');});
+
+/* toast */
+let tTimer;
+function toast(msg){$('#toastMsg').textContent=msg;$('#toast').classList.add('show');clearTimeout(tTimer);tTimer=setTimeout(()=>$('#toast').classList.remove('show'),2400);}
+
+/* init */
+function init(){buildKPIs();renderTable();buildLeaders();buildFeed();drawDonut();drawCmp();}
+init();
+let rT;addEventListener('resize',()=>{clearTimeout(rT);rT=setTimeout(drawCmp,200);});
+</script>
+</body>
+</html>

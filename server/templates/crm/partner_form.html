@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block page_title %}Add Partner{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Add Referral Partner</h1><p>All mandatory details plus Agreement &amp; KYC documents are required.</p></div></div>
+<div class="form-card">
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="fgrid">
+      <div class="grp-head">Personal Details</div>
+      <div class="fld"><label>Full Name *</label>{{ form.name }}{% if form.name.errors %}<ul class="errlist">{% for e in form.name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
+      <div class="fld"><label>Mobile Number *</label>{{ form.mobile }}{% if form.mobile.errors %}<ul class="errlist">{% for e in form.mobile.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
+      <div class="fld full"><label>Email Address *</label>{{ form.email }}{% if form.email.errors %}<ul class="errlist">{% for e in form.email.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
+
+      <div class="grp-head">Business Details</div>
+      <div class="fld"><label>Company Name *</label>{{ form.company }}{% if form.company.errors %}<ul class="errlist">{% for e in form.company.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
+      <div class="fld"><label>Organization / Workplace *</label>{{ form.organization }}{% if form.organization.errors %}<ul class="errlist">{% for e in form.organization.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
+      <div class="fld"><label>Partner Type</label>{{ form.partner_type }}</div>
+      <div class="fld"><label>Status</label>{{ form.status }}</div>
+
+      <div class="grp-head">Identity</div>
+      <div class="fld"><label>Emirates ID Number *</label>{{ form.emirates_id }}{% if form.emirates_id.errors %}<ul class="errlist">{% for e in form.emirates_id.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
+      <div class="fld"><label>Passport Number *</label>{{ form.passport_no }}{% if form.passport_no.errors %}<ul class="errlist">{% for e in form.passport_no.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
+
+      <div class="grp-head">Bank Account Details</div>
+      <div class="fld"><label>Bank Name *</label>{{ form.bank_name }}{% if form.bank_name.errors %}<ul class="errlist">{% for e in form.bank_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
+      <div class="fld"><label>Account Number *</label>{{ form.account_no }}{% if form.account_no.errors %}<ul class="errlist">{% for e in form.account_no.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
+      <div class="fld full"><label>IBAN Number *</label>{{ form.iban }}{% if form.iban.errors %}<ul class="errlist">{% for e in form.iban.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
+
+      <div class="grp-head">Agreement &amp; KYC Upload</div>
+      <div class="fld"><label>Partner Agreement</label>{{ form.agreement }}</div>
+      <div class="fld"><label>KYC Documents</label>{{ form.kyc_doc }}</div>
+    </div>
+    <div class="form-foot">
+      <a class="btn btn-ghost" href="{% url 'partner_list' %}">Cancel</a>
+      <button class="btn btn-primary" type="submit">Create Partner</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

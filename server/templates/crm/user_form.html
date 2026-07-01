@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>{{ title }}</h1><p>Set account details, role and (for advisors) monthly targets.</p></div></div>
+<div class="form-card">
+  <form method="post">
+    {% csrf_token %}
+    <div class="fgrid">
+      <div class="grp-head">Account</div>
+      <div class="fld"><label>First Name</label>{{ form.first_name }}</div>
+      <div class="fld"><label>Last Name</label>{{ form.last_name }}</div>
+      <div class="fld"><label>Username</label>{{ form.username }}{% if form.username.errors %}<ul class="errlist">{% for e in form.username.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div>
+      <div class="fld"><label>Email</label>{{ form.email }}</div>
+      <div class="fld"><label>Phone</label>{{ form.phone }}</div>
+      <div class="fld"><label>Password</label>{{ form.password }}<span style="font-size:10.5px;color:var(--text-3)">Leave blank to keep current</span></div>
+
+      <div class="grp-head">Role &amp; Access</div>
+      <div class="fld"><label>Role</label>{{ form.role }}</div>
+      <div class="fld"><label>Department</label>{{ form.department }}</div>
+      <div class="fld"><label>Status</label>{{ form.status }}</div>
+
+      <div class="grp-head">Advisor Monthly Targets <span style="font-weight:500;text-transform:none;letter-spacing:0;color:var(--text-3)">(used only for Mortgage Advisor role)</span></div>
+      <div class="fld"><label>Calling Target</label>{{ form.target_calls }}</div>
+      <div class="fld"><label>Submission Target</label>{{ form.target_submissions }}</div>
+      <div class="fld"><label>Channel Partner Target</label>{{ form.target_partners }}</div>
+      <div class="fld"><label>Disbursement Target (AED)</label>{{ form.target_disbursement }}</div>
+    </div>
+    <div class="form-foot">
+      <a class="btn btn-ghost" href="{% url 'user_list' %}">Cancel</a>
+      <button class="btn btn-primary" type="submit">Save User</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mortgage CRM — Lost Leads</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#05448B;--primary-h:#0B5AB3;--blue-2:#2D6CB0;--blue-3:#7FA6CF;
+  --blue-50:#F0F5FB;--blue-100:#DEEAF6;
+  --bg:#F7F9FC;--card:#FFFFFF;
+  --text:#0F172A;--text-2:#64748B;--text-3:#94A3B8;
+  --border:#E2E8F0;--border-soft:#EEF2F7;
+  --success:#16A34A;--warning:#B45309;--danger:#DC2626;
+  --r:14px;
+  --sh-xs:0 1px 2px rgba(15,23,42,.05);
+  --sh-sm:0 1px 3px rgba(15,23,42,.06),0 1px 2px rgba(15,23,42,.04);
+  --sh-md:0 4px 12px -2px rgba(15,23,42,.08);
+  --sh-lg:0 12px 32px -8px rgba(15,23,42,.18);
+  --sb:256px;
+  --font:'Inter',system-ui,-apple-system,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+a{color:inherit;text-decoration:none}
+::selection{background:var(--blue-100)}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+.app{display:flex;min-height:100vh}
+.main{flex:1;min-width:0;margin-left:var(--sb)}
+
+/* sidebar */
+.sidebar{position:fixed;inset:0 auto 0 0;width:var(--sb);background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:60;transition:transform .28s cubic-bezier(.4,0,.2,1)}
+.brand{display:flex;align-items:center;gap:11px;padding:20px 20px 16px}
+.brand-mark{width:36px;height:36px;border-radius:10px;background:var(--primary);display:grid;place-items:center;flex-shrink:0}
+.brand-name{font-weight:700;font-size:15px;letter-spacing:-.015em;color:var(--text)}
+.brand-sub{font-size:11px;color:var(--text-3);font-weight:500}
+.nav{flex:1;overflow-y:auto;padding:6px 12px 16px;scrollbar-width:thin;scrollbar-color:#D7DEE8 transparent}
+.nav::-webkit-scrollbar{width:5px}
+.nav::-webkit-scrollbar-thumb{background:#D7DEE8;border-radius:4px}
+.nav-label{font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--text-3);padding:18px 12px 7px;margin-top:2px}
+.nav-label:first-child{margin-top:0;padding-top:8px}
+.nav-item{display:flex;align-items:center;gap:11px;width:100%;padding:8.5px 11px;border-radius:9px;color:#3F4C61;font-size:13.5px;font-weight:500;text-align:left;transition:background .13s,color .13s;position:relative}
+.nav-item svg{width:17px;height:17px;flex-shrink:0;color:var(--text-2);transition:color .13s}
+.nav-item:hover{background:#F3F6FA;color:var(--text)}
+.nav-item:hover svg{color:var(--text)}
+.nav-item.active{background:var(--blue-50);color:var(--primary);font-weight:600}
+.nav-item.active svg{color:var(--primary)}
+.nav-item.active::before{content:"";position:absolute;left:-12px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--primary)}
+.nav-item .chev{margin-left:auto;width:13px;height:13px;color:var(--text-3);transition:transform .22s cubic-bezier(.4,0,.2,1)}
+.nav-group{margin-bottom:1px}
+.nav-group.open>.nav-item{color:var(--text)}
+.nav-group.open>.nav-item svg{color:var(--text)}
+.nav-group.open .chev{transform:rotate(90deg);color:var(--primary)}
+.nav-sub{overflow:hidden;max-height:0;transition:max-height .3s cubic-bezier(.4,0,.2,1);padding-left:4px;margin-left:18px;border-left:1px solid var(--border-soft)}
+.nav-group.open .nav-sub{max-height:320px}
+.nav-sub .nav-item{padding:6.5px 11px 6.5px 22px;font-size:12.75px;color:var(--text-2);font-weight:500;border-radius:7px;margin:1px 0}
+.nav-sub .nav-item:hover{color:var(--text);background:#F3F6FA}
+.nav-sub .nav-item.active{background:var(--blue-50);color:var(--primary);font-weight:600}
+.nav-sub .nav-item.active::before{display:none}
+.nav-count{margin-left:auto;font-size:11px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--blue-50);color:var(--primary)}
+.sidebar-foot{padding:12px;border-top:1px solid var(--border-soft)}
+.user-card{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;transition:background .13s;width:100%;text-align:left}
+.user-card:hover{background:#F3F6FA}
+.user-card b{display:block;font-size:13px;font-weight:600}
+.user-card span{font-size:11.5px;color:var(--text-3)}
+.avatar{width:32px;height:32px;border-radius:9px;background:var(--primary);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
+
+/* header */
+.header{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;padding:13px 28px;background:rgba(255,255,255,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.hamburger{display:none;width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:#fff;place-items:center}
+.page-title{font-size:15px;font-weight:700;letter-spacing:-.01em;margin-right:6px}
+.search{flex:1;max-width:400px;position:relative}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--text-3)}
+.search input{width:100%;padding:8.5px 64px 8.5px 36px;border-radius:10px;border:1px solid var(--border);background:var(--bg);font:inherit;font-size:13.5px;transition:all .15s}
+.search input::placeholder{color:var(--text-3)}
+.search input:focus{outline:none;background:#fff;border-color:var(--primary);box-shadow:0 0 0 3px rgba(5,68,139,.10)}
+.kbd{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:10.5px;font-weight:600;color:var(--text-3);border:1px solid var(--border);background:#fff;border-radius:5px;padding:1px 6px}
+.h-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+.icon-btn{width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:#fff;display:grid;place-items:center;color:var(--text-2);position:relative;transition:all .14s}
+.icon-btn:hover{color:var(--text);border-color:#CBD5E1;background:var(--bg)}
+.icon-btn svg{width:16px;height:16px}
+.dot{position:absolute;top:8px;right:8px;width:6px;height:6px;border-radius:50%;background:var(--danger);border:1.5px solid #fff}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8.5px 14px;border-radius:9px;font-size:13px;font-weight:600;transition:all .14s;white-space:nowrap}
+.btn svg{width:15px;height:15px}
+.btn-ghost{background:#fff;border:1px solid var(--border);color:var(--text-2)}
+.btn-ghost:hover{color:var(--text);border-color:#CBD5E1;background:var(--bg)}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:var(--sh-xs)}
+.btn-primary:hover{background:var(--primary-h)}
+
+/* content */
+.content{padding:24px 28px 48px;display:flex;flex-direction:column;gap:18px;max-width:1620px;width:100%;margin:0 auto}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.page-head h1{font-size:21px;font-weight:700;letter-spacing:-.02em}
+.page-head p{color:var(--text-2);font-size:13.5px;margin-top:3px;max-width:640px}
+.page-head .actions{display:flex;gap:8px;flex-wrap:wrap}
+.rule-note{display:flex;gap:11px;align-items:flex-start;background:var(--blue-50);border:1px solid var(--blue-100);border-radius:12px;padding:12px 15px}
+.rule-note .rn-ic{width:30px;height:30px;border-radius:9px;background:#fff;color:var(--primary);display:grid;place-items:center;flex-shrink:0}
+.rule-note .rn-ic svg{width:15px;height:15px}
+.rule-note p{font-size:12.5px;line-height:1.5;color:var(--blue-2)}
+.rule-note p b{color:var(--primary);font-weight:700}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:15px 16px 13px;box-shadow:var(--sh-xs);transition:box-shadow .16s,border-color .16s}
+.kpi:hover{box-shadow:var(--sh-md);border-color:#D4DDE8}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.kpi-ic{width:31px;height:31px;border-radius:9px;display:grid;place-items:center;background:var(--blue-50);color:var(--primary)}
+.kpi-ic.red{background:#FEE2E2;color:var(--danger)}
+.kpi-ic.amber{background:#FEF3E2;color:var(--warning)}
+.kpi-ic.green{background:#EDFAF1;color:var(--success)}
+.kpi-ic svg{width:14px;height:14px}
+.kpi label{font-size:11.5px;font-weight:600;color:var(--text-2);display:block}
+.kpi .val{font-size:21px;font-weight:700;letter-spacing:-.025em;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi-foot{display:flex;align-items:flex-end;justify-content:space-between;margin-top:6px;gap:6px}
+.delta{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700}
+.delta svg{width:10px;height:10px}
+.delta.pos{color:var(--success)}.delta.neg{color:var(--danger)}.delta.mut{color:var(--text-3)}
+.spark{width:54px;height:22px;flex-shrink:0}
+
+/* filter bar */
+.filter-bar{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-xs);padding:12px 14px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.f-search{position:relative;flex:1;min-width:200px}
+.f-search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-3)}
+.f-search input{width:100%;padding:8px 12px 8px 33px;border-radius:9px;border:1px solid var(--border);background:var(--bg);font:inherit;font-size:13px;transition:all .15s}
+.f-search input:focus{outline:none;background:#fff;border-color:var(--primary);box-shadow:0 0 0 3px rgba(5,68,139,.10)}
+.f-dd{position:relative}
+.f-dd-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:9px;border:1px solid var(--border);background:#fff;font-size:12.5px;font-weight:600;color:var(--text-2);transition:all .14s;white-space:nowrap}
+.f-dd-btn:hover{border-color:#CBD5E1;color:var(--text)}
+.f-dd-btn.on{border-color:var(--primary);color:var(--primary);background:var(--blue-50)}
+.f-dd-btn svg{width:12px;height:12px;color:var(--text-3);transition:transform .18s}
+.f-dd.open .f-dd-btn svg{transform:rotate(180deg)}
+.f-dd-menu{position:absolute;top:calc(100% + 6px);left:0;min-width:200px;background:#fff;border:1px solid var(--border);border-radius:11px;box-shadow:var(--sh-lg);padding:5px;z-index:40;opacity:0;transform:translateY(-4px);pointer-events:none;transition:all .15s;max-height:320px;overflow-y:auto}
+.f-dd.open .f-dd-menu{opacity:1;transform:none;pointer-events:auto}
+.f-dd-menu button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:7.5px 10px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--text-2);transition:background .12s}
+.f-dd-menu button:hover{background:var(--bg);color:var(--text)}
+.f-dd-menu button.sel{background:var(--blue-50);color:var(--primary);font-weight:600}
+.clear-btn{font-size:12.5px;font-weight:600;color:var(--text-3);padding:8px 10px;border-radius:9px;transition:all .14s}
+.clear-btn:hover{color:var(--danger);background:#FEF2F2}
+
+/* cards */
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-xs);min-width:0}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 20px 0}
+.card-h h3{font-size:14px;font-weight:700;letter-spacing:-.008em}
+.card-h .sub{font-size:12px;color:var(--text-2);margin-top:1px}
+.card-body{padding:14px 20px 18px}
+.link-btn{font-size:12px;font-weight:600;color:var(--primary);padding:4px 9px;border-radius:7px;transition:background .14s}
+.link-btn:hover{background:var(--blue-50)}
+
+/* table */
+.tbl-wrap{overflow-x:auto;border-radius:0 0 var(--r) var(--r)}
+.tbl{width:100%;border-collapse:collapse;min-width:1140px}
+.tbl thead th{position:sticky;top:0;background:#FAFCFE;z-index:5;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);text-align:left;padding:11px 13px;border-bottom:1px solid var(--border);white-space:nowrap;user-select:none}
+.tbl thead th.sortable{cursor:pointer}
+.tbl thead th.sortable:hover{color:var(--text)}
+.tbl thead th .s-ic{margin-left:4px;font-size:9px;opacity:.6}
+.tbl thead th.r,.tbl td.r{text-align:right}
+.tbl td{padding:12px 13px;border-bottom:1px solid var(--border-soft);font-size:12.5px;vertical-align:middle;white-space:nowrap}
+.tbl tbody tr{transition:background .12s}
+.tbl tbody tr:hover{background:#FAFCFE}
+.tbl tr:last-child td{border-bottom:none}
+.num{font-variant-numeric:tabular-nums;font-weight:600}
+.lead-cell{display:flex;align-items:center;gap:10px}
+.lead-cell .p-avatar{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:10.5px;font-weight:700;flex-shrink:0;background:var(--blue-50);color:var(--primary)}
+.lead-cell b{display:block;font-size:12.5px;font-weight:600}
+.lead-cell span{font-size:10.5px;color:var(--text-3)}
+.reason-badge{display:inline-flex;align-items:center;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:99px;white-space:nowrap}
+.rec-pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:99px}
+.rec-pill.high{background:#EDFAF1;color:var(--success)}
+.rec-pill.med{background:#FEF3E2;color:var(--warning)}
+.rec-pill.low{background:#F1F5F9;color:var(--text-3)}
+.rec-pill i{width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block}
+.tag{display:inline-flex;font-size:10.5px;font-weight:600;padding:2.5px 9px;border-radius:7px;background:var(--bg);color:var(--text-2);border:1px solid var(--border-soft)}
+.kebab{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--text-3);transition:all .13s}
+.kebab:hover{background:var(--blue-50);color:var(--primary)}
+.kebab svg{width:15px;height:15px}
+.menu-pop{position:fixed;min-width:184px;background:#fff;border:1px solid var(--border);border-radius:11px;box-shadow:var(--sh-lg);padding:5px;z-index:80;display:none}
+.menu-pop.show{display:block;animation:popIn .14s ease}
+@keyframes popIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.menu-pop button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:7.5px 10px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--text-2);transition:background .12s}
+.menu-pop button:hover{background:var(--bg);color:var(--text)}
+.menu-pop button.primary{color:var(--primary);font-weight:600}
+.menu-pop svg{width:13.5px;height:13.5px}
+.menu-sep{height:1px;background:var(--border-soft);margin:4px 6px}
+
+/* layout rows */
+.row2{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+.row2b{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+/* reason cards */
+.reason-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.reason-card{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--border-soft);border-radius:11px;background:var(--bg);transition:all .14s}
+.reason-card:hover{background:#fff;border-color:var(--border);box-shadow:var(--sh-xs)}
+.reason-card .rc-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.reason-card .rc-body{flex:1;min-width:0}
+.reason-card .rc-body b{font-size:12.5px;font-weight:600;display:block}
+.reason-card .rc-body .rc-bar{height:5px;border-radius:99px;background:var(--border-soft);overflow:hidden;margin-top:5px}
+.reason-card .rc-body .rc-bar i{display:block;height:100%;border-radius:99px;width:0;transition:width .9s cubic-bezier(.4,0,.2,1)}
+.reason-card .rc-end{text-align:right;flex-shrink:0}
+.reason-card .rc-end b{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+.reason-card .rc-end span{font-size:10.5px;color:var(--text-3);display:block}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.donut-legend{flex:1;min-width:150px;display:flex;flex-direction:column;gap:7px}
+.donut-legend .dl{display:flex;align-items:center;gap:9px;font-size:12px}
+.donut-legend .dl i{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.donut-legend .dl b{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums}
+.donut-legend .dl span{color:var(--text-2)}
+canvas{display:block;width:100%}
+.chart-legend{display:flex;gap:14px;flex-wrap:wrap}
+.chart-legend span{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--text-2)}
+.chart-legend i{width:9px;height:9px;border-radius:3px;display:inline-block}
+
+/* stage dropoff */
+.drop-row{display:grid;grid-template-columns:150px 1fr 96px 110px;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border-soft)}
+.drop-row:last-child{border-bottom:none}
+.drop-row label{font-size:12px;font-weight:600;color:var(--text-2);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drop-bar-wrap{height:24px;background:var(--bg);border-radius:7px;overflow:hidden}
+.drop-bar{height:100%;border-radius:7px;background:linear-gradient(90deg,#DC2626,#F87171);display:flex;align-items:center;padding:0 10px;color:#fff;font-size:11px;font-weight:700;min-width:42px;width:0;transition:width 1s cubic-bezier(.4,0,.2,1);font-variant-numeric:tabular-nums}
+.drop-pct{font-size:12px;font-weight:700;color:var(--danger);text-align:right;font-variant-numeric:tabular-nums}
+.drop-rev{font-size:12px;font-weight:600;color:var(--text-2);text-align:right;font-variant-numeric:tabular-nums}
+
+/* leaderboard cards */
+.adv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.adv-card{border:1px solid var(--border-soft);border-radius:12px;padding:14px;background:var(--bg);transition:all .15s}
+.adv-card:hover{background:#fff;border-color:var(--border);box-shadow:var(--sh-xs)}
+.adv-card.alert{border-color:#F6DADA;background:#FEFAFA}
+.adv-card .ac-h{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.adv-card .p-avatar{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-size:11.5px;font-weight:700;background:var(--blue-50);color:var(--primary);flex-shrink:0}
+.adv-card b.nm{font-size:13px;font-weight:700;display:block}
+.adv-card .nm span{font-size:10.5px;color:var(--text-3);font-weight:500}
+.adv-card .ac-loss{margin-left:auto;text-align:right}
+.adv-card .ac-loss b{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.adv-card .ac-loss span{font-size:9.5px;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em;display:block}
+.adv-card .ac-stats{display:flex;gap:13px;padding-top:11px;border-top:1px solid var(--border-soft)}
+.adv-card .ac-stats>div label{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em;display:block}
+.adv-card .ac-stats>div b{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+.alert-flag{font-size:9.5px;font-weight:700;color:var(--danger);background:#FEE2E2;padding:2px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.03em}
+
+/* recovery cards */
+.rec-card{display:flex;align-items:center;gap:13px;padding:13px;border:1px solid var(--border-soft);border-radius:12px;background:var(--bg);margin-bottom:10px;transition:all .14s}
+.rec-card:hover{background:#fff;border-color:var(--border);box-shadow:var(--sh-xs)}
+.rec-card:last-child{margin-bottom:0}
+.rec-card .p-avatar{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--blue-50);color:var(--primary);flex-shrink:0}
+.rec-card .rc2-body{flex:1;min-width:0}
+.rec-card .rc2-body b{font-size:13px;font-weight:700;display:block}
+.rec-card .rc2-body span{font-size:11.5px;color:var(--text-2)}
+.rec-card .rc2-body .sugg{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--primary);margin-top:3px}
+.rec-card .rc2-body .sugg svg{width:12px;height:12px}
+.rec-score{display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0}
+.rec-score .rs-ring{width:44px;height:44px;position:relative}
+.rec-score .rs-ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:12px;font-weight:700}
+.rec-score span{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+
+/* insights */
+.insight-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.insight{display:flex;gap:11px;padding:13px 15px;border-radius:12px;border:1px solid var(--border-soft);background:var(--bg)}
+.insight .in-ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;flex-shrink:0}
+.insight .in-ic svg{width:15px;height:15px}
+.insight.good .in-ic{background:#EDFAF1;color:var(--success)}
+.insight.info .in-ic{background:var(--blue-50);color:var(--primary)}
+.insight.warn .in-ic{background:#FEF3E2;color:var(--warning)}
+.insight.bad .in-ic{background:#FEE2E2;color:var(--danger)}
+.insight p{font-size:12.5px;line-height:1.5;color:var(--text-2)}
+.insight p b{color:var(--text);font-weight:700}
+
+/* activity feed */
+.feed{display:flex;flex-direction:column;max-height:360px;overflow-y:auto;padding-right:4px;scrollbar-width:thin}
+.feed::-webkit-scrollbar{width:5px}
+.feed::-webkit-scrollbar-thumb{background:#D7DEE8;border-radius:4px}
+.feed-item{display:flex;gap:11px;position:relative;padding-bottom:15px}
+.feed-item::before{content:"";position:absolute;left:14px;top:31px;bottom:0;width:1.5px;background:var(--border-soft)}
+.feed-item:last-child{padding-bottom:0}
+.feed-item:last-child::before{display:none}
+.feed-ic{width:29px;height:29px;border-radius:9px;display:grid;place-items:center;flex-shrink:0;z-index:1;background:#FEE2E2;color:var(--danger)}
+.feed-ic svg{width:13px;height:13px}
+.feed-body p{font-size:12.3px;line-height:1.45}
+.feed-body p b{font-weight:600}
+.feed-body .rsn{font-size:11px;color:var(--text-2);margin-top:1px}
+.feed-body time{font-size:10.5px;color:var(--text-3)}
+
+/* toast / scrim / responsive */
+.toast{position:fixed;bottom:26px;right:26px;background:#0F172A;color:#fff;font-size:12.5px;font-weight:600;padding:11px 16px;border-radius:11px;box-shadow:var(--sh-lg);z-index:95;opacity:0;transform:translateY(10px);transition:all .25s;display:flex;align-items:center;gap:9px}
+.toast.show{opacity:1;transform:none}
+.toast svg{width:15px;height:15px;color:#4ADE80}
+.scrim{position:fixed;inset:0;background:rgba(15,23,42,.35);z-index:55;opacity:0;pointer-events:none;transition:opacity .25s}
+.scrim.show{opacity:1;pointer-events:auto}
+@media (max-width:1280px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.row2,.row2b{grid-template-columns:1fr}.adv-grid{grid-template-columns:1fr}}
+@media (max-width:960px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0);box-shadow:20px 0 50px rgba(15,23,42,.2)}
+  .main{margin-left:0}.hamburger{display:grid}.hide-md{display:none}
+  .insight-grid,.reason-grid{grid-template-columns:1fr}
+}
+@media (max-width:660px){
+  .content{padding:16px 14px 40px}.header{padding:10px 14px}
+  .kpi-grid{grid-template-columns:1fr 1fr}.hide-sm{display:none}
+  .drop-row{grid-template-columns:96px 1fr 60px 76px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+{% include 'crm/_sidebar.html' %}
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+  <header class="header">
+    <button class="hamburger" id="hamburger" aria-label="Open navigation"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0F172A" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+    <span class="page-title hide-sm">Lost Leads</span>
+    <div class="search hide-sm">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="globalSearch" type="text" placeholder="Search leads, applications, banks…" aria-label="Global search">
+      <span class="kbd">⌘K</span>
+    </div>
+    <div class="h-actions">
+      <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot"></span></button>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <!-- PAGE HEAD -->
+    <div class="page-head">
+      <div>
+        <h1>Lost Leads</h1>
+        <p>Analyze lost opportunities, revenue leakage, recovery opportunities, and conversion failures.</p>
+      </div>
+      <div class="actions">
+        <button class="btn btn-ghost" id="refreshBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>Refresh</button>
+        <a class="btn btn-primary" href="{% url 'lead_export' %}?stage=Declined"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export Report</a>
+      </div>
+    </div>
+
+    <!-- BUSINESS RULE NOTE -->
+    <div class="rule-note">
+      <span class="rn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg></span>
+      <p>Lost leads are <b>never deleted</b>. When a lead is marked <b>Declined</b>, the CRM captures its <b>Lost Reason</b>, <b>Lost Date</b> and <b>Lost Notes</b> — this page reports only on those captured fields.</p>
+    </div>
+
+    <!-- KPI -->
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar" id="filterBar">
+      <div class="f-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="lostSearch" placeholder="Search customer, advisor, bank…">
+      </div>
+      <div class="f-dd" data-filter="reason"></div>
+      <div class="f-dd" data-filter="advisor"></div>
+      <div class="f-dd" data-filter="bank"></div>
+      <div class="f-dd" data-filter="source"></div>
+      <div class="f-dd" data-filter="range"></div>
+      <div class="f-dd" data-filter="value"></div>
+      <button class="clear-btn" id="clearFilters">✕&nbsp; Clear Filters</button>
+    </div>
+
+    <!-- MAIN TABLE -->
+    <div class="card">
+      <div class="card-h"><div><h3>Lost Leads</h3><div class="sub">Every lost opportunity — preserved for recovery, never deleted</div></div><span class="tag" id="lostTblCount"></span></div>
+      <div class="tbl-wrap">
+        <table class="tbl" id="lostTable">
+          <thead><tr>
+            <th class="sortable" data-k="name">Lead<span class="s-ic"></span></th>
+            <th class="sortable r" data-k="loan">Loan Amount<span class="s-ic"></span></th>
+            <th class="sortable r" data-k="propVal">Property Value<span class="s-ic"></span></th>
+            <th>Advisor</th>
+            <th>Source</th>
+            <th>Stage at Loss</th>
+            <th>Lost Reason</th>
+            <th class="sortable" data-k="lostDate">Lost Date<span class="s-ic"></span></th>
+            <th class="sortable r" data-k="revLost">Revenue Lost<span class="s-ic"></span></th>
+            <th style="width:44px"></th>
+          </tr></thead>
+          <tbody id="lostBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- REASON ANALYTICS + DONUT -->
+    <div class="row2">
+      <div class="card">
+        <div class="card-h"><div><h3>Lost Reason Analytics</h3><div class="sub">Breakdown of why deals are lost</div></div></div>
+        <div class="card-body"><div class="reason-grid" id="reasonGrid"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><div><h3>Loss Distribution</h3><div class="sub">Share of lost leads by reason</div></div></div>
+        <div class="card-body">
+          <div class="donut-wrap">
+            <canvas id="donut" width="320" height="320" style="width:160px;height:160px;flex-shrink:0"></canvas>
+            <div class="donut-legend" id="donutLegend"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REVENUE LOST BY REASON -->
+    <div class="card">
+      <div class="card-h"><div><h3>Revenue Lost by Reason</h3><div class="sub">Where the money is leaking — potential revenue forfeited per loss reason</div></div></div>
+      <div class="card-body"><canvas id="revChart" width="1200" height="280" style="height:280px"></canvas></div>
+    </div>
+
+    <!-- STAGE DROPOFF + MONTHLY TREND -->
+    <div class="row2">
+      <div class="card">
+        <div class="card-h"><div><h3>Stage Drop-Off Analysis</h3><div class="sub">Where in the journey leads are being lost</div></div></div>
+        <div class="card-body"><div id="dropList"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><div><h3>Monthly Lost Lead Trends</h3><div class="sub">Lost leads, lost revenue &amp; recoveries</div></div>
+          <div class="chart-legend hide-sm">
+            <span><i style="background:#DC2626"></i>Lost Leads</span>
+            <span><i style="background:#B45309"></i>Lost Rev (AED M)</span>
+            <span><i style="background:#16A34A"></i>Recovered</span>
+          </div>
+        </div>
+        <div class="card-body"><canvas id="trendChart" width="900" height="280" style="height:280px"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ADVISOR PERFORMANCE -->
+    <div class="card">
+      <div class="card-h"><div><h3>Advisor Loss Performance</h3><div class="sub">Loss rate, lost revenue and recovery rate per advisor</div></div></div>
+      <div class="card-body"><div class="adv-grid" id="advGrid"></div></div>
+    </div>
+
+    <!-- SOURCE LOSS + BANK REJECTION -->
+    <div class="row2b">
+      <div class="card">
+        <div class="card-h"><div><h3>Lead Source Loss Analysis</h3><div class="sub">Which channels produce poor-quality leads</div></div></div>
+        <div class="tbl-wrap">
+          <table class="tbl" style="min-width:480px">
+            <thead><tr><th>Source</th><th class="r">Lost Leads</th><th class="r">Loss %</th><th class="r">Lost Revenue</th></tr></thead>
+            <tbody id="srcLossBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><div><h3>Bank Rejection Analysis</h3><div class="sub">Rejection rate by lending partner</div></div></div>
+        <div class="tbl-wrap">
+          <table class="tbl" style="min-width:440px">
+            <thead><tr><th>Bank</th><th class="r">Applications</th><th class="r">Rejected</th><th class="r">Rejection %</th></tr></thead>
+            <tbody id="bankRejBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECENTLY LOST -->
+    <div class="card">
+      <div class="card-h"><div><h3>Recently Lost Leads</h3><div class="sub">Latest leads marked as Declined</div></div></div>
+      <div class="card-body"><div class="feed" id="feed"></div></div>
+    </div>
+
+  </main>
+</div>
+</div>
+
+<!-- ROW MENU -->
+<div class="menu-pop" id="rowMenu">
+  <button class="primary" data-act="view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>View Lead</button>
+  <button data-act="reassign"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Reassign Advisor</button>
+</div>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span id="toastMsg"></span></div>
+
+{{ data|json_script:"page-data" }}
+<script>
+const D=JSON.parse(document.getElementById('page-data').textContent);
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+
+/* sidebar */
+const sidebar=$('#sidebar'),scrim=$('#scrim');
+$('#hamburger').addEventListener('click',()=>{sidebar.classList.add('open');scrim.classList.add('show')});
+scrim.addEventListener('click',()=>{sidebar.classList.remove('open');scrim.classList.remove('show')});
+$$('[data-toggle]').forEach(b=>b.addEventListener('click',()=>{
+  const g=b.closest('.nav-group'),was=g.classList.contains('open');
+  $$('.nav-group.open').forEach(o=>o!==g&&o.classList.remove('open'));
+  g.classList.toggle('open',!was);
+}));
+document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#globalSearch')?.focus();}});
+
+/* ---------- reference data ---------- */
+const REASONS=[
+  {name:'Competitor Chosen',col:'#DC2626'},
+  {name:'No Response',col:'#B45309'},
+  {name:'Documents Not Provided',col:'#D97706'},
+  {name:'Not Eligible',col:'#6D28D9'},
+  {name:'Interest Rate Too High',col:'#2D6CB0'},
+  {name:'Bank Rejected',col:'#BE185D'},
+  {name:'Property Issue',col:'#0F766E'},
+  {name:'Customer Changed Mind',col:'#7FA6CF'},
+  {name:'Budget Issue',col:'#A21CAF'},
+  {name:'Other',col:'#94A3B8'}
+];
+const REASON_COL=Object.fromEntries(REASONS.map(r=>[r.name,r.col]));
+const REASON_TINT={'Competitor Chosen':'#FEE2E2','No Response':'#FEF3E2','Documents Not Provided':'#FEF3E2','Not Eligible':'#EDE9FE','Interest Rate Too High':'#E0F2FE','Bank Rejected':'#FCE7F3','Property Issue':'#CCFBF1','Customer Changed Mind':'#F0F5FB','Budget Issue':'#FAE8FF','Other':'#F1F5F9'};
+const ADVISORS=D.advisors;
+const BANKS=D.banks;
+const SOURCES=D.sources;
+const LOST_STAGES=['Lead Received','Documents Pending','Documents Complete','Under Review','Pre-Approved','Valuation','FOL Issued'];
+
+let LEADS=D.rows.map(r=>({...r,lostDate:new Date(r.lostDate)}));
+
+const ini=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const fmtAED=v=>v>=1e6?'AED '+(v/1e6).toFixed(2)+'M':'AED '+(v/1e3).toFixed(0)+'K';
+const fmtN=v=>v.toLocaleString('en-US');
+const fmtD=d=>d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+
+/* ---------- KPIs ---------- */
+function buildKPIs(){
+  const tot=LEADS.length;
+  const loanVal=LEADS.reduce((s,l)=>s+l.loan,0);
+  const revLost=LEADS.reduce((s,l)=>s+l.revLost,0);
+  const thisMonth=LEADS.filter(l=>l.daysAgo<=30).length;
+  const last7=LEADS.filter(l=>l.daysAgo<=7).length;
+  const avgDeal=Math.round(loanVal/tot);
+  const topReason=reasonStats()[0];
+  const FLAT=[0,0,0,0,0,0,0,0];
+  const KPIS=[
+    {l:'Total Lost Leads',v:fmtN(tot),d:'',cls:'neg',ic:'red',svg:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m17 8 5 5M22 8l-5 5"/>',s:FLAT},
+    {l:'Lost Loan Value',v:fmtAED(loanVal),d:'',cls:'neg',ic:'red',svg:'<path d="M3 11.5 12 4l9 7.5"/><path d="M6 10.5V20h4.5v-5h3v5H18v-9.5"/>',s:FLAT},
+    {l:'Lost Revenue',v:fmtAED(revLost),d:'',cls:'neg',ic:'red',svg:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/>',s:FLAT},
+    {l:'Lost This Month',v:fmtN(thisMonth),d:'',cls:'mut',ic:'amber',svg:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',s:FLAT},
+    {l:'Lost Last 7 Days',v:fmtN(last7),d:'',cls:'mut',ic:'amber',svg:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>',s:FLAT},
+    {l:'Top Lost Reason',v:topReason.count,d:topReason.name,cls:'mut',ic:'red',svg:'<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/>',s:FLAT},
+    {l:'Avg Lost Deal Size',v:tot?fmtAED(avgDeal):'AED 0',d:'',cls:'mut',ic:'amber',svg:'<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.2a2.5 2 0 0 1 5 .3c0 1.5-2.5 1.8-2.5 3"/>',s:FLAT},
+    {l:'Revenue Leakage',v:D.kpis.leakage,d:'',cls:'neg',ic:'red',svg:'<path d="M12 2v6M5 10a7 7 0 1 0 14 0c0-2-1-3-2-4"/>',s:FLAT}
+  ];
+  const spark=(d,neg)=>{const w=54,h=22,max=Math.max(...d),min=Math.min(...d);
+    const pts=d.map((v,i)=>`${(i/(d.length-1))*w},${h-3-((v-min)/(max-min||1))*(h-6)}`).join(' ');
+    return `<svg class="spark" viewBox="0 0 ${w} ${h}"><polyline points="${pts}" fill="none" stroke="${neg?'#DC2626':'#16A34A'}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/></svg>`;};
+  const arrow=cls=>cls==='neg'?'M7 7l10 10M17 17H9M17 17V9':cls==='pos'?'M7 17 17 7M17 7H9M17 7v8':'M5 12h14';
+  $('#kpiGrid').innerHTML=KPIS.map(k=>`
+    <div class="kpi">
+      <div class="kpi-top"><label>${k.l}</label><span class="kpi-ic ${k.ic}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${k.svg}</svg></span></div>
+      <div class="kpi-foot"><div class="val">${k.v}</div>${spark(k.s,k.cls==='neg')}</div>
+      <div class="kpi-foot" style="margin-top:4px"><span class="delta ${k.cls==='pos'?'pos':k.cls==='neg'?'neg':'mut'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="${arrow(k.cls)}"/></svg>${k.d}</span></div>
+    </div>`).join('');
+}
+
+/* ---------- filters ---------- */
+const state={search:'',reason:null,advisor:null,bank:null,source:null,range:null,value:null,sortK:'lostDate',sortDir:-1};
+const FILTER_DEFS={
+  reason:{label:'Lost Reason',opts:REASONS.map(r=>r.name)},
+  advisor:{label:'Advisor',opts:ADVISORS},
+  bank:{label:'Bank',opts:BANKS},
+  source:{label:'Lead Source',opts:SOURCES},
+  range:{label:'Date Range',opts:['Last 7 Days','Last 30 Days','Last 90 Days','This Year']},
+  value:{label:'Loan Value',opts:['Under AED 1M','AED 1M–2M','AED 2M–3M','Over AED 3M']}
+};
+$$('.f-dd').forEach(dd=>{
+  const k=dd.dataset.filter,def=FILTER_DEFS[k];
+  dd.innerHTML=`<button class="f-dd-btn"><span class="lbl">${def.label}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></button>
+    <div class="f-dd-menu">${def.opts.map(o=>`<button data-v="${o}">${k==='reason'?`<i style="width:7px;height:7px;border-radius:50%;background:${REASON_COL[o]};flex-shrink:0"></i>`:''}${o}</button>`).join('')}</div>`;
+  const btn=dd.querySelector('.f-dd-btn');
+  btn.addEventListener('click',e=>{e.stopPropagation();const was=dd.classList.contains('open');$$('.f-dd.open').forEach(o=>o.classList.remove('open'));dd.classList.toggle('open',!was);});
+  dd.querySelectorAll('.f-dd-menu button').forEach(ob=>ob.addEventListener('click',()=>{
+    const v=ob.dataset.v,same=state[k]===v;state[k]=same?null:v;
+    dd.querySelectorAll('.f-dd-menu button').forEach(x=>x.classList.toggle('sel',x.dataset.v===state[k]));
+    btn.classList.toggle('on',!!state[k]);btn.querySelector('.lbl').textContent=state[k]||def.label;
+    dd.classList.remove('open');renderTable();
+  }));
+});
+document.addEventListener('click',()=>$$('.f-dd.open').forEach(o=>o.classList.remove('open')));
+$('#lostSearch').addEventListener('input',e=>{state.search=e.target.value.toLowerCase();renderTable();});
+$('#clearFilters').addEventListener('click',()=>{
+  state.search='';$('#lostSearch').value='';
+  Object.keys(FILTER_DEFS).forEach(k=>{
+    state[k]=null;const dd=document.querySelector(`.f-dd[data-filter=${k}]`);
+    dd.querySelector('.f-dd-btn').classList.remove('on');
+    dd.querySelector('.lbl').textContent=FILTER_DEFS[k].label;
+    dd.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));
+  });
+  renderTable();
+});
+
+/* ---------- main table ---------- */
+function filtered(){
+  return LEADS.filter(l=>{
+    if(state.search&&![l.name,l.advisor,l.bank,l.source,l.reason,l.id].join(' ').toLowerCase().includes(state.search))return false;
+    if(state.reason&&l.reason!==state.reason)return false;
+    if(state.advisor&&l.advisor!==state.advisor)return false;
+    if(state.bank&&l.bank!==state.bank)return false;
+    if(state.source&&l.source!==state.source)return false;
+    if(state.range){const map={'Last 7 Days':7,'Last 30 Days':30,'Last 90 Days':90,'This Year':365};if(l.daysAgo>map[state.range])return false;}
+    if(state.value){const v=l.loan;
+      if(state.value==='Under AED 1M'&&!(v<1e6))return false;
+      if(state.value==='AED 1M–2M'&&!(v>=1e6&&v<2e6))return false;
+      if(state.value==='AED 2M–3M'&&!(v>=2e6&&v<3e6))return false;
+      if(state.value==='Over AED 3M'&&!(v>=3e6))return false;
+    }
+    return true;
+  }).sort((a,b)=>{
+    let va=a[state.sortK],vb=b[state.sortK];
+    if(state.sortK==='lostDate'){va=a.lostDate.getTime();vb=b.lostDate.getTime();}
+    else if(typeof va==='string'){va=va.toLowerCase();vb=vb.toLowerCase();}
+    if(va<vb)return -1*state.sortDir;if(va>vb)return 1*state.sortDir;return 0;
+  });
+}
+function renderTable(){
+  const rows=filtered();
+  $('#lostTblCount').textContent=rows.length+' lost leads';
+  $('#lostBody').innerHTML=rows.length?rows.map(l=>`<tr>
+    <td><div class="lead-cell"><span class="p-avatar">${ini(l.name)}</span><div><b>${l.name}</b><span>${l.id}</span></div></div></td>
+    <td class="r num">${fmtAED(l.loan)}</td>
+    <td class="r num">${fmtAED(l.propVal)}</td>
+    <td>${l.advisor}</td>
+    <td><span class="tag">${l.source}</span></td>
+    <td>${l.stage}</td>
+    <td><span class="reason-badge" style="background:${REASON_TINT[l.reason]};color:${REASON_COL[l.reason]}">${l.reason}</span></td>
+    <td class="mut" style="color:var(--text-3)">${fmtD(l.lostDate)}</td>
+    <td class="r num" style="color:var(--danger)">${fmtAED(l.revLost)}</td>
+    <td><button class="kebab" data-id="${l.id}" aria-label="Actions"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button></td>
+  </tr>`).join(''):`<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-3)">No lost leads match your filters.</td></tr>`;
+  $$('.tbl th.sortable').forEach(th=>th.querySelector('.s-ic')&&(th.querySelector('.s-ic').textContent=th.dataset.k===state.sortK?(state.sortDir===1?'▲':'▼'):''));
+  $$('#lostBody .kebab').forEach(k=>k.addEventListener('click',e=>{
+    e.stopPropagation();const m=$('#rowMenu'),r=k.getBoundingClientRect();
+    m.classList.add('show');m.dataset.id=k.dataset.id;
+    const mw=190,mh=m.offsetHeight||230;let x=r.right-mw,y=r.bottom+6;
+    if(y+mh>innerHeight-12)y=r.top-mh-6;m.style.left=Math.max(8,x)+'px';m.style.top=y+'px';
+  }));
+}
+$$('.tbl th.sortable').forEach(th=>th.addEventListener('click',()=>{
+  const k=th.dataset.k;if(!k)return;if(state.sortK===k)state.sortDir*=-1;else{state.sortK=k;state.sortDir=1;}renderTable();
+}));
+document.addEventListener('click',()=>$('#rowMenu').classList.remove('show'));
+$('#rowMenu').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const id=$('#rowMenu').dataset.id,l=LEADS.find(x=>x.id===id);
+  if(b.dataset.act==='view'){location.href=`/leads/${id}/`;return;}
+  if(b.dataset.act==='reassign'){location.href=`/leads/${id}/`;return;}
+  $('#rowMenu').classList.remove('show');
+});
+
+/* ---------- reason analytics ---------- */
+function reasonStats(){
+  const m={};REASONS.forEach(r=>m[r.name]={count:0,rev:0});
+  LEADS.forEach(l=>{m[l.reason].count++;m[l.reason].rev+=l.revLost;});
+  return REASONS.map(r=>({name:r.name,col:r.col,count:m[r.name].count,rev:m[r.name].rev})).sort((a,b)=>b.count-a.count);
+}
+function buildReasons(){
+  const stats=reasonStats(),tot=LEADS.length,max=Math.max(...stats.map(s=>s.count));
+  $('#reasonGrid').innerHTML=stats.map(s=>`<div class="reason-card">
+    <span class="rc-dot" style="background:${s.col}"></span>
+    <div class="rc-body"><b>${s.name}</b><div class="rc-bar"><i style="background:${s.col}" data-w="${Math.round(s.count/max*100)}"></i></div></div>
+    <div class="rc-end"><b>${s.count}</b><span>${Math.round(s.count/tot*100)}% · ${fmtAED(s.rev)}</span></div>
+  </div>`).join('');
+  requestAnimationFrame(()=>$$('#reasonGrid .rc-bar i').forEach(i=>i.style.width=i.dataset.w+'%'));
+}
+
+/* ---------- donut ---------- */
+function drawDonut(){
+  const cv=$('#donut'),ctx=cv.getContext('2d'),cx=160,cy=160,rO=150,rI=92;
+  const stats=reasonStats().slice(0,6);
+  const otherCount=LEADS.length-stats.reduce((s,x)=>s+x.count,0);
+  const segs=stats.map(s=>({name:s.name,val:s.count,col:s.col}));
+  if(otherCount>0)segs.push({name:'Others',val:otherCount,col:'#CBD5E1'});
+  const total=LEADS.length;let a=-Math.PI/2;
+  ctx.clearRect(0,0,320,320);
+  segs.forEach(sg=>{const ang=sg.val/total*Math.PI*2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,rO,a,a+ang);ctx.closePath();ctx.fillStyle=sg.col;ctx.fill();a+=ang;});
+  ctx.beginPath();ctx.arc(cx,cy,rI,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+  ctx.fillStyle='#0F172A';ctx.font='700 36px Inter';ctx.textAlign='center';ctx.fillText(total,cx,cy-2);
+  ctx.fillStyle='#94A3B8';ctx.font='600 15px Inter';ctx.fillText('LOST LEADS',cx,cy+22);
+  $('#donutLegend').innerHTML=segs.map(sg=>`<div class="dl"><i style="background:${sg.col}"></i><span>${sg.name}</span><b>${Math.round(sg.val/total*100)}%</b></div>`).join('');
+}
+
+/* ---------- revenue lost bar ---------- */
+function drawRev(){
+  const cv=$('#revChart'),ctx=cv.getContext('2d');
+  const W=cv.width=cv.clientWidth*2,H=560;cv.height=H;
+  const data=reasonStats().filter(s=>s.rev>0).slice(0,8);
+  const pad={l:20,r:20,t:34,b:74},gw=(W-pad.l-pad.r)/data.length;
+  const max=Math.max(...data.map(d=>d.rev));
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='#EEF2F7';ctx.lineWidth=2;ctx.fillStyle='#94A3B8';ctx.font='600 20px Inter';ctx.textAlign='right';
+  for(let i=0;i<=4;i++){const y=pad.t+(H-pad.t-pad.b)*i/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
+    ctx.fillText('AED '+Math.round(max/1000*(1-i/4))+'K',pad.l+48,y+6);}
+  data.forEach((d,i)=>{
+    const x=pad.l+i*gw,bw=gw*0.52,rh=d.rev/max*(H-pad.t-pad.b),bx=x+gw*0.24,by=H-pad.b-rh;
+    const grad=ctx.createLinearGradient(0,by,0,H-pad.b);grad.addColorStop(0,d.col);grad.addColorStop(1,d.col+'AA');
+    ctx.fillStyle=grad;rr(ctx,bx,by,bw,rh,7);
+    ctx.fillStyle='#64748B';ctx.font='600 18px Inter';ctx.textAlign='center';
+    const nm=d.name.length>15?d.name.slice(0,14)+'…':d.name;ctx.fillText(nm,x+gw/2,H-pad.b+30);
+    ctx.fillStyle=d.col;ctx.font='700 20px Inter';ctx.fillText(fmtAED(d.rev),x+gw/2,by-12);
+  });
+}
+function rr(ctx,x,y,w,h,r){r=Math.min(r,w/2,h/2);if(h<=0)return;ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,0);ctx.arcTo(x,y+h,x,y,0);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();ctx.fill();}
+
+/* ---------- stage dropoff ---------- */
+function buildDrop(){
+  const m={};LOST_STAGES.forEach(s=>m[s]={count:0,rev:0});
+  LEADS.forEach(l=>{m[l.stage].count++;m[l.stage].rev+=l.revLost;});
+  const tot=LEADS.length,max=Math.max(...LOST_STAGES.map(s=>m[s].count));
+  $('#dropList').innerHTML=LOST_STAGES.map(s=>{
+    const c=m[s].count;
+    return `<div class="drop-row">
+      <label>${s} → Lost</label>
+      <div class="drop-bar-wrap"><div class="drop-bar" data-w="${Math.round(c/max*100)}">${c}</div></div>
+      <div class="drop-pct">${Math.round(c/tot*100)}%</div>
+      <div class="drop-rev">${fmtAED(m[s].rev)}</div>
+    </div>`;
+  }).join('');
+  requestAnimationFrame(()=>$$('#dropList .drop-bar').forEach(b=>b.style.width=Math.max(b.dataset.w,8)+'%'));
+}
+
+/* ---------- monthly trend ---------- */
+function drawTrend(){
+  const cv=$('#trendChart'),ctx=cv.getContext('2d');
+  const W=cv.width=cv.clientWidth*2,H=560;cv.height=H;
+  const months=['Jan','Feb','Mar','Apr','May','Jun'];
+  const series=[{c:'#DC2626',d:[0,0,0,0,0,0],max:30},{c:'#B45309',d:[0,0,0,0,0,0],max:30},{c:'#16A34A',d:[0,0,0,0,0,0],max:30}];
+  const pad={l:42,r:30,t:30,b:60},gx=(W-pad.l-pad.r)/(months.length-1),gh=H-pad.t-pad.b,max=30;
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='#EEF2F7';ctx.lineWidth=2;ctx.fillStyle='#94A3B8';ctx.font='600 19px Inter';ctx.textAlign='right';
+  for(let i=0;i<=4;i++){const y=pad.t+gh*i/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();ctx.fillText(Math.round(max*(1-i/4)),pad.l-10,y+6);}
+  ctx.textAlign='center';ctx.fillStyle='#64748B';ctx.font='600 19px Inter';
+  months.forEach((m,i)=>ctx.fillText(m,pad.l+i*gx,H-pad.b+30));
+  series.forEach(s=>{
+    ctx.strokeStyle=s.c;ctx.lineWidth=4;ctx.beginPath();
+    s.d.forEach((v,i)=>{const x=pad.l+i*gx,y=pad.t+gh*(1-v/max);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
+    s.d.forEach((v,i)=>{const x=pad.l+i*gx,y=pad.t+gh*(1-v/max);ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,y,7,0,Math.PI*2);ctx.fill();ctx.strokeStyle=s.c;ctx.lineWidth=4;ctx.stroke();});
+  });
+}
+
+/* ---------- advisor performance ---------- */
+function buildAdvisors(){
+  const assigned=D.assigned||{};
+  const m={};ADVISORS.forEach(a=>m[a]={lost:0,rev:0});
+  LEADS.forEach(l=>{if(m[l.advisor]){m[l.advisor].lost++;m[l.advisor].rev+=l.revLost;}});
+  const cards=ADVISORS.map(a=>{
+    const lost=m[a].lost,asg=assigned[a]||0,rate=asg?Math.round(lost/asg*1000)/10:0;
+    const recRate=0;
+    return {a,asg,lost,rate,rev:m[a].rev,recRate};
+  }).sort((x,y)=>y.rate-x.rate);
+  const worst=cards.length?cards[0].rate:0;
+  $('#advGrid').innerHTML=cards.map(c=>`<div class="adv-card ${c.rate>=worst&&c.rate>15?'alert':''}">
+    <div class="ac-h"><span class="p-avatar">${ini(c.a)}</span><b class="nm">${c.a}<span>Mortgage Advisor</span></b>
+      <div class="ac-loss"><b style="color:${c.rate>15?'var(--danger)':c.rate>10?'var(--warning)':'var(--text)'}">${c.rate}%</b><span>Loss Rate</span></div></div>
+    ${c.rate>=worst&&c.rate>15?'<div style="margin-bottom:9px"><span class="alert-flag">⚠ High loss rate</span></div>':''}
+    <div class="ac-stats">
+      <div><label>Assigned</label><b>${c.asg}</b></div>
+      <div><label>Lost</label><b style="color:var(--danger)">${c.lost}</b></div>
+      <div><label>Lost Rev</label><b>${fmtAED(c.rev)}</b></div>
+      <div><label>Recovery</label><b style="color:var(--success)">${c.recRate}%</b></div>
+    </div>
+  </div>`).join('');
+}
+
+/* ---------- source loss ---------- */
+function buildSourceLoss(){
+  const totals=D.sourceTotals||{};
+  const m={};SOURCES.forEach(s=>m[s]={lost:0,rev:0});
+  LEADS.forEach(l=>{if(m[l.source]){m[l.source].lost++;m[l.source].rev+=l.revLost;}});
+  const rows=SOURCES.map(s=>({s,lost:m[s].lost,rev:m[s].rev,pct:totals[s]?Math.round(m[s].lost/totals[s]*1000)/10:0})).sort((a,b)=>b.lost-a.lost);
+  $('#srcLossBody').innerHTML=rows.map(r=>`<tr>
+    <td><b style="font-weight:600;font-size:12.5px">${r.s}</b></td>
+    <td class="r num">${r.lost}</td>
+    <td class="r"><span style="font-weight:700;color:${r.pct>20?'var(--danger)':r.pct>12?'var(--warning)':'var(--success)'}">${r.pct}%</span></td>
+    <td class="r num" style="color:var(--danger)">${fmtAED(r.rev)}</td></tr>`).join('');
+}
+
+/* ---------- bank rejection ---------- */
+function buildBankRej(){
+  const DATA=(D.bankRej||[]).map(d=>({...d,pct:d.apps?Math.round(d.rej/d.apps*1000)/10:0})).sort((a,b)=>b.pct-a.pct);
+  $('#bankRejBody').innerHTML=DATA.map(d=>`<tr>
+    <td><div class="lead-cell"><span class="p-avatar" style="width:26px;height:26px;font-size:9px;border-radius:7px;background:var(--blue-50)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;color:var(--primary)"><path d="M3 21h18M5 21V8l7-5 7 5v13"/></svg></span><b style="font-weight:600;font-size:12.5px">${d.b}</b></div></td>
+    <td class="r num">${d.apps}</td>
+    <td class="r num" style="color:var(--danger)">${d.rej}</td>
+    <td class="r"><span style="font-weight:700;color:${d.pct>18?'var(--danger)':d.pct>14?'var(--warning)':'var(--success)'}">${d.pct}%</span></td></tr>`).join('');
+}
+
+/* ---------- recently lost feed ---------- */
+function buildFeed(){
+  const recent=[...LEADS].sort((a,b)=>a.daysAgo-b.daysAgo).slice(0,8);
+  $('#feed').innerHTML=recent.map(l=>`<div class="feed-item">
+    <span class="feed-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m17 8 5 5M22 8l-5 5"/></svg></span>
+    <div class="feed-body"><p><b>${l.name}</b> marked Lost <span style="color:var(--text-3)">· ${fmtAED(l.loan)}</span></p><div class="rsn">Reason: <b style="color:${REASON_COL[l.reason]}">${l.reason}</b> · Advisor ${l.advisor}</div><time>${l.daysAgo} days ago</time></div></div>`).join('');
+}
+
+/* actions */
+$('#refreshBtn').addEventListener('click',()=>{init();toast('Lost leads refreshed');});
+
+/* toast */
+let tTimer;
+function toast(msg){$('#toastMsg').textContent=msg;$('#toast').classList.add('show');clearTimeout(tTimer);tTimer=setTimeout(()=>$('#toast').classList.remove('show'),2400);}
+
+/* init */
+function init(){
+  buildKPIs();renderTable();buildReasons();buildDrop();buildAdvisors();buildSourceLoss();buildBankRej();buildFeed();
+  drawDonut();drawRev();drawTrend();
+}
+init();
+let rT;addEventListener('resize',()=>{clearTimeout(rT);rT=setTimeout(()=>{drawRev();drawTrend();},200);});
+</script>
+</body>
+</html>

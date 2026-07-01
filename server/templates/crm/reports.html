@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Reports & Analytics — Mortgage CRM{% endblock %}
+{% block page_title %}Reports & Analytics{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Reports &amp; Analytics</h1><p>Business performance snapshot across leads and disbursements.</p></div><div class="actions"><a class="btn btn-ghost" href="{% url 'report_export' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export CSV</a></div></div>
+
+<div class="kpi-grid k5">
+  <div class="kpi"><div class="kpi-top"><label>Total Leads</label></div><div class="val">{{ kpis.total_leads }}</div></div>
+  <div class="kpi"><div class="kpi-top"><label>Disbursed</label></div><div class="val">{{ kpis.disbursed }}</div></div>
+  <div class="kpi"><div class="kpi-top"><label>Conversion</label></div><div class="val">{{ kpis.conv }}%</div></div>
+  <div class="kpi"><div class="kpi-top"><label>Lost</label></div><div class="val">{{ kpis.lost }}</div></div>
+  <div class="kpi"><div class="kpi-top"><label>Loan Value</label></div><div class="val" style="font-size:19px">AED {{ kpis.value|floatformat:0 }}</div></div>
+</div>
+
+<div class="card"><div class="card-body" style="color:var(--text-3);font-size:12.5px">
+  Live summary from current data. Use <b>Export CSV</b> for a per-source breakdown (leads, disbursed, declined).
+</div></div>
+{% endblock %}
