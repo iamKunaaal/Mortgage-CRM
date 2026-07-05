@@ -320,7 +320,6 @@ a{color:inherit;text-decoration:none}
       <button type="button" class="step" data-go="sec4"><i>4</i>Bank</button>
       <button type="button" class="step" data-go="sec5"><i>5</i>Assignment</button>
       <button type="button" class="step" data-go="sec6"><i>6</i>Documents</button>
-      <button type="button" class="step" data-go="sec7"><i>7</i>Notes</button>
     </div>
 
     <div class="lead-layout">
@@ -335,6 +334,7 @@ a{color:inherit;text-decoration:none}
         <input type="hidden" name="source" id="hSource" value="{{ form.source.value|default:'Website' }}">
         <input type="hidden" name="stage" id="hStage" value="{{ form.stage.value|default:'Lead Received' }}">
         <input type="hidden" name="priority" id="hPriority" value="{{ form.priority.value|default:'Medium' }}">
+        <input type="hidden" name="referral_partner" id="hPartner" value="{{ form.referral_partner.value|default:'' }}">
 
         <!-- SECTION 1 -->
         <section class="fcard" id="sec1">
@@ -449,30 +449,11 @@ a{color:inherit;text-decoration:none}
           <div class="up-grid" id="upGrid"></div>
         </section>
 
-        <!-- SECTION 7 -->
-        <section class="fcard" id="sec7">
-          <div class="fcard-h">
-            <span class="fcard-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
-            <div><h2>Internal Notes</h2><p>Context for the team — visible internally only.</p></div>
-          </div>
-          <div class="note-composer">
-            <span class="p-avatar">KP</span>
-            <div class="note-box">
-              <textarea id="noteText" placeholder="Add an internal note about this lead…"></textarea>
-              <div class="note-actions"><button type="button" class="btn btn-ghost" id="addNote"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Add Note</button></div>
-            </div>
-          </div>
-          <div class="note-list" id="noteList"></div>
-        </section>
-
         <!-- ACTION BAR -->
         <div class="action-bar">
           <a class="btn btn-ghost" href="{% url 'lead_list' %}">Cancel</a>
-          <button type="button" class="btn btn-ghost" id="fillRandom" style="border-color:#F59E0B;color:#B45309" title="Temporary: fill the form with random test data">⚡ Fill Random (test)</button>
           <span class="draft-note hide-sm" id="draftNote"></span>
           <span class="spacer"></span>
-          <button type="button" class="btn btn-ghost" id="saveDraft"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>Save Draft</button>
-          <button type="submit" class="btn btn-outline" id="createAssign">Create &amp; Assign</button>
           <button type="submit" class="btn btn-primary" id="createLead"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>{{ title }}</button>
         </div>
       </form>
@@ -590,7 +571,8 @@ buildCombo('cAdvisor',ADVISORS);
 buildCombo('cSource',SOURCES);
 
 /* ---------- multi-select combo (referral partners) ---------- */
-const PARTNERS=D.partners||[];
+const PARTNERS=(D.partners||[]).map(p=>p.name);
+const PARTNER_MAP={};(D.partners||[]).forEach(p=>PARTNER_MAP[p.name]=p.pk);
 const multiState={cPartners:[],cBank:[]};
 function buildMultiCombo(id,opts){
   const c=document.getElementById(id),label=c.dataset.label;
@@ -737,19 +719,6 @@ function renderDocs(set){
 }
 renderDocs('salaried');
 
-/* ---------- notes ---------- */
-$('#addNote').addEventListener('click',()=>{
-  const t=$('#noteText').value.trim();if(!t)return;
-  const d=document.createElement('div');d.className='note-item';
-  const time=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-  d.innerHTML=`<span class="p-avatar">KP</span>
-    <div class="note-body"><div class="meta"><b>Kunal Darji</b><time>Today · ${time}</time></div><p></p></div>`;
-  d.querySelector('p').textContent=t;
-  $('#noteList').prepend(d);
-  $('#noteText').value='';
-  toast('Note added');
-});
-
 /* ---------- live summary + progress ---------- */
 const PR_COLORS={High:['#FEE2E2','#DC2626'],Medium:['#FEF3E2','#B45309'],Low:['#EDFAF1','#16A34A']};
 function update(){
@@ -785,6 +754,8 @@ function update(){
       $('#cPartners').classList.remove('has-val');
     }
   }
+  /* sync first selected partner pk into the real FK field */
+  $('#hPartner').value=(isRef&&multiState.cPartners.length)?(PARTNER_MAP[multiState.cPartners[0]]||''):'';
   /* referral partners in summary */
   const pRow=$('#sumPartnerRow');
   if(pRow){
@@ -867,39 +838,6 @@ $('#leadForm').addEventListener('submit',e=>{
   /* strip thousands separators so DecimalField accepts the numbers */
   ['#fPropVal','#fLoan'].forEach(sel=>{const el=$(sel);if(el)el.value=el.value.replace(/[^\d.]/g,'');});
 });
-$('#saveDraft').addEventListener('click',()=>{
-  const time=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-  $('#draftNote').textContent='Draft saved at '+time;
-  toast('Draft saved');
-});
-
-/* ---------- TEMP: one-click random test data ---------- */
-(function(){
-  const btn=$('#fillRandom'); if(!btn) return;
-  const NAMES=['Rania Saeed','Omar Haddad','Priya Nair','Daniel Roy','Aisha Verma','Karan Shah','Leila Aziz','Marcus Lee','Sana Iqbal','Yousef Ali','Nora Aziz','Hassan Qadir'];
-  const EMPLOYERS=['Emirates Group','ADNOC','Majid Al Futtaim','Etisalat','DP World','Emaar','Dubai Holding'];
-  const pick=a=>a[Math.floor(Math.random()*a.length)];
-  const ri=(lo,hi)=>Math.floor(Math.random()*(hi-lo+1))+lo;
-  function setF(sel,val){const el=$(sel);if(!el)return;el.value=val;el.dispatchEvent(new Event('input',{bubbles:true}));}
-  btn.addEventListener('click',()=>{
-    const nm=pick(NAMES);
-    setF('#fName',nm);
-    setF('#fMobile','5'+ri(0,6)+' '+ri(100,999)+' '+ri(1000,9999));
-    setF('#fEmail',nm.toLowerCase().replace(/[^a-z]+/g,'.')+ri(1,99)+'@example.com');
-    setF('#fPropVal',String(ri(80,450)*10000));
-    setF('#fLtv',String(pick([65,70,75,80,85])));
-    presetCombo('cNat',pick(NATS));
-    if(typeof ADVISORS!=='undefined'&&ADVISORS.length)presetCombo('cAdvisor',pick(ADVISORS));
-    presetCombo('cSource',pick(SOURCES));
-    if(typeof BANKS!=='undefined'&&BANKS.length)presetMulti('cBank',pick(BANKS));
-    const emp=$('#fEmployer');if(emp)setF('#fEmployer',pick(EMPLOYERS));
-    const prs=$$('#prPills .pill');
-    if(prs.length){prs.forEach(p=>p.classList.remove('on'));pick(prs).classList.add('on');}
-    update();
-    toast('Random test data filled — review & submit');
-  });
-})();
-
 /* ---------- stepper / scroll-spy ---------- */
 const steps=$$('.step'),secs=$$('.fcard[id]');
 steps.forEach(s=>s.addEventListener('click',()=>{

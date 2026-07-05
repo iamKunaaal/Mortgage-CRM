@@ -515,7 +515,7 @@ function filtered(){
     if(state.status&&d.status!==state.status)return false;
     if(state.advisor&&d.advisor!==state.advisor)return false;
     if(state.uploader&&d.uploader!==state.uploader)return false;
-    if(state.range){const diff=(new Date(2026,5,12)-d.upDate)/864e5;if(state.range==='Today'&&diff>1)return false;if(state.range==='Last 7 Days'&&diff>7)return false;if(state.range==='Last 30 Days'&&diff>30)return false;}
+    if(state.range){const diff=(new Date()-d.upDate)/864e5;if(state.range==='Today'&&diff>1)return false;if(state.range==='Last 7 Days'&&diff>7)return false;if(state.range==='Last 30 Days'&&diff>30)return false;}
     return true;
   }).sort((a,b)=>{
     let va=a[state.sortK],vb=b[state.sortK];
@@ -562,7 +562,7 @@ $$('.tbl th.sortable').forEach(th=>th.addEventListener('click',()=>{
 document.addEventListener('click',()=>$('#rowMenu').classList.remove('show'));
 $('#rowMenu').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
-  const d=DOCS.find(x=>x.id===$('#rowMenu').dataset.id),act=b.dataset.act;
+  const d=DOCS.find(x=>x.id===+$('#rowMenu').dataset.id),act=b.dataset.act;
   $('#rowMenu').classList.remove('show');
   if(act==='view')openView(d);
   else if(act==='verify')openAction('verify',d);
@@ -620,8 +620,8 @@ function openView(d){
 }
 $('#vClose').addEventListener('click',()=>$('#viewModal').classList.remove('show'));
 $('#viewModal').addEventListener('click',e=>{if(e.target===$('#viewModal'))$('#viewModal').classList.remove('show');});
-$('#vVerify').addEventListener('click',()=>{const d=DOCS.find(x=>x.id===$('#viewModal').dataset.id);$('#viewModal').classList.remove('show');openAction('verify',d);});
-$('#vReject').addEventListener('click',()=>{const d=DOCS.find(x=>x.id===$('#viewModal').dataset.id);$('#viewModal').classList.remove('show');openAction('reject',d);});
+$('#vVerify').addEventListener('click',()=>{const d=DOCS.find(x=>x.id===+$('#viewModal').dataset.id);$('#viewModal').classList.remove('show');openAction('verify',d);});
+$('#vReject').addEventListener('click',()=>{const d=DOCS.find(x=>x.id===+$('#viewModal').dataset.id);$('#viewModal').classList.remove('show');openAction('reject',d);});
 
 /* ---------- action modal ---------- */
 let actCtx=null;
@@ -662,7 +662,7 @@ $('#aConfirm').addEventListener('click',()=>{
 });
 
 /* actions */
-$('#refreshBtn').addEventListener('click',()=>{init();toast('Documents refreshed');});
+$('#refreshBtn').addEventListener('click',()=>{location.reload();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('#viewModal').classList.remove('show');$('#actModal').classList.remove('show');}});
 
 /* toast */

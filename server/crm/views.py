@@ -9,7 +9,8 @@ from django.utils import timezone
 from django.http import HttpResponse
 from django.views.decorators.http import require_POST
 
-from .models import User, Lead, Bank, Task, ReferralPartner, Document, Role, STAGES, SOURCES
+from .models import (User, Lead, Bank, Task, ReferralPartner, Document, Role, STAGES, SOURCES,
+                     Note, LeadSourceState, RolePermission, AppSetting)
 from .forms import LoginForm, LeadForm, UserForm, PartnerForm, BankForm
 from . import permissions as perm
 
@@ -213,6 +214,7 @@ def management_dashboard(request):
         'advisors': advisors_js, 'banks': banks_js, 'sources': sources_js,
         'partners': partners_js, 'finance': finance, 'profit': profit_bars,
         'actions': actions,
+        'feed': _activity_feed(),
     }
     return render(request, 'crm/dashboard_mgmt.html', {
         'dash': dash, 'greet_name': request.user.first_name or request.user.username,
@@ -366,7 +368,9 @@ def lead_create(request):
                      for a in form.fields['advisor'].queryset],
         'banks': [{'pk': b.pk, 'name': b.name}
                   for b in form.fields['bank'].queryset],
-        'sources': SOURCES, 'partners': [], 'init': {},
+        'sources': SOURCES,
+        'partners': [{'pk': p.pk, 'name': p.name} for p in ReferralPartner.objects.filter(status='Active')],
+        'init': {},
     }
     return render(request, 'crm/lead_form.html', {
         'form': form, 'title': 'Create Lead', 'data': data, 'active_nav': 'Leads'})
@@ -406,6 +410,7 @@ def lead_detail(request, pk):
             't': d.doc_type,
             'm': f'{d.uploaded_by} · {d.created_at.strftime("%d %b %Y")}',
             's': s, 'txt': txt,
+            'url': d.file.url if d.file else '',
         })
 
     tasks_js = [{
@@ -413,9 +418,17 @@ def lead_detail(request, pk):
         'status': t.status, 'due': t.due_date.strftime('%d %b %Y') if t.due_date else '—',
     } for t in tasks]
 
+    notes_js = [{
+        'author': (n.author.get_full_name() or n.author.username) if n.author else '—',
+        'role': n.author.role_label if n.author else '',
+        'initials': n.author.initials if n.author else '·',
+        'when': n.created_at.strftime('%d %b %Y · %I:%M %p'),
+        'text': n.text,
+    } for n in lead.notes.select_related('author')]
+
     data = {
         'lead': lead_js, 'stageOrder': STAGES,
-        'documents': documents_js, 'tasks': tasks_js,
+        'documents': documents_js, 'tasks': tasks_js, 'notes': notes_js,
     }
     advisors = User.objects.filter(role=Role.ADVISOR)
     return render(request, 'crm/lead_detail.html', {
@@ -547,7 +560,7 @@ def lead_pipeline(request):
         'advisor': (l.advisor.get_full_name() or l.advisor.username) if l.advisor else 'Unassigned',
         'bank': l.bank.name if l.bank else '—', 'source': l.source, 'stage': l.stage,
         'priority': l.priority, 'act': _act(l), 'created': l.created_at.strftime('%Y-%m-%d'),
-        'days': _days(l),
+        'days': _days(l), 'pipelineMonth': l.pipeline_month or None,
     } for l in base.order_by('-created_at')]
 
     advisors = [u.get_full_name() or u.username for u in User.objects.filter(role=Role.ADVISOR)]
@@ -602,6 +615,7 @@ def lead_sources(request):
                        'FOL Initiated', 'FOL Issued', 'FOL Signing Fixed',
                        'FOL Signed', 'Under Disbursement'] + DISBURSED_STAGES
 
+    src_states = {s.name: s.active for s in LeadSourceState.objects.all()}
     sources_js = []
     for src in SOURCES:
         qs = base.filter(source=src)
@@ -619,7 +633,8 @@ def lead_sources(request):
             'leads': cnt, 'qualified': qualified, 'applications': applications,
             'approved': approved, 'disbursed': disbursed,
             'revenue': round(disb_val * 0.011),
-            'active': '—', 'status': 'active',
+            'active': '—',
+            'status': 'active' if src_states.get(src, True) else 'inactive',
             'created': '—',
             'avgLoan': round(loan_val / cnt) if cnt else 0,
             'avgProp': round(prop_val / cnt) if cnt else 0,
@@ -631,20 +646,56 @@ def lead_sources(request):
 
     partners_js = []
     for p in ReferralPartner.objects.all()[:5]:
+        disb = _f(p.leads.filter(stage__in=DISBURSED_STAGES).aggregate(v=Sum('loan_amount'))['v'])
         partners_js.append({
-            'n': p.name, 'leads': 0, 'approved': 0,
-            'disbursed': 0, 'revenue': 0, 'comm': 0,
+            'n': p.name, 'leads': p.leads.count(),
+            'approved': p.leads.filter(stage__in=APPROVED_STAGES).count(),
+            'disbursed': p.leads.filter(stage__in=DISBURSED_STAGES).count(),
+            'revenue': round(disb * 0.011), 'comm': round(disb * 0.003),
         })
 
+    trend_labels, trend_series = _monthly_trend(base)
     data = {
         'sources': sources_js,
         'advisors': advisors,
         'banks': banks,
         'partners': partners_js,
+        'trend': {'labels': trend_labels, 'values': trend_series},
     }
     return render(request, 'crm/lead_sources.html', {
         'data': data, 'active_nav': 'Leads', 'active_sub': 'lead_sources',
     })
+
+
+def _activity_feed(limit=8):
+    """Recent activity derived from lead/task/document timestamps."""
+    items = []
+    for l in Lead.objects.order_by('-created_at')[:limit]:
+        items.append({'t': f'New lead "{l.name}" received', 'm': l.source,
+                      'when': l.created_at})
+    for t in Task.objects.filter(status='Completed').order_by('-created_at')[:limit]:
+        items.append({'t': f'Task completed: {t.title}',
+                      'm': (t.assignee.get_full_name() or t.assignee.username) if t.assignee else '',
+                      'when': t.created_at})
+    for d in Document.objects.order_by('-created_at')[:limit]:
+        items.append({'t': f'{d.doc_type} uploaded for {d.lead.name}', 'm': d.uploaded_by,
+                      'when': d.created_at})
+    items.sort(key=lambda x: x['when'], reverse=True)
+    return [{'t': i['t'], 'm': i['m'], 'when': i['when'].strftime('%d %b · %I:%M %p')}
+            for i in items[:limit]]
+
+
+def _monthly_trend(qs, months=6, field='created_at'):
+    """Return ([label,...], [count,...]) for the last N calendar months."""
+    now = timezone.localdate()
+    labels, values = [], []
+    for i in range(months - 1, -1, -1):
+        y, m = now.year, now.month - i
+        while m <= 0:
+            y, m = y - 1, m + 12
+        labels.append(f'{["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m-1]}')
+        values.append(qs.filter(**{f'{field}__year': y, f'{field}__month': m}).count())
+    return labels, values
 
 
 @login_required
@@ -710,6 +761,8 @@ def lost_leads(request):
         'bankRej': bank_rej,
         'kpis': {'leakage': leakage},
     }
+    tl, tv = _monthly_trend(visible_leads(request.user).filter(stage='Declined'), field='updated_at')
+    data['trend'] = {'labels': tl, 'values': tv}
     return render(request, 'crm/lost_leads.html', {
         'data': data, 'leads': leads, 'kpis': kpis,
         'active_nav': 'Leads', 'active_sub': 'lost_leads',
@@ -840,10 +893,12 @@ def settings_view(request):
     doc_types = ['Passport', 'Emirates ID', 'Salary Certificate', 'Bank Statements',
                  'Trade License', 'Property MOU', 'Title Deed', 'Liability Letter',
                  'Property Documents', 'Other Documents']
+    saved = {s.key: s.value for s in AppSetting.objects.all()}
     data = {
-        'stages': [s for s in STAGES if s != 'Declined'],
-        'sources': list(SOURCES),
-        'docTypes': doc_types,
+        'stages': saved.get('stages') or [s for s in STAGES if s != 'Declined'],
+        'sources': saved.get('sources') or list(SOURCES),
+        'docTypes': saved.get('doc_types') or doc_types,
+        'notifications': saved.get('notifications') or [],
     }
     return render(request, 'crm/settings.html', {'data': data, 'active_nav': 'SettingsPage'})
 
@@ -852,9 +907,14 @@ def settings_view(request):
 @perm.module_required('Leads', 'edit')
 def lead_edit(request, pk):
     lead = get_object_or_404(visible_leads(request.user), pk=pk)
-    form = LeadForm(request.POST or None, instance=lead)
+    form = LeadForm(request.POST or None, request.FILES or None, instance=lead)
     if request.method == 'POST' and form.is_valid():
         form.save()
+        uploader = request.user.get_full_name() or request.user.username
+        for key, f in request.FILES.items():
+            if key.startswith('doc::'):
+                Document.objects.create(lead=lead, doc_type=key[5:], file=f,
+                                        status='Pending Review', uploaded_by=uploader)
         messages.success(request, 'Lead updated.')
         return redirect('lead_detail', pk=lead.pk)
     data = {
@@ -862,7 +922,8 @@ def lead_edit(request, pk):
                      for a in form.fields['advisor'].queryset],
         'banks': [{'pk': b.pk, 'name': b.name}
                   for b in form.fields['bank'].queryset],
-        'sources': SOURCES, 'partners': [],
+        'sources': SOURCES,
+        'partners': [{'pk': p.pk, 'name': p.name} for p in ReferralPartner.objects.filter(status='Active')],
         'init': {
             'nationality': lead.nationality or '',
             'advisor_name': (lead.advisor.get_full_name() or lead.advisor.username) if lead.advisor else '',
@@ -953,11 +1014,12 @@ def task_list(request):
 def task_create(request):
     from .forms import TaskForm
     form = TaskForm(request.POST or None)
-    if request.method == 'POST' and form.is_valid():
-        form.save()
-        messages.success(request, 'Task created.')
-    else:
-        messages.error(request, 'Task title is required.')
+    if request.method == 'POST':
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Task created.')
+        else:
+            messages.error(request, 'Task title is required.')
     return redirect('task_list')
 
 
@@ -1166,7 +1228,13 @@ def partner_list(request):
         'contact': p.name,
         'phone': p.mobile or '—',
         'email': p.email or '—',
-        'leads': 0, 'approved': 0, 'disbursed': 0, 'revenue': 0,
+        'leads': p.leads.count(),
+        'approved': p.leads.exclude(stage__in=['Lead Received', 'Documents Pending',
+                                               'Documents Complete', 'Logged In',
+                                               'Under Review', 'Declined']).count(),
+        'disbursed': p.leads.filter(stage__in=DISBURSED_STAGES).count(),
+        'revenue': round(_f(p.leads.filter(stage__in=DISBURSED_STAGES)
+                            .aggregate(v=Sum('loan_amount'))['v']) * 0.011),
         'status': p.status if p.status in STC_STATUS else 'Active',
         'i': _ini(p.name),
         'created': p.created_at.strftime('%Y-%m-%d'),
@@ -1296,6 +1364,8 @@ def document_list(request):
 @login_required
 @perm.module_required('Documents', 'edit')
 def document_action(request, pk, action):
+    if request.method != 'POST':
+        return redirect('document_list')
     doc = get_object_or_404(Document, pk=pk)
     mapping = {'verify': ('Verified', 'verified'), 'reject': ('Rejected', 'rejected'),
                'reupload': ('Missing', 're-upload requested for')}
@@ -1508,6 +1578,7 @@ def settings_save(request):
 
 # ---------- roles ----------
 @login_required
+@perm.module_required('Settings')
 def role_list(request):
     proto_modules = ['Dashboard', 'Leads', 'Tasks', 'Banks', 'Documents',
                      'Finance', 'Reports', 'Users', 'Settings']
@@ -1522,7 +1593,7 @@ def role_list(request):
     rows = []
     roles_js = []
     for role in Role:
-        access = perm.ACCESS.get(role, {})
+        access = perm.effective_access(role)
         user_count = User.objects.filter(role=role).count()
         rows.append({
             'label': role.label,
@@ -1543,8 +1614,114 @@ def role_list(request):
     data = {
         'roles': roles_js,
         'modules': list(perm.MODULES),
+        'role_keys': {r.label: r.value for r in Role},
     }
     return render(request, 'crm/role_list.html', {
         'roles': rows, 'modules': perm.MODULES, 'data': data,
         'total_users': total_users, 'active_nav': 'Settings',
     })
+
+
+# ---------- QC additions: notes, uploads, restore, pipeline month, sources, roles, settings ----------
+@login_required
+@perm.module_required('Leads')
+@require_POST
+def lead_note_add(request, pk):
+    lead = get_object_or_404(visible_leads(request.user), pk=pk)
+    text = request.POST.get('text', '').strip()
+    if text:
+        Note.objects.create(lead=lead, author=request.user, text=text)
+        messages.success(request, 'Note added.')
+    return redirect('lead_detail', pk=pk)
+
+
+@login_required
+@perm.module_required('Documents', 'create')
+@require_POST
+def lead_document_upload(request, pk):
+    lead = get_object_or_404(visible_leads(request.user), pk=pk)
+    uploader = request.user.get_full_name() or request.user.username
+    doc_type = request.POST.get('doc_type', '').strip() or 'Document'
+    n = 0
+    for f in request.FILES.getlist('file'):
+        Document.objects.create(lead=lead, doc_type=doc_type, file=f,
+                                status='Pending Review', uploaded_by=uploader)
+        n += 1
+    if n:
+        messages.success(request, f'{n} document(s) uploaded.')
+        new_stage = request.POST.get('stage', '')
+        if new_stage in dict(Lead.STAGE_CHOICES) and perm.can_edit(request.user, 'Leads'):
+            lead.stage = new_stage
+            lead.save()
+    else:
+        messages.error(request, 'No file selected.')
+    return redirect('lead_detail', pk=pk)
+
+
+@login_required
+@perm.module_required('Leads', 'edit')
+@require_POST
+def lead_restore(request, pk):
+    lead = get_object_or_404(visible_leads(request.user), pk=pk)
+    lead.stage = 'Lead Received'
+    lead.lost_reason = ''
+    lead.save()
+    messages.success(request, f'Lead "{lead.name}" restored to pipeline.')
+    return redirect('lost_leads')
+
+
+@login_required
+@perm.module_required('Leads', 'edit')
+@require_POST
+def lead_pipeline_month(request, pk):
+    lead = get_object_or_404(visible_leads(request.user), pk=pk)
+    lead.pipeline_month = request.POST.get('month', '').strip()
+    lead.save()
+    return HttpResponse('ok')
+
+
+@login_required
+@perm.module_required('Leads', 'edit')
+@require_POST
+def source_toggle(request):
+    name = request.POST.get('name', '').strip()
+    if name:
+        st, _ = LeadSourceState.objects.get_or_create(name=name)
+        st.active = not st.active
+        st.save()
+        return HttpResponse('on' if st.active else 'off')
+    return HttpResponse('err', status=400)
+
+
+@login_required
+@perm.module_required('Settings', 'edit')
+@require_POST
+def role_perm_save(request):
+    role = request.POST.get('role', '')
+    module = request.POST.get('module', '')
+    lvl = request.POST.get('level', '')
+    if role in dict(Role.choices) and module in perm.MODULES and lvl:
+        rp, _ = RolePermission.objects.get_or_create(role=role, module=module,
+                                                     defaults={'level': lvl})
+        rp.level = lvl
+        rp.save()
+        return HttpResponse('ok')
+    return HttpResponse('err', status=400)
+
+
+@login_required
+@perm.module_required('Settings', 'edit')
+@require_POST
+def settings_state_save(request):
+    import json
+    key = request.POST.get('key', '')
+    if key not in ('stages', 'sources', 'doc_types', 'notifications'):
+        return HttpResponse('err', status=400)
+    try:
+        value = json.loads(request.POST.get('value', '[]'))
+    except ValueError:
+        return HttpResponse('err', status=400)
+    s, _ = AppSetting.objects.get_or_create(key=key, defaults={'value': value})
+    s.value = value
+    s.save()
+    return HttpResponse('ok')

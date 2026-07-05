@@ -295,7 +295,7 @@ canvas{display:block;width:100%}
       <span class="kbd">⌘K</span>
     </div>
     <div class="h-actions">
-      <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot"></span></button>
+      <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></button>
     </div>
   </header>
 
@@ -323,10 +323,7 @@ canvas{display:block;width:100%}
         <input type="text" id="srcSearch" placeholder="Search source, lead, campaign…">
       </div>
       <div class="f-dd" data-filter="type"></div>
-      <div class="f-dd" data-filter="advisor"></div>
-      <div class="f-dd" data-filter="bank"></div>
       <div class="f-dd" data-filter="status"></div>
-      <div class="f-dd" data-filter="range"></div>
       <div class="f-dd" data-filter="revenue"></div>
       <button class="clear-btn" id="clearFilters">✕&nbsp; Clear Filters</button>
     </div>
@@ -395,11 +392,9 @@ canvas{display:block;width:100%}
     <!-- LOW PERF + MONTHLY TREND -->
     <div class="row2">
       <div class="card">
-        <div class="card-h"><div><h3>Monthly Lead Trend</h3><div class="sub">Source-wise lead volume — last 6 months</div></div>
+        <div class="card-h"><div><h3>Monthly Lead Trend</h3><div class="sub">Total lead volume — last 6 months</div></div>
           <div class="chart-legend hide-sm">
-            <span><i style="background:#05448B"></i>Meta Ads</span>
-            <span><i style="background:#2D6CB0"></i>Google Ads</span>
-            <span><i style="background:#16A34A"></i>Referral</span>
+            <span><i style="background:#05448B"></i>Total Leads</span>
           </div>
         </div>
         <div class="card-body"><canvas id="trendChart" width="900" height="280" style="height:280px"></canvas></div>
@@ -458,6 +453,8 @@ canvas{display:block;width:100%}
 
 <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span id="toastMsg"></span></div>
 
+<form id="csrfForm" style="display:none">{% csrf_token %}</form>
+
 {{ data|json_script:"page-data" }}
 <script>
 const D=JSON.parse(document.getElementById('page-data').textContent);
@@ -492,7 +489,7 @@ const C={meta:'#1877F2',google:'#EA4335',web:'#05448B',walk:'#B45309',ref:'#16A3
 const tint={meta:'#E7F0FE',google:'#FDECEA',web:'#F0F5FB',walk:'#FEF3E2',ref:'#EDFAF1',cust:'#EDE9FE',adv:'#CCFBF1',pf:'#FEE2E2',bayut:'#DCFCE7',wa:'#DCFCE7',cold:'#EDE9FE'};
 
 let SOURCES=D.sources;
-SOURCES.forEach(s=>s.rate=Math.round(s.approved/s.leads*1000)/10);
+SOURCES.forEach(s=>s.rate=s.leads?Math.round(s.approved/s.leads*1000)/10:0);
 
 const fmtAED=v=>v>=1e6?'AED '+(v/1e6).toFixed(2)+'M':'AED '+(v/1e3).toFixed(0)+'K';
 const fmtN=v=>v.toLocaleString('en-US');
@@ -502,14 +499,14 @@ function buildKPIs(){
   const t=(f)=>SOURCES.reduce((s,x)=>s+x[f],0);
   const totLeads=t('leads'),qual=t('qualified'),appr=t('approved'),disb=t('disbursed'),rev=t('revenue');
   const KPIS=[
-    {l:'Total Leads',v:fmtN(totLeads),sub:'↑ 9.2% vs last month',cls:'up',ic:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/>'},
-    {l:'Qualified Leads',v:fmtN(qual),sub:Math.round(qual/totLeads*100)+'% qualification rate',cls:'muted',ic:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>'},
-    {l:'Approved Loans',v:fmtN(appr),sub:'↑ 6.4% vs last month',cls:'up',ic:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>'},
-    {l:'Disbursed Loans',v:fmtN(disb),sub:'AED 31.2M disbursed',cls:'muted',ic:'<path d="M3 11.5 12 4l9 7.5"/><path d="M6 10.5V20h4.5v-5h3v5H18v-9.5"/>'},
-    {l:'Total Revenue',v:fmtAED(rev),sub:'↑ 12.4% vs last month',cls:'up',ic:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/>'},
-    {l:'Active Sources',v:SOURCES.filter(s=>s.status!=='paused').length,sub:SOURCES.filter(s=>s.status==='review').length+' need review',cls:'muted',ic:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>'},
-    {l:'Avg Approval Rate',v:(appr/totLeads*100).toFixed(1)+'%',sub:'across all channels',cls:'muted',ic:'<path d="M3 3v18h18"/><path d="m7 14 4-4 4 3 5-6"/>'},
-    {l:'Cost Per Lead',v:'AED 94',sub:'↓ 7.1% vs last month',cls:'up',ic:'<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.2a2.5 2 0 0 1 5 .3c0 1.5-2.5 1.8-2.5 3M12 15.5v.5"/>'}
+    {l:'Total Leads',v:fmtN(totLeads),sub:'all channels',cls:'muted',ic:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/>'},
+    {l:'Qualified Leads',v:fmtN(qual),sub:(totLeads?Math.round(qual/totLeads*100):0)+'% qualification rate',cls:'muted',ic:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>'},
+    {l:'Approved Loans',v:fmtN(appr),sub:'&nbsp;',cls:'muted',ic:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>'},
+    {l:'Disbursed Loans',v:fmtN(disb),sub:'&nbsp;',cls:'muted',ic:'<path d="M3 11.5 12 4l9 7.5"/><path d="M6 10.5V20h4.5v-5h3v5H18v-9.5"/>'},
+    {l:'Total Revenue',v:fmtAED(rev),sub:'&nbsp;',cls:'muted',ic:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/>'},
+    {l:'Active Sources',v:SOURCES.filter(s=>s.status==='active').length,sub:SOURCES.filter(s=>s.status!=='active').length+' inactive',cls:'muted',ic:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>'},
+    {l:'Avg Approval Rate',v:(totLeads?(appr/totLeads*100):0).toFixed(1)+'%',sub:'across all channels',cls:'muted',ic:'<path d="M3 3v18h18"/><path d="m7 14 4-4 4 3 5-6"/>'},
+    {l:'Revenue / Lead',v:'AED '+fmtN(totLeads?Math.round(rev/totLeads):0),sub:'across all channels',cls:'muted',ic:'<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.2a2.5 2 0 0 1 5 .3c0 1.5-2.5 1.8-2.5 3M12 15.5v.5"/>'}
   ];
   $('#kpiGrid').innerHTML=KPIS.map(k=>`
     <div class="kpi">
@@ -520,13 +517,10 @@ function buildKPIs(){
 }
 
 /* ---------- filters ---------- */
-const state={search:'',type:null,advisor:null,bank:null,status:null,range:null,revenue:null,sortK:'revenue',sortDir:-1};
+const state={search:'',type:null,status:null,revenue:null,sortK:'revenue',sortDir:-1};
 const FILTER_DEFS={
   type:{label:'Source Type',opts:['Paid','Organic','Direct','Referral','Partner','Portal','Outbound']},
-  advisor:{label:'Advisor',opts:D.advisors},
-  bank:{label:'Bank',opts:D.banks},
-  status:{label:'Lead Status',opts:['Active','Needs Review','Paused']},
-  range:{label:'Date Range',opts:['Today','Last 7 Days','Last 30 Days','This Quarter','This Year']},
+  status:{label:'Lead Status',opts:['Active','Inactive']},
   revenue:{label:'Revenue Range',opts:['Under AED 200K','AED 200K–500K','AED 500K–1M','Over AED 1M']}
 };
 $$('.f-dd').forEach(dd=>{
@@ -546,7 +540,7 @@ document.addEventListener('click',()=>$$('.f-dd.open').forEach(o=>o.classList.re
 $('#srcSearch').addEventListener('input',e=>{state.search=e.target.value.toLowerCase();renderTable();});
 $('#clearFilters').addEventListener('click',()=>{
   state.search='';$('#srcSearch').value='';
-  ['type','advisor','bank','status','range','revenue'].forEach(k=>{
+  ['type','status','revenue'].forEach(k=>{
     state[k]=null;const dd=document.querySelector(`.f-dd[data-filter=${k}]`);
     dd.querySelector('.f-dd-btn').classList.remove('on');
     dd.querySelector('.lbl').textContent=FILTER_DEFS[k].label;
@@ -556,12 +550,12 @@ $('#clearFilters').addEventListener('click',()=>{
 });
 
 /* ---------- table ---------- */
-const ST_LABEL={active:['active','Active'],review:['review','Needs Review'],paused:['paused','Paused']};
+const ST_LABEL={active:['active','Active'],review:['review','Needs Review'],paused:['paused','Paused'],inactive:['paused','Inactive']};
 function filtered(){
   return SOURCES.filter(s=>{
     if(state.search&&![s.name,s.type].join(' ').toLowerCase().includes(state.search))return false;
     if(state.type&&s.type!==state.type)return false;
-    if(state.status){const map={'Active':'active','Needs Review':'review','Paused':'paused'};if(s.status!==map[state.status])return false;}
+    if(state.status){const map={'Active':'active','Inactive':'inactive'};if(s.status!==map[state.status])return false;}
     if(state.revenue){const r=s.revenue;
       if(state.revenue==='Under AED 200K'&&!(r<200000))return false;
       if(state.revenue==='AED 200K–500K'&&!(r>=200000&&r<500000))return false;
@@ -618,12 +612,11 @@ function buildFunnelSelect(){
 }
 function drawFunnel(key){
   const s=SOURCES.find(x=>x.key===key);
-  const docs=Math.round(s.qualified*.9),login=Math.round(s.applications*1.05);
-  const steps=[['Leads',s.leads],['Documents Complete',docs],['Logged In',login],['Pre-Approved',Math.round(s.approved*1.4)],['Approved',s.approved],['Disbursed',s.disbursed]];
-  const max=steps[0][1];
+  const steps=[['Leads',s.leads],['Qualified',s.qualified],['Applications',s.applications],['Approved',s.approved],['Disbursed',s.disbursed]];
+  const max=steps[0][1]||1;
   $('#funnel').innerHTML=steps.map((st,i)=>{
     const pct=Math.round(st[1]/max*100);
-    const conv=i>0?Math.round(st[1]/steps[i-1][1]*100):100;
+    const conv=i>0?Math.round(st[1]/(steps[i-1][1]||1)*100):100;
     return `<div class="f-stage">
       <label>${st[0]}</label>
       <div class="f-bar-wrap"><div class="f-bar" data-w="${pct}">${fmtN(st[1])}</div></div>
@@ -689,9 +682,9 @@ function rr(ctx,x,y,w,h,r){r=Math.min(r,w/2,h/2);if(h<=0)return;ctx.beginPath();
 function drawTrend(){
   const cv=$('#trendChart'),ctx=cv.getContext('2d');
   const W=cv.width=cv.clientWidth*2,H=560;cv.height=H;
-  const months=['Jan','Feb','Mar','Apr','May','Jun'];
-  const series=[{c:'#05448B',d:[0,0,0,0,0,0]},{c:'#2D6CB0',d:[0,0,0,0,0,0]},{c:'#16A34A',d:[0,0,0,0,0,0]}];
-  const pad={l:50,r:30,t:30,b:60},max=100;
+  const months=(D.trend&&D.trend.labels)||['Jan','Feb','Mar','Apr','May','Jun'];
+  const series=[{c:'#05448B',d:(D.trend&&D.trend.values)||[0,0,0,0,0,0]}];
+  const pad={l:50,r:30,t:30,b:60},max=Math.max(10,Math.ceil(Math.max(...series[0].d)*1.15));
   const gx=(W-pad.l-pad.r)/(months.length-1),gh=H-pad.t-pad.b;
   ctx.clearRect(0,0,W,H);
   ctx.strokeStyle='#EEF2F7';ctx.lineWidth=2;ctx.fillStyle='#94A3B8';ctx.font='600 19px Inter';ctx.textAlign='right';
@@ -765,11 +758,26 @@ function buildPartners(){
 }
 
 /* ---------- insights ---------- */
-const INSIGHTS=[];
+function computeInsights(){
+  const out=[],withLeads=SOURCES.filter(s=>s.leads>0);
+  if(!withLeads.length)return out;
+  const icStar='<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/>';
+  const icTrend='<path d="M3 3v18h18"/><path d="m7 14 4-4 4 3 5-6"/>';
+  const icWarn='<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/>';
+  const totLeads=withLeads.reduce((s,x)=>s+x.leads,0);
+  const topLeads=[...withLeads].sort((a,b)=>b.leads-a.leads)[0];
+  out.push({c:'info',ic:icTrend,t:`<b>${topLeads.name}</b> is your top channel by volume with <b>${fmtN(topLeads.leads)} leads</b> (${Math.round(topLeads.leads/totLeads*100)}% of all leads).`});
+  const bestConv=[...withLeads].sort((a,b)=>b.rate-a.rate)[0];
+  if(bestConv)out.push({c:'good',ic:icStar,t:`<b>${bestConv.name}</b> has the best approval rate at <b>${bestConv.rate}%</b> (${fmtN(bestConv.approved)} of ${fmtN(bestConv.leads)} leads approved).`});
+  const worst=[...withLeads].sort((a,b)=>a.rate-b.rate)[0];
+  if(worst&&worst!==bestConv)out.push({c:'warn',ic:icWarn,t:`<b>${worst.name}</b> converts weakest at <b>${worst.rate}%</b> approval — review targeting or qualification for this channel.`});
+  return out;
+}
 function buildInsights(){
-  $('#insightGrid').innerHTML=INSIGHTS.map(i=>`<div class="insight ${i.c}">
+  const INSIGHTS=computeInsights();
+  $('#insightGrid').innerHTML=INSIGHTS.length?INSIGHTS.map(i=>`<div class="insight ${i.c}">
     <span class="in-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${i.ic}</svg></span>
-    <p>${i.t}</p></div>`).join('');
+    <p>${i.t}</p></div>`).join(''):'<p style="color:var(--text-3);font-size:12.5px;padding:12px 0">Not enough data for insights yet.</p>';
 }
 
 /* ---------- source management ---------- */
@@ -778,20 +786,24 @@ function buildSM(){
     <span class="src-ic" style="background:${tint[s.key]};color:${C[s.key]}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${SVG[s.key]}</svg></span>
     <div class="sm-body"><b>${s.name}</b><span>${s.type} · Created ${s.created}</span></div>
     <div class="sm-meta"><b>${s.active}</b>last lead received</div>
-    <button class="sm-edit" data-edit="${s.key}">Edit</button>
-    <span class="switch ${s.status!=='paused'?'on':''}" data-toggle-src="${s.key}" role="switch" aria-checked="${s.status!=='paused'}"></span>
+    <span class="switch ${s.status==='active'?'on':''}" data-toggle-src="${s.key}" role="switch" aria-checked="${s.status==='active'}"></span>
   </div>`).join('');
   $$('[data-toggle-src]').forEach(sw=>sw.addEventListener('click',()=>{
     const s=SOURCES.find(x=>x.key===sw.dataset.toggleSrc);
-    if(sw.classList.contains('on')){sw.classList.remove('on');s.status='paused';toast(s.name+' disabled');}
-    else{sw.classList.add('on');s.status='active';toast(s.name+' enabled');}
-    buildKPIs();renderTable();
+    const csrf=document.querySelector('#csrfForm [name=csrfmiddlewaretoken]').value;
+    fetch("{% url 'source_toggle' %}",{method:'POST',headers:{'X-CSRFToken':csrf,'Content-Type':'application/x-www-form-urlencoded'},body:'name='+encodeURIComponent(s.name)})
+      .then(r=>r.text()).then(res=>{
+        const on=res.trim()==='on';
+        sw.classList.toggle('on',on);sw.setAttribute('aria-checked',on);
+        s.status=on?'active':'inactive';
+        toast(s.name+(on?' enabled':' disabled'));
+        buildKPIs();renderTable();
+      }).catch(()=>toast('Could not update '+s.name));
   }));
-  $$('[data-edit]').forEach(b=>b.addEventListener('click',()=>toast('Edit '+SOURCES.find(x=>x.key===b.dataset.edit).name)));
 }
 
 /* refresh / add */
-$('#refreshBtn').addEventListener('click',()=>{init();toast('Lead sources refreshed');});
+$('#refreshBtn').addEventListener('click',()=>location.reload());
 
 /* toast */
 let tTimer;

@@ -49,7 +49,20 @@ NAV = [
 def level(user, module):
     if not user.is_authenticated:
         return 'No'
-    return ACCESS.get(user.role, {}).get(module, 'No')
+    return effective_access(user.role).get(module, 'No')
+
+
+def effective_access(role):
+    """Static matrix overridden by DB-stored per-role customisations."""
+    from .models import RolePermission
+    base = dict(ACCESS.get(role, {}))
+    try:
+        for rp in RolePermission.objects.filter(role=role):
+            if rp.module in MODULES:
+                base[rp.module] = rp.level
+    except Exception:
+        pass  # table missing during initial migrate
+    return base
 
 
 def can_access(user, module):

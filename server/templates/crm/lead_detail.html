@@ -355,7 +355,7 @@ a{color:inherit;text-decoration:none}
     <span class="page-title">Lead Detail</span>
     <div class="h-actions">
       <a class="btn btn-ghost hide-sm" href="{% url 'lead_list' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back to Leads</a>
-      <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot"></span></button>
+      <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></button>
     </div>
   </header>
 
@@ -423,7 +423,16 @@ a{color:inherit;text-decoration:none}
         <!-- DOCUMENTS -->
         <div class="pane" id="pDocs">
           <div class="card">
-            <div class="card-h"><div><h3>Document Center</h3><div class="sub">Verification status of customer documents</div></div><a class="btn btn-ghost" href="{% url 'document_list' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>Upload</a></div>
+            <div class="card-h"><div><h3>Document Center</h3><div class="sub">Verification status of customer documents</div></div>
+              <form id="docUploadForm" method="post" action="{% url 'lead_document_upload' lead.pk %}" enctype="multipart/form-data" style="display:flex;align-items:center;gap:8px">
+                {% csrf_token %}
+                <select name="doc_type" style="padding:8px 10px;border:1px solid var(--border);border-radius:9px;font:inherit;font-size:12.5px;color:var(--text-2);background:#fff">
+                  <option>Document</option><option>Passport</option><option>Emirates ID</option><option>Visa</option><option>Salary Certificate</option><option>Bank Statement</option><option>Trade License</option><option>Title Deed</option><option>MOU</option>
+                </select>
+                <input type="file" name="file" id="docUploadInput" multiple style="display:none" onchange="if(this.files.length)document.getElementById('docUploadForm').submit()">
+                <button type="button" class="btn btn-ghost" onclick="document.getElementById('docUploadInput').click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>Upload</button>
+              </form>
+            </div>
             <div class="card-body">
               <div class="doc-widget">
                 <div class="dw-top"><b id="dwCount"></b><span id="dwPct"></span></div>
@@ -468,7 +477,7 @@ a{color:inherit;text-decoration:none}
             <div class="card-h"><div><h3>Team Discussion</h3><div class="sub">Internal collaboration — visible to your team only</div></div></div>
             <div class="card-body">
               <div class="note-composer">
-                <span class="p-avatar">KP</span>
+                <span class="p-avatar">{{ request.user.initials }}</span>
                 <div class="note-box">
                   <textarea id="noteText" placeholder="Add an internal note…"></textarea>
                   <div class="note-actions"><button class="btn btn-ghost" id="addNote"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Add Note</button></div>
@@ -627,6 +636,8 @@ a{color:inherit;text-decoration:none}
 </div>
 
 <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span id="toastMsg"></span></div>
+
+<form id="csrfForm" style="display:none">{% csrf_token %}</form>
 
 {{ data|json_script:"page-data" }}
 <script>
@@ -795,7 +806,14 @@ const IC_CALL='<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07
 const IC_WA='<path d="M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.8-.9L3 21l2-5.2a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 8.4-8.5 8.38 8.38 0 0 1 8.5 8z"/>';
 const IC_MAIL='<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/>';
 const IC_STAGE='<path d="M12 20v-6M6 20V10M18 20V4"/>';
-const TL=[];
+const IC_DOC='<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>';
+const IC_TASK='<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>';
+const TL=[
+  ...D.documents.map(d=>({ic:IC_DOC,ok:d.s==='ok',h:`<b>${d.t}</b> document — ${d.txt} · ${d.m}`,t:d.m.split('·').pop().trim()})),
+  ...D.tasks.map(t=>({ic:IC_TASK,ok:t.status==='Completed',h:`<b>${t.title}</b> — ${t.type||''} task (${t.status})`,t:'Due '+t.due})),
+  {ic:IC_STAGE,ok:false,h:`Currently in stage <b>${L.stage}</b>`,t:'As of '+L.act},
+  {ic:IC_MAIL,ok:true,h:`<b>Lead created</b> via ${L.source} and assigned to ${L.advisor}`,t:fmtD(L.created)}
+];
 $('#timeline').innerHTML=TL.map(f=>`<div class="tl-item">
   <span class="tl-ic ${f.ok?'ok':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${f.ic}</svg></span>
   <div class="tl-body"><p>${f.h}</p><time>${f.t}</time></div></div>`).join('');
@@ -814,12 +832,12 @@ const DOCS=D.documents;
 $('#docList').innerHTML=DOCS.map(d=>`<div class="doc-row">
   <span class="doc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></span>
   <div><b>${d.t}</b><span>${d.m}</span></div>
-  <div class="doc-status"><span class="d-badge ${d.s}">${d.txt}</span><button class="link-btn">View</button></div>
+  <div class="doc-status"><span class="d-badge ${d.s}">${d.txt}</span>${d.url?`<a class="link-btn" href="${d.url}" target="_blank" rel="noopener">View</a>`:''}</div>
 </div>`).join('');
 
 /* ---------- application tracking ---------- */
 const subDate=new Date(L.created);subDate.setDate(subDate.getDate()+4);
-const procDays=Math.max(1,Math.round((new Date(2026,5,12)-subDate)/864e5));
+const procDays=Math.max(1,Math.round((new Date()-subDate)/864e5));
 const submittedBanks=[L.bank].filter(Boolean);
 const APP_TRACK=[
   ['Preferred Bank(s)',submittedBanks.join(', '),'Submitted to '+submittedBanks.length+' banks'],
@@ -871,7 +889,7 @@ const ROLE_STYLE={
   'Finance':['#EDFAF1','#16A34A'],
   'Super Admin':['#0F172A','#fff']
 };
-const SEED_NOTES=[];
+const SEED_NOTES=(D.notes||[]).map(n=>({a:n.author,r:n.role||'Advisor',t:n.when,txt:n.text}));
 function noteHTML(n){
   const [rbg,rfg]=ROLE_STYLE[n.r]||ROLE_STYLE['Advisor'];
   return `<div class="note-item"><span class="p-avatar">${ini(n.a)}</span>
@@ -880,10 +898,12 @@ function noteHTML(n){
 $('#noteList').innerHTML=SEED_NOTES.map(noteHTML).join('');
 $('#addNote').addEventListener('click',()=>{
   const t=$('#noteText').value.trim();if(!t)return;
-  const time=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-  const d=document.createElement('div');d.innerHTML=noteHTML({a:'Kunal Darji',r:'Super Admin',t:'Today · '+time,txt:t});
-  $('#noteList').prepend(d.firstElementChild);
-  $('#noteText').value='';toast('Note added');
+  const f=document.createElement('form');f.method='post';f.action="{% url 'lead_note_add' lead.pk %}";
+  const csrf=document.querySelector('#csrfForm [name=csrfmiddlewaretoken]').value;
+  f.innerHTML=`<input type="hidden" name="csrfmiddlewaretoken"><input type="hidden" name="text">`;
+  f.querySelector('[name=csrfmiddlewaretoken]').value=csrf;
+  f.querySelector('[name=text]').value=t;
+  document.body.appendChild(f);f.submit();
 });
 
 /* ---------- rail ---------- */
@@ -922,20 +942,23 @@ function closeTitleDeed(){$('#tdScrim').classList.remove('show');}
   $('#tdScrim').addEventListener('click',e=>{if(e.target===$('#tdScrim'))closeTitleDeed();});
   $('#tdSubmit').addEventListener('click',()=>{
     if(!tdFile){toast('Please upload the Title Deed first');return;}
-    // advisor submits → status Verification Pending, sent to Manager
-    const st=$('#tdStatus');st.style.display='flex';st.className='td-status pend';
-    st.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><div><b>Verification Pending</b> — Title Deed submitted by ${L.advisor}. Advisor role complete. Sent to Manager for review.</div>`;
-    $('#tdSubmit').textContent='Approve as Manager';
-    $('#tdSubmit').onclick=()=>{
-      // manager approves → Property Transferred (green)
-      st.className='td-status done';
-      st.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><div><b>Property Transferred</b> — Title Deed approved by Manager. Property transfer complete.</div>`;
-      $('#tdSubmit').style.display='none';
-      // reflect on the stage badge
-      const sb=$('#stageBadge'),stg=$('#stageTxt');
-      if(sb&&stg){sb.style.background='#DCFCE7';sb.style.color='#15803D';stg.textContent='Property Transferred';}
-      toast('Property Transferred — approved by Manager');
-    };
+    const csrf=document.querySelector('#csrfForm [name=csrfmiddlewaretoken]').value;
+    const fd=new FormData();
+    fd.append('csrfmiddlewaretoken',csrf);
+    fd.append('file',tdFile);
+    fd.append('doc_type','Title Deed');
+    fd.append('stage','Property Transfer');
+    $('#tdSubmit').disabled=true;$('#tdSubmit').textContent='Submitting…';
+    fetch("{% url 'lead_document_upload' lead.pk %}",{method:'POST',body:fd})
+      .then(r=>{
+        if(!r.ok)throw new Error();
+        toast('Title Deed submitted');
+        location.reload();
+      })
+      .catch(()=>{
+        $('#tdSubmit').disabled=false;$('#tdSubmit').textContent='Submit Title Deed';
+        toast('Upload failed — please try again');
+      });
   });
 })();
 

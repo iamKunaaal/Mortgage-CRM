@@ -328,7 +328,7 @@ canvas{display:block;width:100%}
       <span class="kbd">⌘K</span>
     </div>
     <div class="h-actions">
-      <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot"></span></button>
+      <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></button>
     </div>
   </header>
 
@@ -360,8 +360,6 @@ canvas{display:block;width:100%}
       <div class="f-dd" data-filter="status"></div>
       <div class="f-dd" data-filter="volume"></div>
       <div class="f-dd" data-filter="revenue"></div>
-      <div class="f-dd" data-filter="commission"></div>
-      <div class="f-dd" data-filter="range"></div>
       <button class="clear-btn" id="clearFilters">✕&nbsp; Clear Filters</button>
     </div>
 
@@ -435,77 +433,6 @@ canvas{display:block;width:100%}
   <button class="primary" data-act="view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>View Partner</button>
 </div>
 
-<!-- ADD / EDIT MODAL -->
-<div class="modal-scrim" id="ptModal">
-  <div class="modal" role="dialog" aria-modal="true">
-    <div class="modal-h">
-      <span class="m-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></span>
-      <div><b id="modalTitle">Add Partner</b><span id="modalSub">Register a new referral partner</span></div>
-      <button class="x" id="mClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-    </div>
-    <div class="modal-body">
-      <div class="grp-label full">Personal Details</div>
-      <div class="fld req"><label>Full Name *</label><input type="text" id="fName" placeholder="e.g. Rami Haddad"><span class="err">Required</span></div>
-      <div class="fld req"><label>Mobile Number *</label><input type="tel" id="fPhone" placeholder="+971 50 000 0000"><span class="err">Required</span></div>
-      <div class="fld req full"><label>Email Address *</label><input type="email" id="fEmail" placeholder="name@company.com"><span class="err">Valid email required</span></div>
-
-      <div class="grp-label full">Business Details</div>
-      <div class="fld req"><label>Company Name *</label><input type="text" id="fCompany" placeholder="e.g. Provident Real Estate"><span class="err">Required</span></div>
-      <div class="fld req"><label>Organization / Workplace *</label><input type="text" id="fOrg" placeholder="e.g. Provident Group"><span class="err">Required</span></div>
-      <div class="fld"><label>Partner Type</label><select id="fType"></select></div>
-      <div class="fld"><label>Status</label><select id="fStatus"><option>Active</option><option>On Hold</option><option>Inactive</option></select></div>
-
-      <div class="grp-label full">Identity</div>
-      <div class="fld req"><label>Emirates ID Number *</label><input type="text" id="fEid" placeholder="784-XXXX-XXXXXXX-X"><span class="err">Required</span></div>
-      <div class="fld req"><label>Passport Number *</label><input type="text" id="fPassport" placeholder="e.g. A1234567"><span class="err">Required</span></div>
-
-      <div class="grp-label full">Bank Account Details</div>
-      <div class="fld req"><label>Bank Name *</label><input type="text" id="fBank" placeholder="Bank name"><span class="err">Required</span></div>
-      <div class="fld req"><label>Account Number *</label><input type="text" id="fAcct" placeholder="Account number"><span class="err">Required</span></div>
-      <div class="fld req full"><label>IBAN Number *</label><input type="text" id="fIban" placeholder="AE00 0000 0000 0000 0000 000"><span class="err">Required</span></div>
-
-      <div class="grp-label full">Other</div>
-      <div class="fld"><label>Commission %</label><input type="number" id="fComm" step="0.1" min="0" placeholder="e.g. 0.5"></div>
-      <div class="fld"><label>Address</label><input type="text" id="fAddress" placeholder="Office address"></div>
-      <div class="fld full"><label>Notes</label><textarea id="fNotes" placeholder="Internal notes about this partner…"></textarea></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" id="mCancel">Cancel</button>
-      <button class="btn btn-primary" id="mSave">Continue to Documents</button>
-    </div>
-  </div>
-</div>
-
-<!-- KYC / AGREEMENT UPLOAD POPUP -->
-<div class="modal-scrim" id="kycModal">
-  <div class="modal" role="dialog" aria-modal="true">
-    <div class="modal-h">
-      <span class="m-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 15l2 2 4-4"/></svg></span>
-      <div><b>Agreement &amp; KYC Upload</b><span id="kycSub">Final step — upload required documents</span></div>
-      <button class="x" id="kClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-    </div>
-    <div class="modal-body" style="grid-template-columns:1fr">
-      <div class="kyc-note">All mandatory details are complete. Upload the signed <b>Partner Agreement</b> and <b>KYC documents</b> to finish creating this referral partner.</div>
-      <div class="kyc-zone" data-k="agreement">
-        <span class="ki"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 14l2 2 4-4"/></svg></span>
-        <b>Partner Agreement</b><p>Signed agreement · PDF, JPG, PNG</p>
-        <div class="kyc-file" style="display:none"><span></span><button type="button">Remove</button></div>
-        <input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none">
-      </div>
-      <div class="kyc-zone" data-k="kyc">
-        <span class="ki"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8.5" cy="11" r="2.2"/><path d="M14 9h5M14 13h5"/></svg></span>
-        <b>KYC Documents</b><p>Emirates ID / Passport copy · PDF, JPG, PNG</p>
-        <div class="kyc-file" style="display:none"><span></span><button type="button">Remove</button></div>
-        <input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none">
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" id="kBack">Back</button>
-      <button class="btn btn-primary" id="kCreate">Create Partner</button>
-    </div>
-  </div>
-</div>
-
 <!-- VIEW MODAL -->
 <div class="modal-scrim" id="viewModal">
   <div class="modal lg" role="dialog" aria-modal="true">
@@ -517,7 +444,6 @@ canvas{display:block;width:100%}
     <div class="vm-body" id="vBody"></div>
     <div class="modal-foot">
       <button class="btn btn-ghost" id="vCloseBtn">Close</button>
-      <button class="btn btn-primary" id="vEdit">Edit Partner</button>
     </div>
   </div>
 </div>
@@ -568,26 +494,26 @@ function buildKPIs(){
 /* ---------- commission summary ---------- */
 function buildCS(){
   const totalComm=PARTNERS.reduce((s,p)=>s+commission(p),0);
-  const paid=Math.round(totalComm*0.62),pending=totalComm-paid;
-  const thisMonth=Math.round(totalComm*0.21),avg=Math.round(totalComm/PARTNERS.length);
+  const totalRev=PARTNERS.reduce((s,p)=>s+p.revenue,0);
+  const totalDisb=PARTNERS.reduce((s,p)=>s+p.disbursed,0);
+  const avg=PARTNERS.length?Math.round(totalComm/PARTNERS.length):0;
+  const monthLbl=new Date().toLocaleString('en-US',{month:'long',year:'numeric'});
   const TILES=[
-    {l:'Total Commission Paid',v:fmtAED(paid),s:'62% settled',cls:'',sc:'up'},
-    {l:'Total Commission Pending',v:fmtAED(pending),s:'awaiting payout',cls:'',sc:'warn'},
-    {l:'This Month Commission',v:fmtAED(thisMonth),s:'June 2026',cls:'',sc:'up'},
-    {l:'Avg Commission / Partner',v:fmtAED(avg),s:'across active partners',cls:'hl',sc:''}
+    {l:'Total Est. Commission',v:fmtAED(totalComm),s:'across all partners',cls:'',sc:'up'},
+    {l:'Total Revenue Generated',v:fmtAED(totalRev),s:'as of '+monthLbl,cls:'',sc:'up'},
+    {l:'Disbursed Cases',v:totalDisb,s:'from partner referrals',cls:'',sc:''},
+    {l:'Avg Commission / Partner',v:fmtAED(avg),s:'across all partners',cls:'hl',sc:''}
   ];
   $('#csGrid').innerHTML=TILES.map(t=>`<div class="cs-tile ${t.cls}"><label>${t.l}</label><b>${t.v}</b><span style="color:${t.sc==='up'?'var(--success)':t.sc==='warn'?'var(--warning)':''}">${t.s}</span></div>`).join('');
 }
 
 /* ---------- filters ---------- */
-const state={search:'',type:null,status:null,volume:null,revenue:null,commission:null,range:null,sortK:'revenue',sortDir:-1};
+const state={search:'',type:null,status:null,volume:null,revenue:null,sortK:'revenue',sortDir:-1};
 const FILTER_DEFS={
   type:{label:'Partner Type',opts:PT_TYPES},
   status:{label:'Status',opts:['Active','On Hold','Inactive']},
   volume:{label:'Referral Volume',opts:['60+ leads','30–60 leads','Under 30']},
-  revenue:{label:'Revenue Generated',opts:['AED 5M+','AED 2–5M','Under AED 2M']},
-  commission:{label:'Commission Status',opts:['Paid','Pending']},
-  range:{label:'Date Range',opts:['Last 30 Days','This Quarter','This Year']}
+  revenue:{label:'Revenue Generated',opts:['AED 5M+','AED 2–5M','Under AED 2M']}
 };
 $$('.f-dd').forEach(dd=>{
   const k=dd.dataset.filter,def=FILTER_DEFS[k];
@@ -726,12 +652,10 @@ function buildFeed(){
 }
 
 /* ---------- view modal ---------- */
-const REFERRED={};
 function openView(p){
   $('#vAvatar').textContent=ini(p.name);
   $('#vName').textContent=p.company;
   $('#vSub').textContent=`${p.type} · ${p.status}`;
-  const refs=REFERRED[p.name]||['Recent lead A','Recent lead B'];
   $('#vBody').innerHTML=`
     <div class="vm-sec"><h4>Referral Statistics</h4>
       <div class="vm-stats">
@@ -752,7 +676,7 @@ function openView(p){
       </div>
     </div>
     <div class="vm-sec"><h4>Recent Referred Leads</h4>
-      ${refs.map(n=>`<div class="vm-lead"><span class="p-avatar">${n.split(' ').map(w=>w[0]).join('').slice(0,2)}</span><div class="vl-body"><b>${n}</b><span>Referred by ${p.company}</span></div></div>`).join('')}
+      <div style="text-align:center;padding:18px;color:var(--text-3);font-size:12.5px">No data available.</div>
     </div>`;
   $('#viewModal').dataset.name=p.name;
   $('#viewModal').classList.add('show');
@@ -760,104 +684,10 @@ function openView(p){
 $('#vClose').addEventListener('click',()=>$('#viewModal').classList.remove('show'));
 $('#vCloseBtn').addEventListener('click',()=>$('#viewModal').classList.remove('show'));
 $('#viewModal').addEventListener('click',e=>{if(e.target===$('#viewModal'))$('#viewModal').classList.remove('show');});
-$('#vEdit').addEventListener('click',()=>{const p=PARTNERS.find(x=>x.name===$('#viewModal').dataset.name);$('#viewModal').classList.remove('show');openModal(p);});
-
-/* ---------- add / edit modal ---------- */
-let editing=null;
-$('#fType').innerHTML=PT_TYPES.map(t=>`<option>${t}</option>`).join('');
-function openModal(p){
-  editing=p||null;
-  $('#modalTitle').textContent=p?'Edit Partner':'Add Partner';
-  $('#modalSub').textContent=p?'Update referral partner details':'Register a new referral partner';
-  $('#fName').value=p?p.name:'';
-  $('#fCompany').value=p?p.company:'';
-  $('#fOrg').value=p?(p.org||''):'';
-  $('#fType').value=p?p.type:PT_TYPES[0];
-  $('#fStatus').value=p?p.status:'Active';
-  $('#fPhone').value=p?p.phone:'';
-  $('#fEmail').value=p?p.email:'';
-  $('#fEid').value=p?(p.eid||''):'';
-  $('#fPassport').value=p?(p.passport||''):'';
-  $('#fBank').value=p?(p.bank||''):'';
-  $('#fAcct').value=p?(p.acct||''):'';
-  $('#fIban').value=p?(p.iban||''):'';
-  $('#fComm').value=p?(p.comm||0.5):'';
-  $('#fAddress').value=p?(p.address||''):'';
-  $('#fNotes').value=p?(p.notes||''):'';
-  $('#mSave').textContent=p?'Save Changes':'Continue to Documents';
-  $$('#ptModal .fld').forEach(f=>f.classList.remove('invalid'));
-  $('#ptModal').classList.add('show');
-}
-function closeModal(){$('#ptModal').classList.remove('show');editing=null;}
-$('#addBtn')?.addEventListener('click',()=>openModal(null));
-$('#mClose').addEventListener('click',closeModal);
-$('#mCancel').addEventListener('click',closeModal);
-$('#ptModal').addEventListener('click',e=>{if(e.target===$('#ptModal'))closeModal();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();$('#viewModal').classList.remove('show');$('#kycModal').classList.remove('show');}});
-
-/* mandatory fields validation */
-const REQ=[['fName',v=>v.trim().length>1],['fPhone',v=>v.trim().length>=7],['fEmail',v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim())],['fCompany',v=>!!v.trim()],['fOrg',v=>!!v.trim()],['fEid',v=>!!v.trim()],['fPassport',v=>!!v.trim()],['fBank',v=>!!v.trim()],['fAcct',v=>!!v.trim()],['fIban',v=>!!v.trim()]];
-function validatePartner(){
-  let ok=true,first=null;
-  REQ.forEach(([id,test])=>{
-    const el=$('#'+id),fld=el.closest('.fld'),valid=test(el.value);
-    fld.classList.toggle('invalid',!valid);
-    if(!valid){ok=false;first=first||el;}
-  });
-  if(first)first.focus();
-  return ok;
-}
-$$('#ptModal .fld.req input').forEach(el=>el.addEventListener('input',()=>el.closest('.fld').classList.remove('invalid')));
-
-function collectPartner(){
-  return {company:$('#fCompany').value.trim(),org:$('#fOrg').value.trim(),type:$('#fType').value,status:$('#fStatus').value,contact:$('#fName').value.trim(),phone:$('#fPhone').value.trim(),email:$('#fEmail').value.trim(),eid:$('#fEid').value.trim(),passport:$('#fPassport').value.trim(),bank:$('#fBank').value.trim(),acct:$('#fAcct').value.trim(),iban:$('#fIban').value.trim(),comm:+$('#fComm').value||0.5,address:$('#fAddress').value.trim(),notes:$('#fNotes').value.trim()};
-}
-$('#mSave').addEventListener('click',()=>{
-  if(!validatePartner()){toast('Please complete all mandatory fields');return;}
-  const name=$('#fName').value.trim();
-  if(editing){
-    Object.assign(editing,{name,...collectPartner()});
-    buildKPIs();buildCS();renderTable();buildLeaders();buildPerf();drawCmp();closeModal();
-    toast(`${editing.company} updated`);
-  }else{
-    // mandatory details done → open document upload popup
-    $('#kycSub').textContent=name+' · upload documents to finish';
-    $('#ptModal').classList.remove('show');
-    resetKyc();
-    $('#kycModal').classList.add('show');
-  }
-});
-
-/* ---------- KYC / agreement upload popup ---------- */
-const kycFiles={agreement:null,kyc:null};
-function resetKyc(){
-  kycFiles.agreement=null;kycFiles.kyc=null;
-  $$('#kycModal .kyc-zone').forEach(z=>{z.classList.remove('has');z.querySelector('p').style.display='';z.querySelector('.kyc-file').style.display='none';z.querySelector('input').value='';});
-}
-$$('#kycModal .kyc-zone').forEach(z=>{
-  const inp=z.querySelector('input'),fileRow=z.querySelector('.kyc-file'),pEl=z.querySelector('p'),k=z.dataset.k;
-  function setFile(f){if(!f)return;kycFiles[k]=f;z.classList.add('has');pEl.style.display='none';fileRow.style.display='flex';fileRow.querySelector('span').textContent=f.name;}
-  z.addEventListener('click',e=>{if(!z.classList.contains('has')&&e.target.tagName!=='BUTTON')inp.click();});
-  inp.addEventListener('change',()=>setFile(inp.files[0]));
-  z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('drag');});
-  z.addEventListener('dragleave',()=>z.classList.remove('drag'));
-  z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('drag');setFile(e.dataTransfer.files[0]);});
-  fileRow.querySelector('button').addEventListener('click',e=>{e.stopPropagation();kycFiles[k]=null;inp.value='';z.classList.remove('has');pEl.style.display='';fileRow.style.display='none';});
-});
-$('#kClose').addEventListener('click',()=>$('#kycModal').classList.remove('show'));
-$('#kBack').addEventListener('click',()=>{$('#kycModal').classList.remove('show');$('#ptModal').classList.add('show');});
-$('#kycModal').addEventListener('click',e=>{if(e.target===$('#kycModal'))$('#kycModal').classList.remove('show');});
-$('#kCreate').addEventListener('click',()=>{
-  if(!kycFiles.agreement||!kycFiles.kyc){toast('Upload both Agreement and KYC documents');return;}
-  const name=$('#fName').value.trim();
-  PARTNERS.unshift({name,leads:0,approved:0,disbursed:0,revenue:0,...collectPartner()});
-  buildKPIs();buildCS();renderTable();buildLeaders();buildPerf();drawCmp();
-  $('#kycModal').classList.remove('show');editing=null;
-  toast(`${name} created with documents`);
-});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('#viewModal').classList.remove('show');});
 
 /* actions */
-$('#refreshBtn').addEventListener('click',()=>{init();toast('Partners refreshed');});
+$('#refreshBtn').addEventListener('click',()=>{location.reload();});
 
 /* toast */
 let tTimer;

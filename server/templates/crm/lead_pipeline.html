@@ -351,7 +351,6 @@ a{color:inherit;text-decoration:none}
       <div class="actions">
         <button class="btn btn-ghost" id="refreshBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>Refresh</button>
         <a class="btn btn-ghost" href="{% url 'lead_export' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export Pipeline</a>
-        <button class="btn btn-ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Pipeline Settings</button>
         <a class="btn btn-primary" href="{% url 'lead_create' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Create Lead</a>
       </div>
     </div>
@@ -439,6 +438,8 @@ a{color:inherit;text-decoration:none}
 </div>
 
 <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span id="toastMsg"></span></div>
+
+<form id="csrfForm" style="display:none">{% csrf_token %}</form>
 
 {{ data|json_script:"page-data" }}
 <script>
@@ -537,13 +538,13 @@ function clearAll(){
 }
 $('#clearFilters').addEventListener('click',clearAll);
 
-const NOW=new Date(2026,5,12);
+const NOW=new Date();
 function inRange(d){
   if(!state.range)return true;const diff=(NOW-d)/864e5;
   switch(state.range){
     case 'Today':return d.getDate()===NOW.getDate()&&d.getMonth()===NOW.getMonth();
     case 'Last 7 Days':return diff<=7;case 'Last 30 Days':return diff<=30;
-    case 'This Quarter':return d.getMonth()>=3&&d.getMonth()<=5;case 'This Year':return d.getFullYear()===2026;
+    case 'This Quarter':return d.getMonth()>=3&&d.getMonth()<=5;case 'This Year':return d.getFullYear()===NOW.getFullYear();
   }return true;
 }
 function passFilters(l){
@@ -628,9 +629,18 @@ function bindCards(){
       else if(act==='note')location.href=`/leads/${id}/`;
       else if(act==='pipeline'){
         const l=LEADS.find(x=>x.id===id);
-        if(l.pipelineMonth===state.pipelineMonth){l.pipelineMonth=null;toast(`${l.name} removed from ${state.pipelineMonth} pipeline`);}
-        else{l.pipelineMonth=state.pipelineMonth;toast(`${l.name} added to ${state.pipelineMonth} pipeline`);}
-        renderBoard();
+        const newMonth=l.pipelineMonth===state.pipelineMonth?'':state.pipelineMonth;
+        const csrf=document.querySelector('#csrfForm [name=csrfmiddlewaretoken]').value;
+        fetch(`/leads/${id}/pipeline-month/`,{
+          method:'POST',
+          headers:{'X-CSRFToken':csrf,'Content-Type':'application/x-www-form-urlencoded'},
+          body:new URLSearchParams({month:newMonth}).toString()
+        }).then(r=>{
+          if(!r.ok)throw new Error();
+          l.pipelineMonth=newMonth||null;
+          toast(newMonth?`${l.name} added to ${newMonth} pipeline`:`${l.name} removed from ${state.pipelineMonth} pipeline`);
+          renderBoard();
+        }).catch(()=>toast('Could not update pipeline — try again'));
       }
     });
     card.addEventListener('keydown',e=>{if(e.key==='Enter'){location.href=`/leads/${id}/`;}});
@@ -737,7 +747,7 @@ function buildFeed(){
 }
 
 /* refresh */
-$('#refreshBtn').addEventListener('click',()=>{buildKPIs();renderBoard();buildHealth();buildAttention();toast('Pipeline refreshed');});
+$('#refreshBtn').addEventListener('click',()=>location.reload());
 
 /* toast */
 let tTimer;
@@ -745,7 +755,6 @@ function toast(msg){$('#toastMsg').textContent=msg;$('#toast').classList.add('sh
 
 /* init */
 /* ---------- monthly pipeline controls ---------- */
-LEADS.forEach((l,i)=>{if(i%4===0&&l.stage!=='Disbursed'&&l.stage!=='Declined')l.pipelineMonth=PIPE_MONTHS[i%PIPE_MONTHS.length];});
 $('#pipeMonth').innerHTML=PIPE_MONTHS.map(m=>`<option${m===state.pipelineMonth?' selected':''}>${m}</option>`).join('');
 $('#pipeMonth').addEventListener('change',e=>{state.pipelineMonth=e.target.value;renderBoard();});
 $('#monthlyToggle').addEventListener('click',()=>{

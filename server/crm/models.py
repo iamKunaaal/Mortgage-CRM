@@ -40,6 +40,10 @@ class Bank(models.Model):
     bank_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='Conventional')
     contact_person = models.CharField(max_length=120, blank=True)
     status = models.CharField(max_length=20, default='Active')
+    commission_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=30, blank=True)
+    notes = models.TextField(blank=True)
 
     def __str__(self):
         return self.name
@@ -96,6 +100,9 @@ class Lead(models.Model):
     stage = models.CharField(max_length=40, choices=STAGE_CHOICES, default='Lead Received')
     priority = models.CharField(max_length=10, choices=PRIORITY, default='Medium')
     lost_reason = models.CharField(max_length=80, blank=True)
+    pipeline_month = models.CharField(max_length=20, blank=True)
+    referral_partner = models.ForeignKey(ReferralPartner, on_delete=models.SET_NULL,
+                                         null=True, blank=True, related_name='leads')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -145,3 +152,44 @@ class Document(models.Model):
 
     def __str__(self):
         return f'{self.doc_type} · {self.lead.name}'
+
+
+class Note(models.Model):
+    lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='notes')
+    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'Note on {self.lead.name}'
+
+
+class LeadSourceState(models.Model):
+    name = models.CharField(max_length=40, unique=True)
+    active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+
+
+class RolePermission(models.Model):
+    role = models.CharField(max_length=20, choices=Role.choices)
+    module = models.CharField(max_length=40)
+    level = models.CharField(max_length=20)
+
+    class Meta:
+        unique_together = ('role', 'module')
+
+    def __str__(self):
+        return f'{self.role} · {self.module} = {self.level}'
+
+
+class AppSetting(models.Model):
+    key = models.CharField(max_length=60, unique=True)
+    value = models.JSONField(default=dict)
+
+    def __str__(self):
+        return self.key

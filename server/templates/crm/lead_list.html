@@ -311,7 +311,7 @@ input[type=checkbox].cbx{width:15px;height:15px;accent-color:var(--primary);curs
       </div>
       <div class="actions">
         <button class="btn btn-ghost" id="refreshBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>Refresh</button>
-        <a class="btn btn-ghost" href="{% url 'lead_export' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export Leads</a>
+        <a class="btn btn-ghost" id="exportBtn" href="{% url 'lead_export' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export Leads</a>
         <a class="btn btn-primary" href="{% url 'lead_create' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Create Lead</a>
       </div>
     </div>
@@ -386,15 +386,15 @@ input[type=checkbox].cbx{width:15px;height:15px;accent-color:var(--primary);curs
       <!-- SIDE PANEL -->
       <aside class="side-panel" id="sidePanel">
         <div class="sp-card">
-          <h3>Recent Activities <button class="link-btn">View all</button></h3>
+          <h3>Recent Activities <a class="link-btn" href="{% url 'task_list' %}">View all</a></h3>
           <div id="spFeed"></div>
         </div>
         <div class="sp-card">
-          <h3>Pending Follow-Ups <button class="link-btn">View all</button></h3>
+          <h3>Pending Follow-Ups <a class="link-btn" href="{% url 'task_list' %}">View all</a></h3>
           <div id="spFollow"></div>
         </div>
         <div class="sp-card">
-          <h3>Upcoming Meetings <button class="link-btn">Calendar</button></h3>
+          <h3>Upcoming Meetings <a class="link-btn" href="{% url 'task_list' %}">Calendar</a></h3>
           <div id="spMeet"></div>
         </div>
       </aside>
@@ -406,9 +406,13 @@ input[type=checkbox].cbx{width:15px;height:15px;accent-color:var(--primary);curs
 <!-- BULK BAR -->
 <div class="bulk-bar" id="bulkBar">
   <span class="cnt"><b id="bulkCnt">0</b> selected</span>
+  <button id="bulkStageBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20v-6M6 20V10M18 20V4"/></svg>Change Stage</button>
   <button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>Delete</button>
   <button class="bulk-x" id="bulkClear" aria-label="Clear selection"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
 </div>
+
+<!-- BULK STAGE MENU -->
+<div class="menu-pop" id="bulkStageMenu" style="max-height:300px;overflow-y:auto"></div>
 
 <!-- ROW MENU (single floating instance) -->
 <div class="menu-pop" id="rowMenu">
@@ -469,6 +473,9 @@ const STAGES={
  'FOL Signed':          ['#DCFCE7','#15803D'],
  'Under Disbursement':  ['#ECFCCB','#4D7C0F'],
  'Disbursed':           ['#EDFAF1','#16A34A'],
+ 'Property Transfer Scheduled':['#E0F2FE','#0369A1'],
+ 'Property Transfer':   ['#FEF3E2','#B45309'],
+ 'Property Transferred':['#DCFCE7','#15803D'],
  'Declined':            ['#FEE2E2','#DC2626']
 };
 const STAGE_ORDER=Object.keys(STAGES);
@@ -518,6 +525,14 @@ $$('.f-dd').forEach(dd=>{
 });
 document.addEventListener('click',()=>$$('.f-dd.open').forEach(o=>o.classList.remove('open')));
 $('#tblSearch').addEventListener('input',e=>{state.search=e.target.value.toLowerCase();state.page=1;render();});
+/* keep Export link in sync with current search + stage filter */
+function syncExport(){
+  const base="{% url 'lead_export' %}";
+  const p=new URLSearchParams();
+  if(state.search)p.set('q',state.search);
+  if(state.stage)p.set('stage',state.stage);
+  $('#exportBtn').href=base+(p.toString()?'?'+p.toString():'');
+}
 function clearAll(){
   state.search='';$('#tblSearch').value='';
   ['stage','advisor','bank','source','priority','range'].forEach(k=>{
@@ -532,7 +547,7 @@ function clearAll(){
 $('#clearFilters').addEventListener('click',clearAll);
 
 /* date range check */
-const NOW=new Date(2026,5,11);
+const NOW=new Date();
 function inRange(d){
   if(!state.range)return true;
   const diff=(NOW-d)/864e5;
@@ -541,7 +556,7 @@ function inRange(d){
     case 'Last 7 Days':return diff<=7;
     case 'Last 30 Days':return diff<=30;
     case 'This Quarter':return d.getMonth()>=3&&d.getMonth()<=5;
-    case 'This Year':return d.getFullYear()===2026;
+    case 'This Year':return d.getFullYear()===NOW.getFullYear();
   }return true;
 }
 
@@ -589,6 +604,7 @@ function filtered(){
 }
 
 function render(){
+  syncExport();
   const rows=filtered();
   const per=state.per,total=rows.length,pages=Math.max(1,Math.ceil(total/per));
   if(state.page>pages)state.page=pages;
@@ -695,8 +711,28 @@ $$('#bulkBar > button:not(.bulk-x)').forEach(b=>b.addEventListener('click',()=>{
     if(confirm(`Delete ${n} selected lead(s) permanently?`))bulkSubmit('delete');
   }
 }));
+/* bulk change stage */
+(function(){
+  const menu=$('#bulkStageMenu');
+  menu.innerHTML=STAGE_ORDER.map(s=>`<button data-stage="${s}"><i style="width:7px;height:7px;border-radius:50%;background:${STAGES[s][1]};flex-shrink:0"></i>${s}</button>`).join('');
+  $('#bulkStageBtn').addEventListener('click',e=>{
+    e.stopPropagation();
+    if(!state.selected.size)return;
+    const r=e.currentTarget.getBoundingClientRect();
+    menu.classList.add('show');
+    const mh=menu.offsetHeight||300;
+    menu.style.left=Math.max(8,r.left)+'px';
+    menu.style.top=Math.max(8,r.top-mh-8)+'px';
+  });
+  menu.addEventListener('click',e=>{
+    const b=e.target.closest('button[data-stage]');if(!b)return;
+    menu.classList.remove('show');
+    bulkSubmit('stage',{stage:b.dataset.stage});
+  });
+  document.addEventListener('click',()=>menu.classList.remove('show'));
+})();
 $('#perPage').addEventListener('change',e=>{state.per=+e.target.value;state.page=1;render();});
-$('#refreshBtn').addEventListener('click',()=>{toast('Leads refreshed');render();});
+$('#refreshBtn').addEventListener('click',()=>location.reload());
 
 /* toast */
 let tTimer;

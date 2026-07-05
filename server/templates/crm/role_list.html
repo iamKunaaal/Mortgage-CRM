@@ -384,30 +384,6 @@ canvas{display:block;width:100%}
   <button class="primary" data-act="view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>View Role</button>
 </div>
 
-<!-- CREATE / EDIT MODAL -->
-<div class="modal-scrim" id="roleModal">
-  <div class="modal" role="dialog" aria-modal="true">
-    <div class="modal-h">
-      <span class="m-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5z"/></svg></span>
-      <div><b id="modalTitle">Create Role</b><span id="modalSub">Define a new role and its access</span></div>
-      <button class="x" id="mClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-    </div>
-    <div class="modal-body">
-      <div class="frow">
-        <div class="fld"><label>Role Name</label><input type="text" id="fName" placeholder="e.g. Regional Manager"></div>
-        <div class="fld"><label>Status</label><select id="fStatus"><option>Active</option><option>Inactive</option></select></div>
-      </div>
-      <div class="fld"><label>Description</label><textarea id="fDesc" placeholder="What can this role access and do?"></textarea></div>
-      <div class="matrix-label">Permissions Matrix</div>
-      <table class="matrix"><thead><tr><th>Module</th><th class="r">Access Level</th></tr></thead><tbody id="editMatrixBody"></tbody></table>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" id="mCancel">Cancel</button>
-      <button class="btn btn-primary" id="mSave">Create Role</button>
-    </div>
-  </div>
-</div>
-
 <!-- VIEW MODAL -->
 <div class="modal-scrim" id="viewModal">
   <div class="modal" role="dialog" aria-modal="true">
@@ -418,17 +394,18 @@ canvas{display:block;width:100%}
     <div class="modal-body" id="vBody"></div>
     <div class="modal-foot">
       <button class="btn btn-ghost" id="vCloseBtn">Close</button>
-      <button class="btn btn-primary" id="vEdit">Edit Role</button>
     </div>
   </div>
 </div>
 
 <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span id="toastMsg"></span></div>
 
+<form style="display:none">{% csrf_token %}</form>
 {{ data|json_script:"page-data" }}
 <script>
 const D=JSON.parse(document.getElementById('page-data').textContent);
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const CSRF=document.querySelector('[name=csrfmiddlewaretoken]').value;
 
 /* sidebar */
 const sidebar=$('#sidebar'),scrim=$('#scrim');
@@ -548,11 +525,22 @@ function buildMatrix(){
   </tr>`).join('');
   $$('#matrixBody .lvl-sel').forEach(sel=>sel.addEventListener('change',()=>{
     const role=ROLES.find(r=>r.name===sel.dataset.role),m=sel.dataset.mod;
-    role.access[m]=sel.value;
-    sel.className='lvl-sel '+tier(sel.value);
+    const prev=role.access[m],val=sel.value;
+    role.access[m]=val;
+    sel.className='lvl-sel '+tier(val);
     buildTable();buildOverview();
-    toast(`${role.name}: ${m} → ${sel.value}`);
-    logActivity(`${role.name} · ${m} access set to ${sel.value}`);
+    fetch('/roles/save/',{
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken':CSRF},
+      body:new URLSearchParams({role:D.role_keys[role.name],module:m,level:val})
+    }).then(r=>{if(!r.ok)throw 0;
+      toast(`${role.name}: ${m} → ${val}`);
+      logActivity(`${role.name} · ${m} access set to ${val}`);
+    }).catch(()=>{
+      role.access[m]=prev;sel.value=prev;sel.className='lvl-sel '+tier(prev);
+      buildTable();buildOverview();
+      toast('Could not save change — reverted');
+    });
   }));
 }
 
@@ -594,7 +582,6 @@ function openView(r){
       <div class="vm-row"><label>Assigned Users</label><b>${r.users}</b></div>
       <div class="vm-row"><label>Permissions</label><b>${pc}</b></div>
       <div class="vm-row"><label>Created Date</label><b>${r.created}</b></div>
-      <div class="vm-row"><label>Last Updated</label><b>Today</b></div>
     </div>
     <div class="matrix-label">Module Access</div>
     <div class="vm-rows">${allowed}</div>`;
@@ -604,49 +591,10 @@ function openView(r){
 $('#vClose').addEventListener('click',()=>$('#viewModal').classList.remove('show'));
 $('#vCloseBtn').addEventListener('click',()=>$('#viewModal').classList.remove('show'));
 $('#viewModal').addEventListener('click',e=>{if(e.target===$('#viewModal'))$('#viewModal').classList.remove('show');});
-$('#vEdit').addEventListener('click',()=>{const r=ROLES.find(x=>x.name===$('#viewModal').dataset.name);$('#viewModal').classList.remove('show');openModal(r);});
-
-/* ---------- create / edit modal ---------- */
-let editing=null,draftAccess=null;
-function buildEditMatrix(){
-  $('#editMatrixBody').innerHTML=MODULES.map(m=>`<tr>
-    <td><span class="mod-ic"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${m.ic}</svg></span>${m.k}</span></td>
-    <td class="r"><select class="lvl-sel ${tier(draftAccess[m.k])}" data-mod="${m.k}" style="max-width:200px;margin-left:auto">${m.opts.map(o=>`<option${o===draftAccess[m.k]?' selected':''}>${o}</option>`).join('')}</select></td>
-  </tr>`).join('');
-  $$('#editMatrixBody .lvl-sel').forEach(sel=>sel.addEventListener('change',()=>{draftAccess[sel.dataset.mod]=sel.value;sel.className='lvl-sel '+tier(sel.value)+'';sel.style.maxWidth='200px';sel.style.marginLeft='auto';}));
-}
-function defaultAccess(){const o={};MODULES.forEach(m=>o[m.k]=m.k==='Dashboard'?'Yes':'No');return o;}
-function openModal(r){
-  editing=r||null;
-  $('#modalTitle').textContent=r?'Edit Role':'Create Role';
-  $('#modalSub').textContent=r?'Update role details and access':'Define a new role and its access';
-  $('#mSave').textContent=r?'Save Changes':'Create Role';
-  $('#fName').value=r?r.name:'';$('#fName').disabled=r&&!r.custom&&r.name===TOP_ROLE;
-  $('#fDesc').value=r?r.desc:'';
-  $('#fStatus').value=r?r.status:'Active';
-  draftAccess=r?JSON.parse(JSON.stringify(r.access)):defaultAccess();
-  buildEditMatrix();
-  $('#roleModal').classList.add('show');
-}
-function closeModal(){$('#roleModal').classList.remove('show');editing=null;}
-$('#mClose').addEventListener('click',closeModal);
-$('#mCancel').addEventListener('click',closeModal);
-$('#roleModal').addEventListener('click',e=>{if(e.target===$('#roleModal'))closeModal();});
-$('#mSave').addEventListener('click',()=>{
-  const name=$('#fName').value.trim();
-  if(!name){toast('Role name is required');return;}
-  const data={desc:$('#fDesc').value.trim()||'—',status:$('#fStatus').value,access:draftAccess};
-  if(editing){
-    if(editing.name===TOP_ROLE&&data.status==='Inactive'){toast('CEO / Managing Director must remain active');return;}
-    Object.assign(editing,data);toast(`${editing.name} updated`);logActivity(`${editing.name} role updated`);
-  }else{ROLES.push({name,users:0,created:'Today',custom:true,...data});toast(`${name} created`);logActivity(`New role "${name}" created`);}
-  refresh();closeModal();
-});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();$('#viewModal').classList.remove('show');}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('#viewModal').classList.remove('show');}});
 
 /* refresh */
-function refresh(){buildKPIs();buildOverview();buildTable();buildMatrix();drawDonut();}
-$('#refreshBtn').addEventListener('click',()=>{refresh();toast('Roles refreshed');});
+$('#refreshBtn').addEventListener('click',()=>location.reload());
 
 /* toast */
 let tTimer;

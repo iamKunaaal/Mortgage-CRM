@@ -239,7 +239,7 @@ a{color:inherit;text-decoration:none}
       <span class="kbd">⌘K</span>
     </div>
     <div class="h-actions">
-      <span class="ro-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5z"/></svg>Super Admin</span>
+      <span class="ro-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5z"/></svg>{{ request.user.role_label }}</span>
       <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot"></span></button>
     </div>
   </header>
@@ -377,9 +377,20 @@ $$('.set-tab').forEach(t=>t.addEventListener('click',()=>{
 
 /* ---------- data ---------- */
 const STAGE_COL=['#05448B','#B45309','#854D0E','#0369A1','#6D28D9','#1D4ED8','#BE185D','#A21CAF','#0F766E','#15803D','#16A34A'];
-let stages=D.stages.map((s,i)=>({name:s,active:true}));
-let sources=D.sources.map(s=>({name:s,active:true}));
-let docTypes=D.docTypes.map(s=>({name:s,active:true}));
+const asItem=s=>typeof s==='string'?{name:s,active:true}:{name:s.name,active:s.active!==false};
+let stages=D.stages.map(asItem);
+let sources=D.sources.map(asItem);
+let docTypes=D.docTypes.map(asItem);
+
+/* ---------- server persistence ---------- */
+const CSRF=document.querySelector('[name=csrfmiddlewaretoken]').value;
+function persist(key,value){
+  fetch('/settings/state/',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken':CSRF},
+    body:new URLSearchParams({key,value:JSON.stringify(value)})
+  }).then(r=>{if(!r.ok)throw 0;}).catch(()=>toast('Could not save to server'));
+}
 
 /* ---------- edit modal ---------- */
 let editCtx=null;
@@ -400,7 +411,7 @@ function saveEdit(){
   if(!editCtx)return;const v=$('#emInput').value.trim();
   if(!v){toast('Name cannot be empty');return;}
   const{arr,i,elId,opts}=editCtx;arr[i].name=v;
-  renderCfg(elId,arr,opts);closeEdit();toast(`${opts.label} updated`);logActivity(`${opts.label} "${v}" updated`);
+  renderCfg(elId,arr,opts);persist(opts.key,arr);closeEdit();toast(`${opts.label} updated`);logActivity(`${opts.label} "${v}" updated`);
 }
 $('#emSave').addEventListener('click',saveEdit);
 $('#emInput').addEventListener('keydown',e=>{if(e.key==='Enter')saveEdit();});
@@ -426,9 +437,9 @@ function renderCfg(elId,arr,opts){
     const i=+row.dataset.i;
     row.querySelectorAll('[data-act]').forEach(b=>b.addEventListener('click',()=>{
       const act=b.dataset.act;
-      if(act==='up'&&i>0){[arr[i-1],arr[i]]=[arr[i],arr[i-1]];logActivity(opts.label+' reordered');renderCfg(elId,arr,opts);}
-      else if(act==='down'&&i<arr.length-1){[arr[i+1],arr[i]]=[arr[i],arr[i+1]];logActivity(opts.label+' reordered');renderCfg(elId,arr,opts);}
-      else if(act==='toggle'){arr[i].active=!arr[i].active;toast(`${arr[i].name} ${arr[i].active?'activated':'deactivated'}`);renderCfg(elId,arr,opts);}
+      if(act==='up'&&i>0){[arr[i-1],arr[i]]=[arr[i],arr[i-1]];logActivity(opts.label+' reordered');renderCfg(elId,arr,opts);persist(opts.key,arr);}
+      else if(act==='down'&&i<arr.length-1){[arr[i+1],arr[i]]=[arr[i],arr[i+1]];logActivity(opts.label+' reordered');renderCfg(elId,arr,opts);persist(opts.key,arr);}
+      else if(act==='toggle'){arr[i].active=!arr[i].active;toast(`${arr[i].name} ${arr[i].active?'activated':'deactivated'}`);renderCfg(elId,arr,opts);persist(opts.key,arr);}
       else if(act==='edit'){openEdit(arr,i,elId,opts);}
     }));
     if(numbered){
@@ -440,21 +451,21 @@ function renderCfg(elId,arr,opts){
         e.preventDefault();
         if(!dragCtx||dragCtx.elId!==elId)return;
         const from=dragCtx.from,to=i;
-        if(from!==to){const[m]=arr.splice(from,1);arr.splice(to,0,m);logActivity(opts.label+' reordered');renderCfg(elId,arr,opts);}
+        if(from!==to){const[m]=arr.splice(from,1);arr.splice(to,0,m);logActivity(opts.label+' reordered');renderCfg(elId,arr,opts);persist(opts.key,arr);}
       });
     }
   });
 }
 function addCfg(arr,inputId,elId,opts){
   const v=$('#'+inputId).value.trim();if(!v){toast('Enter a name first');return;}
-  arr.push({name:v,active:true});$('#'+inputId).value='';renderCfg(elId,arr,opts);toast(`${opts.label} "${v}" added`);logActivity(`New ${opts.label} added`);
+  arr.push({name:v,active:true});$('#'+inputId).value='';renderCfg(elId,arr,opts);persist(opts.key,arr);toast(`${opts.label} "${v}" added`);logActivity(`New ${opts.label} added`);
 }
-renderCfg('stageList',stages,{numbered:true,label:'Stage'});
-renderCfg('sourceList',sources,{numbered:false,label:'Source'});
-renderCfg('docList',docTypes,{numbered:false,label:'Document type'});
-$('#stageAddBtn').addEventListener('click',()=>addCfg(stages,'stageAdd','stageList',{numbered:true,label:'Stage'}));
-$('#sourceAddBtn').addEventListener('click',()=>addCfg(sources,'sourceAdd','sourceList',{numbered:false,label:'Source'}));
-$('#docAddBtn').addEventListener('click',()=>addCfg(docTypes,'docAdd','docList',{numbered:false,label:'Document type'}));
+renderCfg('stageList',stages,{numbered:true,label:'Stage',key:'stages'});
+renderCfg('sourceList',sources,{numbered:false,label:'Source',key:'sources'});
+renderCfg('docList',docTypes,{numbered:false,label:'Document type',key:'doc_types'});
+$('#stageAddBtn').addEventListener('click',()=>addCfg(stages,'stageAdd','stageList',{numbered:true,label:'Stage',key:'stages'}));
+$('#sourceAddBtn').addEventListener('click',()=>addCfg(sources,'sourceAdd','sourceList',{numbered:false,label:'Source',key:'sources'}));
+$('#docAddBtn').addEventListener('click',()=>addCfg(docTypes,'docAdd','docList',{numbered:false,label:'Document type',key:'doc_types'}));
 [['stageAdd','stageAddBtn'],['sourceAdd','sourceAddBtn'],['docAdd','docAddBtn']].forEach(([inp,btn])=>$('#'+inp).addEventListener('keydown',e=>{if(e.key==='Enter')$('#'+btn).click();}));
 
 /* ---------- notifications ---------- */
@@ -466,6 +477,11 @@ const NOTIFS=[
   {t:'Lead Assignment Notifications',d:'Notify advisors when a lead is assigned to them',on:true,ic:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>'},
   {t:'Status Change Notifications',d:'Notify stakeholders when a lead stage changes',on:false,ic:'<path d="M12 20v-6M6 20V10M18 20V4"/>'}
 ];
+/* apply persisted notification states (D.notifications may be [] on first load) */
+if(Array.isArray(D.notifications)&&D.notifications.length){
+  D.notifications.forEach(p=>{const n=NOTIFS.find(x=>x.t===p.label);if(n)n.on=!!p.enabled;});
+}
+function persistNotifs(){persist('notifications',NOTIFS.map(n=>({label:n.t,enabled:n.on})));}
 function renderNotifs(){
   $('#notifList').innerHTML=NOTIFS.map((n,i)=>`<div class="notif-item">
     <span class="notif-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${n.ic}</svg></span>
@@ -473,20 +489,10 @@ function renderNotifs(){
     <span class="switch ${n.on?'on':''}" data-i="${i}" role="switch" aria-checked="${n.on}"></span>
   </div>`).join('');
   $$('#notifList .switch').forEach(sw=>sw.addEventListener('click',()=>{
-    const n=NOTIFS[+sw.dataset.i];n.on=!n.on;sw.classList.toggle('on',n.on);toast(`${n.t} ${n.on?'enabled':'disabled'}`);
+    const n=NOTIFS[+sw.dataset.i];n.on=!n.on;sw.classList.toggle('on',n.on);persistNotifs();toast(`${n.t} ${n.on?'enabled':'disabled'}`);logActivity(`${n.t} ${n.on?'enabled':'disabled'}`);
   }));
 }
 renderNotifs();
-
-/* ---------- logo ---------- */
-$('#logoBtn').addEventListener('click',()=>$('#logoFile').click());
-$('#logoFile').addEventListener('change',()=>{
-  const f=$('#logoFile').files[0];if(!f)return;
-  const url=URL.createObjectURL(f),box=document.querySelector('.logo-box');
-  box.innerHTML=`<img src="${url}" alt="Logo" style="width:100%;height:100%;object-fit:cover;border-radius:14px">`;
-  box.style.background='#fff';box.style.border='1px solid var(--border)';
-  toast(`Logo "${f.name}" uploaded`);logActivity('Company logo updated');
-});
 
 /* ---------- activity feed ---------- */
 let FEED=[];

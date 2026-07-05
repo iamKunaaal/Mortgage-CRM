@@ -27,7 +27,8 @@ class LeadForm(StyledMixin, forms.ModelForm):
     class Meta:
         model = Lead
         fields = ['name', 'mobile', 'email', 'nationality', 'property_value', 'ltv',
-                  'loan_amount', 'advisor', 'bank', 'source', 'stage', 'priority']
+                  'loan_amount', 'advisor', 'bank', 'source', 'stage', 'priority',
+                  'referral_partner']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -75,7 +76,8 @@ class TaskForm(StyledMixin, forms.ModelForm):
 class BankForm(StyledMixin, forms.ModelForm):
     class Meta:
         model = Bank
-        fields = ['name', 'bank_type', 'contact_person', 'status']
+        fields = ['name', 'bank_type', 'contact_person', 'status',
+                  'commission_rate', 'email', 'phone', 'notes']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

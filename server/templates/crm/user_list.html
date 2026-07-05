@@ -316,7 +316,7 @@ canvas{display:block;width:100%}
       <span class="kbd">⌘K</span>
     </div>
     <div class="h-actions">
-      <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot"></span></button>
+      <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></button>
     </div>
   </header>
 
@@ -415,55 +415,6 @@ canvas{display:block;width:100%}
   <button data-act="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>Edit User</button>
 </div>
 
-<!-- ADD / EDIT MODAL -->
-<div class="modal-scrim" id="usrModal">
-  <div class="modal" role="dialog" aria-modal="true">
-    <div class="modal-h">
-      <span class="m-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>
-      <div><b id="modalTitle">Add User</b><span id="modalSub">Create a new CRM account</span></div>
-      <button class="x" id="mClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-    </div>
-    <div class="modal-body">
-      <div class="fld full"><label>Full Name</label><input type="text" id="fName" placeholder="e.g. Fatima Rahman"></div>
-      <div class="fld"><label>Email Address</label><input type="email" id="fEmail" placeholder="name@crm.com"></div>
-      <div class="fld"><label>Phone Number</label><input type="tel" id="fPhone" placeholder="+971 50 000 0000"></div>
-      <div class="fld"><label>Role</label><select id="fRole"></select></div>
-      <div class="fld"><label>Department</label><select id="fDept"></select></div>
-      <div class="role-warn full" id="roleWarn" style="display:none">
-        <span class="rw-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></span>
-        <div><b>Warning</b><p id="roleWarnTxt"></p></div>
-      </div>
-      <div class="fld" id="pwFld1"><label>Password</label><input type="password" id="fPw" placeholder="••••••••"></div>
-      <div class="fld" id="pwFld2"><label>Confirm Password</label><input type="password" id="fPw2" placeholder="••••••••"></div>
-      <div class="fld"><label>Status</label><select id="fStatus"><option>Active</option><option>Inactive</option><option>Suspended</option></select></div>
-      <div class="fld full"><label>Notes</label><textarea id="fNotes" placeholder="Internal notes about this user…"></textarea></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" id="mCancel">Cancel</button>
-      <button class="btn btn-primary" id="mSave">Create User</button>
-    </div>
-  </div>
-</div>
-
-<!-- RESET PASSWORD MODAL -->
-<div class="modal-scrim" id="resetModal">
-  <div class="modal sm" role="dialog" aria-modal="true">
-    <div class="modal-h">
-      <span class="m-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-      <div><b>Reset Password</b><span id="rSub"></span></div>
-      <button class="x" id="rClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-    </div>
-    <div class="modal-body" style="grid-template-columns:1fr">
-      <div class="fld"><label>New Password</label><input type="password" id="rPw" placeholder="••••••••"></div>
-      <div class="fld"><label>Confirm Password</label><input type="password" id="rPw2" placeholder="••••••••"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" id="rCancel">Cancel</button>
-      <button class="btn btn-primary" id="rConfirm">Reset Password</button>
-    </div>
-  </div>
-</div>
-
 <!-- VIEW MODAL -->
 <div class="modal-scrim" id="viewModal">
   <div class="modal" role="dialog" aria-modal="true">
@@ -513,7 +464,6 @@ let USERS=D.rows.map(u=>({...u,created:new Date(u.created),get tasksCount(){retu
 /* ---------- KPIs ---------- */
 function buildKPIs(){
   const KPIS=D.kpis;
-  ];
   const spark=(d)=>{const w=54,h=22,max=Math.max(...d),min=Math.min(...d);
     const pts=d.map((v,i)=>`${(i/(d.length-1))*w},${h-3-((v-min)/(max-min||1))*(h-6)}`).join(' ');
     return `<svg class="spark" viewBox="0 0 ${w} ${h}"><polyline points="${pts}" fill="none" stroke="#05448B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/></svg>`;};
@@ -694,9 +644,7 @@ function openView(u){
     </div>
     <div class="vm-sec"><h4>Recent Activity</h4>
       <div class="vm-rows">
-        <div class="vm-row"><label>${u.lastLogin}</label><b>Logged in</b></div>
-        <div class="vm-row"><label>Earlier today</label><b>Updated 2 lead records</b></div>
-        <div class="vm-row"><label>Yesterday</label><b>Completed 3 tasks</b></div>
+        <div class="vm-row"><label style="color:var(--text-3)">No recent activity</label></div>
       </div>
     </div>`;
   $('#viewModal').dataset.id=u.id;
@@ -707,65 +655,9 @@ $('#vCloseBtn').addEventListener('click',()=>$('#viewModal').classList.remove('s
 $('#viewModal').addEventListener('click',e=>{if(e.target===$('#viewModal'))$('#viewModal').classList.remove('show');});
 $('#vEdit').addEventListener('click',()=>{location.href=`/users/${$('#viewModal').dataset.id}/edit/`;});
 
-/* ---------- add / edit modal ---------- */
-let editing=null;
-$('#fRole').innerHTML=ROLES.map(r=>`<option>${r}</option>`).join('');
-$('#fDept').innerHTML=DEPTS.map(d=>`<option>${d}</option>`).join('');
-function openModal(u){
-  editing=u||null;
-  $('#modalTitle').textContent=u?'Edit User':'Add User';
-  $('#modalSub').textContent=u?'Update account details':'Create a new CRM account';
-  $('#mSave').textContent=u?'Save Changes':'Create User';
-  $('#fName').value=u?u.name:'';
-  $('#fEmail').value=u?u.email:'';
-  $('#fPhone').value=u?u.phone:'';
-  $('#fRole').value=u?u.role:'Advisor';
-  $('#fDept').value=u?u.dept:'Operations';
-  $('#fStatus').value=u?u.status:'Active';
-  $('#fNotes').value=u?(u.notes||''):'';
-  $('#pwFld1').style.display=u?'none':'';$('#pwFld2').style.display=u?'none':'';
-  $('#fPw').value='';$('#fPw2').value='';
-  $('#roleWarn').style.display='none';
-  $('#usrModal').classList.add('show');
-}
-/* warn when changing role of a user with active workload */
-$('#fRole').addEventListener('change',()=>{
-  const w=$('#roleWarn');
-  if(editing&&$('#fRole').value!==editing.role&&(editing.leadsCount>0||editing.openTasks>0)){
-    $('#roleWarnTxt').innerHTML=`This user currently has <b>${editing.leadsCount} Assigned Leads</b> and <b>${editing.openTasks} Active Tasks</b>. Please review ownership before changing this role.`;
-    w.style.display='flex';
-  }else w.style.display='none';
-});
-function closeModal(){$('#usrModal').classList.remove('show');editing=null;}
-$('#addBtn')?.addEventListener('click',e=>{});
-$('#mClose').addEventListener('click',closeModal);
-$('#mCancel').addEventListener('click',closeModal);
-$('#usrModal').addEventListener('click',e=>{if(e.target===$('#usrModal'))closeModal();});
-$('#mSave').addEventListener('click',()=>{
-  const name=$('#fName').value.trim();
-  if(!name){toast('Full name is required');return;}
-  if(!editing){if(!$('#fPw').value){toast('Password is required');return;}if($('#fPw').value!==$('#fPw2').value){toast('Passwords do not match');return;}}
-  const data={email:$('#fEmail').value.trim(),phone:$('#fPhone').value.trim(),role:$('#fRole').value,dept:$('#fDept').value,status:$('#fStatus').value,notes:$('#fNotes').value.trim()};
-  if(editing){Object.assign(editing,{name,...data});toast(`${name} updated`);}
-  else{USERS.unshift({id:'USR-'+(1001+USERS.length),name,...data,lastLogin:'Never',created:new Date(2026,5,12),online:false,leadsCount:0,tasksCount:0});toast(`${name} created`);}
-  buildKPIs();renderTable();buildStatus();buildRecent();drawDonut();closeModal();
-});
-
-/* ---------- reset password ---------- */
-function openReset(u){$('#resetModal').dataset.id=u.id;$('#rSub').textContent=u.name;$('#rPw').value='';$('#rPw2').value='';$('#resetModal').classList.add('show');}
-$('#rClose').addEventListener('click',()=>$('#resetModal').classList.remove('show'));
-$('#rCancel').addEventListener('click',()=>$('#resetModal').classList.remove('show'));
-$('#resetModal').addEventListener('click',e=>{if(e.target===$('#resetModal'))$('#resetModal').classList.remove('show');});
-$('#rConfirm').addEventListener('click',()=>{
-  if(!$('#rPw').value){toast('Enter a new password');return;}
-  if($('#rPw').value!==$('#rPw2').value){toast('Passwords do not match');return;}
-  const u=USERS.find(x=>x.id===$('#resetModal').dataset.id);
-  $('#resetModal').classList.remove('show');toast(`Password reset for ${u.name}`);
-});
-
 /* actions */
-$('#refreshBtn').addEventListener('click',()=>{init();toast('Users refreshed');});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();$('#viewModal').classList.remove('show');$('#resetModal').classList.remove('show');}});
+$('#refreshBtn').addEventListener('click',()=>location.reload());
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('#viewModal').classList.remove('show');}});
 
 /* toast */
 let tTimer;

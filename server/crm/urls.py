@@ -18,6 +18,11 @@ urlpatterns = [
     path('leads/<int:pk>/delete/', views.lead_delete, name='lead_delete'),
     path('leads/<int:pk>/stage/', views.lead_stage_update, name='lead_stage_update'),
     path('leads/<int:pk>/assign/', views.lead_assign, name='lead_assign'),
+    path('leads/<int:pk>/note/', views.lead_note_add, name='lead_note_add'),
+    path('leads/<int:pk>/documents/upload/', views.lead_document_upload, name='lead_document_upload'),
+    path('leads/<int:pk>/restore/', views.lead_restore, name='lead_restore'),
+    path('leads/<int:pk>/pipeline-month/', views.lead_pipeline_month, name='lead_pipeline_month'),
+    path('leads/sources/toggle/', views.source_toggle, name='source_toggle'),
 
     path('tasks/', views.task_list, name='task_list'),
     path('tasks/overdue/', views.overdue_tasks, name='overdue_tasks'),
@@ -53,6 +58,8 @@ urlpatterns = [
     path('users/<int:pk>/edit/', views.user_edit, name='user_edit'),
 
     path('roles/', views.role_list, name='role_list'),
+    path('roles/save/', views.role_perm_save, name='role_perm_save'),
     path('settings/', views.settings_view, name='settings_view'),
     path('settings/save/', views.settings_save, name='settings_save'),
+    path('settings/state/', views.settings_state_save, name='settings_state_save'),
 ]

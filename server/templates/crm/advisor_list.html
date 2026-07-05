@@ -288,7 +288,7 @@ canvas{display:block;width:100%}
       <span class="kbd">⌘K</span>
     </div>
     <div class="h-actions">
-      <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot"></span></button>
+      <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></button>
     </div>
   </header>
 
@@ -339,7 +339,7 @@ canvas{display:block;width:100%}
             <th class="sortable r" data-k="disbursed">Disbursed<span class="s-ic"></span></th>
             <th class="sortable r" data-k="conv">Conversion<span class="s-ic"></span></th>
             <th class="sortable r" data-k="revenue">Revenue<span class="s-ic"></span></th>
-            <th class="r">Commission</th>
+            <th class="r">Est. Commission</th>
             <th>Status</th>
             <th style="width:44px"></th>
           </tr></thead>
@@ -378,7 +378,7 @@ canvas{display:block;width:100%}
       <div class="card-h"><div><h3>Revenue Leaderboard</h3><div class="sub">Revenue, commission and loan output per advisor</div></div></div>
       <div class="tbl-wrap">
         <table class="tbl" style="min-width:680px">
-          <thead><tr><th>Advisor</th><th class="r">Revenue Generated</th><th class="r">Commission Earned</th><th class="r">Approved Loans</th><th class="r">Disbursed Loans</th></tr></thead>
+          <thead><tr><th>Advisor</th><th class="r">Revenue Generated</th><th class="r">Est. Commission</th><th class="r">Approved Loans</th><th class="r">Disbursed Loans</th></tr></thead>
           <tbody id="lbBody"></tbody>
         </table>
       </div>
@@ -394,31 +394,6 @@ canvas{display:block;width:100%}
 </div>
 </div>
 
-
-<!-- ADD / EDIT MODAL -->
-<div class="modal-scrim" id="advModal">
-  <div class="modal" role="dialog" aria-modal="true">
-    <div class="modal-h">
-      <span class="m-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>
-      <div><b id="modalTitle">Add Advisor</b><span id="modalSub">Register a new advisor</span></div>
-      <button class="x" id="mClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-    </div>
-    <div class="modal-body">
-      <div class="fld full"><label>Full Name</label><input type="text" id="fName" placeholder="e.g. Sara Lopez"></div>
-      <div class="fld"><label>Role</label><select id="fRole"><option>Mortgage Advisor</option><option>Senior Advisor</option><option>Team Lead</option><option>Sales Director</option><option>Operations Advisor</option></select></div>
-      <div class="fld"><label>Status</label><select id="fStatus"><option>Active</option><option>On Leave</option><option>Inactive</option></select></div>
-      <div class="fld"><label>Email</label><input type="email" id="fEmail" placeholder="name@mortgagecrm.ae"></div>
-      <div class="fld"><label>Phone</label><input type="tel" id="fPhone" placeholder="+971 50 000 0000"></div>
-      <div class="fld"><label>Commission %</label><input type="number" id="fComm" step="0.1" min="0" placeholder="e.g. 0.35"></div>
-      <div class="fld"><label>Joining Date</label><input type="date" id="fJoin"></div>
-      <div class="fld full"><label>Notes</label><textarea id="fNotes" placeholder="Internal notes about this advisor…"></textarea></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" id="mCancel">Cancel</button>
-      <button class="btn btn-primary" id="mSave">Save Advisor</button>
-    </div>
-  </div>
-</div>
 
 <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span id="toastMsg"></span></div>
 
@@ -531,7 +506,7 @@ function renderTable(){
       <td class="r num">${fmtAED(a.revenue)}</td>
       <td class="r num" style="color:var(--success)">${fmtAED(commission(a))}</td>
       <td><span class="status ${STC[a.status]}"><i></i>${a.status}</span></td>
-      <td></td>
+      <td><a href="/users/" style="font-size:11.5px;font-weight:600;color:var(--primary);text-decoration:none;white-space:nowrap">View</a></td>
     </tr>`;}).join(''):`<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text-3)">No advisors match your filters.</td></tr>`;
   $$('.tbl th.sortable').forEach(th=>th.querySelector('.s-ic').textContent=th.dataset.k===state.sortK?(state.sortDir===1?'▲':'▼'):'');
 }
@@ -608,39 +583,8 @@ function buildFeed(){
     <div class="feed-body"><p>${f.h}</p><time>${f.t}</time></div></div>`).join('');
 }
 
-/* ---------- add / edit modal ---------- */
-let editing=null;
-function openModal(adv){
-  editing=adv||null;
-  $('#modalTitle').textContent=adv?'Edit Advisor':'Add Advisor';
-  $('#modalSub').textContent=adv?'Update advisor details':'Register a new advisor';
-  $('#fName').value=adv?adv.name:'';$('#fName').disabled=!!adv;
-  $('#fRole').value=adv?adv.role:'Mortgage Advisor';
-  $('#fStatus').value=adv?adv.status:'Active';
-  $('#fEmail').value=adv?(adv.email||''):'';
-  $('#fPhone').value=adv?(adv.phone||''):'';
-  $('#fComm').value=adv?(adv.comm||0.30):'';
-  $('#fJoin').value=adv?(adv.join||''):'';
-  $('#fNotes').value=adv?(adv.notes||''):'';
-  $('#advModal').classList.add('show');
-}
-function closeModal(){$('#advModal').classList.remove('show');editing=null;}
-$('#addBtn')?.addEventListener('click',()=>openModal(null));
-$('#mClose').addEventListener('click',closeModal);
-$('#mCancel').addEventListener('click',closeModal);
-$('#advModal').addEventListener('click',e=>{if(e.target===$('#advModal'))closeModal();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
-$('#mSave').addEventListener('click',()=>{
-  const name=$('#fName').value.trim();
-  if(!name){toast('Advisor name is required');return;}
-  const data={role:$('#fRole').value,status:$('#fStatus').value,email:$('#fEmail').value.trim(),phone:$('#fPhone').value.trim(),comm:+$('#fComm').value||0.30,join:$('#fJoin').value,notes:$('#fNotes').value.trim()};
-  if(editing){Object.assign(editing,data);toast(`${editing.name} updated`);}
-  else{ADV.push({name,assigned:0,active:0,approved:0,disbursed:0,revenue:0,...data});toast(`${name} added`);}
-  buildKPIs();renderTable();buildLeaders();buildWorkload();buildLB();drawCmp();closeModal();
-});
-
 /* actions */
-$('#refreshBtn').addEventListener('click',()=>{init();toast('Advisors refreshed');});
+$('#refreshBtn').addEventListener('click',()=>{location.reload();});
 
 /* toast */
 let tTimer;
