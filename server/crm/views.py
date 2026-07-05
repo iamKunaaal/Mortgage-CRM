@@ -354,6 +354,11 @@ def lead_create(request):
         if request.user.role == Role.ADVISOR:
             lead.advisor = request.user
         lead.save()
+        uploader = request.user.get_full_name() or request.user.username
+        for key, f in request.FILES.items():
+            if key.startswith('doc::'):
+                Document.objects.create(lead=lead, doc_type=key[5:], file=f,
+                                        status='Pending Review', uploaded_by=uploader)
         messages.success(request, f'Lead "{lead.name}" created.')
         return redirect('lead_detail', pk=lead.pk)
     data = {

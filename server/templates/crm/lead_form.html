@@ -325,7 +325,7 @@ a{color:inherit;text-decoration:none}
 
     <div class="lead-layout">
       <!-- ============ FORM ============ -->
-      <form class="form-col" method="post" action="" id="leadForm">
+      <form class="form-col" method="post" action="" id="leadForm" enctype="multipart/form-data">
         {% csrf_token %}
         {% for err in form.non_field_errors %}<div style="grid-column:1/-1;color:var(--danger);font-size:12px;font-weight:600;margin-bottom:4px">{{ err }}</div>{% endfor %}
         <!-- hidden fields synced from decorative combos/pills -->
@@ -712,7 +712,7 @@ function renderDocs(set){
       <b>${d.t}</b>
       <p>Drag &amp; drop or click to browse · PDF, JPG, PNG</p>
       <div class="up-file" style="display:none"><span></span><em></em><button type="button">Remove</button></div>
-      <input type="file" accept=".pdf,.jpg,.jpeg,.png">
+      <input type="file" name="doc::${d.t}" accept=".pdf,.jpg,.jpeg,.png">
     </div>`).join('');
   $$('#upGrid .up-zone').forEach(z=>{
     const inp=z.querySelector('input[type=file]'),fileRow=z.querySelector('.up-file'),p=z.querySelector('p');
@@ -728,7 +728,7 @@ function renderDocs(set){
     inp.addEventListener('change',()=>setFile(inp.files[0]));
     z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('drag');});
     z.addEventListener('dragleave',()=>z.classList.remove('drag'));
-    z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('drag');setFile(e.dataTransfer.files[0]);});
+    z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('drag');inp.files=e.dataTransfer.files;setFile(e.dataTransfer.files[0]);});
     fileRow.querySelector('button').addEventListener('click',e=>{
       e.stopPropagation();inp.value='';
       z.classList.remove('has-file');p.style.display='';fileRow.style.display='none';
