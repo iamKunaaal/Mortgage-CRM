@@ -115,10 +115,10 @@ def management_dashboard(request):
         ('New Leads Today', leads.filter(created_at__date=date.today()).count(), '', '', 'since midnight'),
         ('Applications Submitted', leads.filter(stage__in=submitted_stages).count(), '', '', 'in progress'),
         ('Pre-Approval', leads.filter(stage='Pre-Approved').count(), '', '', 'awaiting final'),
-        ('Loan Disbursed', n_disbursed, '', '', f'AED {disbursed_val/1e6:.1f}M value'),
+        ('Loan Disbursed', n_disbursed, '', '', f'AED {disbursed_val:,.0f} value'),
         ('Pending Title Deed', leads.filter(stage__in=['Property Transfer Scheduled', 'Property Transfer']).count(), '', '', 'awaiting transfer'),
-        ('Revenue This Month', round(revenue / 1e6, 2), 'M', 'AED ', 'commission est.'),
-        ('Net Profit', round(net_profit / 1e6, 2), 'M', 'AED ', '70.5% margin'),
+        ('Revenue This Month', round(revenue), '', 'AED ', 'commission est.'),
+        ('Net Profit', round(net_profit), '', 'AED ', '70.5% margin'),
     ]
     kpis_js = [
         {'label': lbl, 'val': val, 'suf': suf, 'pre': pre, 'ic': IC[i],
