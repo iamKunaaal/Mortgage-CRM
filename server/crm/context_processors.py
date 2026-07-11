@@ -13,4 +13,5 @@ def crm_globals(request):
         if user.role == Role.ADVISOR:
             leads = leads.filter(advisor=user)
         lead_count = leads.count()
-    return {'allowed': allowed, 'lead_count': lead_count}
+    is_ceo = bool(user and user.is_authenticated and user.role == Role.CEO)
+    return {'allowed': allowed, 'lead_count': lead_count, 'is_ceo': is_ceo}

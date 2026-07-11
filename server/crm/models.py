@@ -193,3 +193,68 @@ class AppSetting(models.Model):
 
     def __str__(self):
         return self.key
+
+
+class LeadAudit(models.Model):
+    """Immutable record of who changed what on a lead, when."""
+    lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='audits')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    action = models.CharField(max_length=60)          # e.g. 'Field updated', 'Stage changed'
+    field = models.CharField(max_length=60, blank=True)
+    old_value = models.CharField(max_length=255, blank=True)
+    new_value = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.lead.name} · {self.action} · {self.field}'
+
+
+class Customization(models.Model):
+    """CEO-only revenue sheet row derived from a lead (see CRM Ref.xlsx)."""
+    lead = models.OneToOneField(Lead, on_delete=models.CASCADE, related_name='customization')
+    bank_rm = models.CharField(max_length=120, blank=True)   # Bank RM (col D)
+    cp = models.CharField(max_length=120, blank=True)        # Channel Partner (col P)
+    slab = models.DecimalField(max_digits=6, decimal_places=4, default=0)   # e.g. 0.01 = 1%
+    broker_pct = models.DecimalField(max_digits=5, decimal_places=2, default=80)  # broker revenue %
+    vat_override = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)  # None = auto 5%
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-added_at']
+
+    # ---- derived revenue fields (mirror the reference sheet) ----
+    @property
+    def loan_amount(self):
+        return float(self.lead.loan_amount or 0)
+
+    @property
+    def actual_revenue(self):          # J = Loan × Slab
+        return self.loan_amount * float(self.slab or 0)
+
+    @property
+    def vat(self):                     # K = Actual × 5% (or manual override)
+        if self.vat_override is not None:
+            return float(self.vat_override)
+        return self.actual_revenue * 0.05
+
+    @property
+    def with_vat(self):                # L = Actual + VAT
+        return self.actual_revenue + self.vat
+
+    @property
+    def broker_revenue(self):          # M = Actual × broker%
+        return self.actual_revenue * float(self.broker_pct or 0) / 100
+
+    @property
+    def broker_payout(self):           # N = Actual × (100 − broker%)
+        return self.actual_revenue * (100 - float(self.broker_pct or 0)) / 100
+
+    @property
+    def final_revenue(self):           # O = Broker Revenue
+        return self.broker_revenue
+
+    def __str__(self):
+        return f'Customization · {self.lead.name}'

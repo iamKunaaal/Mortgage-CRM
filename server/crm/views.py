@@ -10,7 +10,7 @@ from django.http import HttpResponse
 from django.views.decorators.http import require_POST
 
 from .models import (User, Lead, Bank, Task, ReferralPartner, Document, Role, STAGES, SOURCES,
-                     Note, LeadSourceState, RolePermission, AppSetting)
+                     Note, LeadSourceState, RolePermission, AppSetting, Customization, LeadAudit)
 from .forms import LoginForm, LeadForm, UserForm, PartnerForm, BankForm
 from . import permissions as perm
 
@@ -28,6 +28,35 @@ def logout_view(request):
 
 
 # ---------- helpers ----------
+def _audit(lead, user, action, field='', old='', new=''):
+    LeadAudit.objects.create(lead=lead, user=user, action=action, field=field,
+                             old_value=str(old)[:255], new_value=str(new)[:255])
+
+
+# human-readable labels for tracked lead fields
+_AUDIT_FIELDS = {
+    'name': 'Name', 'mobile': 'Mobile', 'email': 'Email', 'nationality': 'Nationality',
+    'property_value': 'Property Value', 'ltv': 'LTV', 'loan_amount': 'Loan Amount',
+    'advisor': 'Advisor', 'bank': 'Bank', 'source': 'Source', 'stage': 'Stage',
+    'priority': 'Priority', 'referral_partner': 'Referral Partner',
+}
+
+
+def _snapshot(lead):
+    def val(f):
+        v = getattr(lead, f)
+        return str(v) if v is not None else ''
+    return {f: val(f) for f in _AUDIT_FIELDS}
+
+
+def _audit_diff(lead, user, before):
+    """Compare a pre-edit snapshot to current lead state; log each changed field."""
+    after = _snapshot(lead)
+    for f, label in _AUDIT_FIELDS.items():
+        if before.get(f, '') != after.get(f, ''):
+            _audit(lead, user, 'Field updated', label, before.get(f, '') or '—', after.get(f, '') or '—')
+
+
 def visible_leads(user):
     """Apply 'Own Leads Only' scope for advisors."""
     qs = Lead.objects.select_related('advisor', 'bank')
@@ -335,12 +364,15 @@ def lead_list(request):
         {'l': 'This Month Revenue', 'v': 'AED ' + f'{_f(base.filter(stage__in=disbursed_stages).aggregate(v=Sum("loan_amount"))["v"])*0.011/1e6:.2f}M',
          'ic': '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/>'},
     ]
+    customized_ids = list(Customization.objects.values_list('lead_id', flat=True)) \
+        if request.user.role == Role.CEO else []
     data = {'leads': leads_js, 'advisors': advisors, 'banks': banks, 'sources': SOURCES,
-            'me': me, 'kpis': kpis_js}
+            'me': me, 'kpis': kpis_js, 'customizedIds': customized_ids}
     return render(request, 'crm/lead_list.html', {
         'data': data, 'q': q, 'stage': stage, 'kpis': kpis,
         'stages': [s[0] for s in Lead.STAGE_CHOICES],
         'can_create': perm.can_create(request.user, 'Leads'),
+        'can_delete': perm.can_delete(request.user, 'Leads'),
         'active_nav': 'Leads', 'active_sub': 'lead_list',
     })
 
@@ -357,10 +389,12 @@ def lead_create(request):
             lead.advisor = request.user
         lead.save()
         uploader = request.user.get_full_name() or request.user.username
+        _audit(lead, request.user, 'Lead created', 'Lead', '', lead.name)
         for key, f in request.FILES.items():
             if key.startswith('doc::'):
                 Document.objects.create(lead=lead, doc_type=key[5:], file=f,
                                         status='Pending Review', uploaded_by=uploader)
+                _audit(lead, request.user, 'Document uploaded', key[5:])
         messages.success(request, f'Lead "{lead.name}" created.')
         return redirect('lead_detail', pk=lead.pk)
     data = {
@@ -426,9 +460,19 @@ def lead_detail(request, pk):
         'text': n.text,
     } for n in lead.notes.select_related('author')]
 
+    audits_js = [{
+        'user': (a.user.get_full_name() or a.user.username) if a.user else 'System',
+        'initials': a.user.initials if a.user else '·',
+        'role': a.user.role_label if a.user else '',
+        'action': a.action, 'field': a.field,
+        'old': a.old_value, 'new': a.new_value,
+        'when': a.created_at.strftime('%d %b %Y · %I:%M %p'),
+    } for a in lead.audits.select_related('user')]
+
     data = {
         'lead': lead_js, 'stageOrder': STAGES,
         'documents': documents_js, 'tasks': tasks_js, 'notes': notes_js,
+        'audits': audits_js,
     }
     advisors = User.objects.filter(role=Role.ADVISOR)
     return render(request, 'crm/lead_detail.html', {
@@ -458,10 +502,13 @@ def lead_stage_update(request, pk):
     lead = get_object_or_404(visible_leads(request.user), pk=pk)
     stage = request.POST.get('stage', '')
     if stage in dict(Lead.STAGE_CHOICES):
+        old = lead.stage
         lead.stage = stage
         if stage == 'Declined':
             lead.lost_reason = request.POST.get('lost_reason', '') or lead.lost_reason
         lead.save()
+        if old != stage:
+            _audit(lead, request.user, 'Stage changed', 'Stage', old, stage)
         messages.success(request, f'Stage updated to "{stage}".')
     else:
         messages.error(request, 'Invalid stage.')
@@ -474,14 +521,17 @@ def lead_stage_update(request, pk):
 def lead_assign(request, pk):
     lead = get_object_or_404(visible_leads(request.user), pk=pk)
     adv_id = request.POST.get('advisor', '')
+    old_adv = str(lead.advisor) if lead.advisor else '—'
     if adv_id:
         advisor = get_object_or_404(User, pk=adv_id, role=Role.ADVISOR)
         lead.advisor = advisor
         lead.save()
+        _audit(lead, request.user, 'Advisor assigned', 'Advisor', old_adv, str(advisor))
         messages.success(request, f'Assigned to {advisor.get_full_name() or advisor.username}.')
     else:
         lead.advisor = None
         lead.save()
+        _audit(lead, request.user, 'Advisor unassigned', 'Advisor', old_adv, '—')
         messages.success(request, 'Advisor unassigned.')
     nxt = request.POST.get('next')
     return redirect(nxt) if nxt else redirect('lead_detail', pk=pk)
@@ -907,14 +957,19 @@ def settings_view(request):
 @perm.module_required('Leads', 'edit')
 def lead_edit(request, pk):
     lead = get_object_or_404(visible_leads(request.user), pk=pk)
+    # snapshot BEFORE the form binds/validates (is_valid() mutates the instance)
+    before = _snapshot(lead)
     form = LeadForm(request.POST or None, request.FILES or None, instance=lead)
     if request.method == 'POST' and form.is_valid():
         form.save()
+        lead.refresh_from_db()
+        _audit_diff(lead, request.user, before)
         uploader = request.user.get_full_name() or request.user.username
         for key, f in request.FILES.items():
             if key.startswith('doc::'):
                 Document.objects.create(lead=lead, doc_type=key[5:], file=f,
                                         status='Pending Review', uploaded_by=uploader)
+                _audit(lead, request.user, 'Document uploaded', key[5:])
         messages.success(request, 'Lead updated.')
         return redirect('lead_detail', pk=lead.pk)
     data = {
@@ -1631,6 +1686,7 @@ def lead_note_add(request, pk):
     text = request.POST.get('text', '').strip()
     if text:
         Note.objects.create(lead=lead, author=request.user, text=text)
+        _audit(lead, request.user, 'Note added', 'Note', '', text[:80])
         messages.success(request, 'Note added.')
     return redirect('lead_detail', pk=pk)
 
@@ -1646,13 +1702,17 @@ def lead_document_upload(request, pk):
     for f in request.FILES.getlist('file'):
         Document.objects.create(lead=lead, doc_type=doc_type, file=f,
                                 status='Pending Review', uploaded_by=uploader)
+        _audit(lead, request.user, 'Document uploaded', doc_type)
         n += 1
     if n:
         messages.success(request, f'{n} document(s) uploaded.')
         new_stage = request.POST.get('stage', '')
         if new_stage in dict(Lead.STAGE_CHOICES) and perm.can_edit(request.user, 'Leads'):
+            old = lead.stage
             lead.stage = new_stage
             lead.save()
+            if old != new_stage:
+                _audit(lead, request.user, 'Stage changed', 'Stage', old, new_stage)
     else:
         messages.error(request, 'No file selected.')
     return redirect('lead_detail', pk=pk)
@@ -1663,9 +1723,11 @@ def lead_document_upload(request, pk):
 @require_POST
 def lead_restore(request, pk):
     lead = get_object_or_404(visible_leads(request.user), pk=pk)
+    old = lead.stage
     lead.stage = 'Lead Received'
     lead.lost_reason = ''
     lead.save()
+    _audit(lead, request.user, 'Lead restored', 'Stage', old, 'Lead Received')
     messages.success(request, f'Lead "{lead.name}" restored to pipeline.')
     return redirect('lost_leads')
 
@@ -1725,3 +1787,125 @@ def settings_state_save(request):
     s.value = value
     s.save()
     return HttpResponse('ok')
+
+
+# ---------- Customization (CEO-only revenue sheet) ----------
+def _ceo_required(view):
+    from functools import wraps
+    @wraps(view)
+    def wrapper(request, *args, **kwargs):
+        from django.core.exceptions import PermissionDenied
+        if not (request.user.is_authenticated and request.user.role == Role.CEO):
+            raise PermissionDenied('CEO only.')
+        return view(request, *args, **kwargs)
+    return wrapper
+
+
+def _cz_row(c):
+    l = c.lead
+    return {
+        'id': c.pk, 'leadId': l.pk,
+        'month': l.created_at.strftime('%b %Y'),
+        'client': l.name,
+        'bankRm': c.bank_rm,
+        'mob': l.mobile or '—',
+        'loan': float(l.loan_amount or 0),
+        'bank': l.bank.name if l.bank else '—',
+        'rm': (l.advisor.get_full_name() or l.advisor.username) if l.advisor else '—',
+        'slab': float(c.slab or 0),
+        'brokerPct': float(c.broker_pct or 0),
+        'vatOverride': (float(c.vat_override) if c.vat_override is not None else None),
+        'actualRevenue': c.actual_revenue,
+        'vat': c.vat,
+        'withVat': c.with_vat,
+        'brokerRevenue': c.broker_revenue,
+        'brokerPayout': c.broker_payout,
+        'finalRevenue': c.final_revenue,
+        'cp': c.cp,
+        'status': l.stage,
+    }
+
+
+@login_required
+@_ceo_required
+def customization_list(request):
+    rows = [_cz_row(c) for c in Customization.objects.select_related('lead', 'lead__advisor', 'lead__bank')]
+    totals = {
+        'count': len(rows),
+        'actual': sum(r['actualRevenue'] for r in rows),
+        'final': sum(r['finalRevenue'] for r in rows),
+        'payout': sum(r['brokerPayout'] for r in rows),
+    }
+    return render(request, 'crm/customization.html', {
+        'data': {'rows': rows, 'totals': totals},
+        'active_nav': 'Leads', 'active_sub': 'customization',
+    })
+
+
+@login_required
+@_ceo_required
+@require_POST
+def customization_add(request, pk):
+    lead = get_object_or_404(Lead, pk=pk)
+    Customization.objects.get_or_create(lead=lead)
+    messages.success(request, f'"{lead.name}" added to Customization.')
+    nxt = request.POST.get('next')
+    return redirect(nxt) if nxt else redirect('lead_list')
+
+
+@login_required
+@_ceo_required
+@require_POST
+def customization_update(request, pk):
+    c = get_object_or_404(Customization, pk=pk)
+    from decimal import Decimal, InvalidOperation
+    for field, attr in (('slab', 'slab'), ('broker_pct', 'broker_pct')):
+        if field in request.POST:
+            try:
+                setattr(c, attr, Decimal(request.POST[field] or '0'))
+            except (InvalidOperation, ValueError):
+                return HttpResponse('bad number', status=400)
+    if 'vat' in request.POST:
+        raw = request.POST['vat'].strip()
+        if raw == '':
+            c.vat_override = None          # revert to auto 5%
+        else:
+            try:
+                c.vat_override = Decimal(raw)
+            except (InvalidOperation, ValueError):
+                return HttpResponse('bad number', status=400)
+    for field in ('bank_rm', 'cp'):
+        if field in request.POST:
+            setattr(c, field, request.POST[field].strip())
+    c.save()
+    import json
+    return HttpResponse(json.dumps(_cz_row(c)), content_type='application/json')
+
+
+@login_required
+@_ceo_required
+@require_POST
+def customization_remove(request, pk):
+    c = get_object_or_404(Customization, pk=pk)
+    name = c.lead.name
+    c.delete()
+    messages.success(request, f'"{name}" removed from Customization.')
+    return redirect('customization_list')
+
+
+@login_required
+@_ceo_required
+def customization_export(request):
+    resp = HttpResponse(content_type='text/csv')
+    resp['Content-Disposition'] = 'attachment; filename="customization.csv"'
+    w = csv.writer(resp)
+    w.writerow(['Month', 'Client Name', 'Bank RM', 'MOB', 'Loan Amount', 'Bank Name',
+                'RM Name', 'Slab', 'Actual Revenue', 'VAT', 'With VAT', 'Broker Revenue',
+                'Broker Payout', 'Final Revenue', 'CP', 'Status'])
+    for c in Customization.objects.select_related('lead', 'lead__advisor', 'lead__bank'):
+        r = _cz_row(c)
+        w.writerow([r['month'], r['client'], r['bankRm'], r['mob'], r['loan'], r['bank'],
+                    r['rm'], r['slab'], round(r['actualRevenue'], 2), round(r['vat'], 2),
+                    round(r['withVat'], 2), round(r['brokerRevenue'], 2),
+                    round(r['brokerPayout'], 2), round(r['finalRevenue'], 2), r['cp'], r['status']])
+    return resp

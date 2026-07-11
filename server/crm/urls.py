@@ -24,6 +24,12 @@ urlpatterns = [
     path('leads/<int:pk>/pipeline-month/', views.lead_pipeline_month, name='lead_pipeline_month'),
     path('leads/sources/toggle/', views.source_toggle, name='source_toggle'),
 
+    path('customization/', views.customization_list, name='customization_list'),
+    path('customization/export/', views.customization_export, name='customization_export'),
+    path('customization/add/<int:pk>/', views.customization_add, name='customization_add'),
+    path('customization/<int:pk>/update/', views.customization_update, name='customization_update'),
+    path('customization/<int:pk>/remove/', views.customization_remove, name='customization_remove'),
+
     path('tasks/', views.task_list, name='task_list'),
     path('tasks/overdue/', views.overdue_tasks, name='overdue_tasks'),
     path('tasks/new/', views.task_create, name='task_create'),

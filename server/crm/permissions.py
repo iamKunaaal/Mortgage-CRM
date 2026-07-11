@@ -80,7 +80,8 @@ def can_create(user, module):
 
 
 def can_delete(user, module):
-    return level(user, module) == 'Full'
+    # Delete is restricted to CEO only, regardless of module access level.
+    return user.is_authenticated and user.role == Role.CEO
 
 
 def is_own_scope(user, module):
