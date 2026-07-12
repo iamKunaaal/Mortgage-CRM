@@ -385,9 +385,9 @@ a{color:inherit;text-decoration:none}
             <div><h2>Property Information</h2><p>Property and financing requirements.</p></div>
           </div>
           <div class="fgrid">
-            <div class="field"><input type="text" name="property_value" inputmode="numeric" id="fPropVal" data-money data-sum="prop" value="{{ form.property_value.value|default:'' }}"><label>Property Value (AED) *</label></div>
+            <div class="field"><input type="text" name="property_value" inputmode="numeric" id="fPropVal" data-money data-sum="prop" value="{{ form.property_value.value|floatformat:'0'|default:'' }}"><label>Property Value (AED) *</label></div>
             <div class="field"><input type="number" name="ltv" inputmode="numeric" id="fLtv" min="0" max="100" step="1" value="{{ form.ltv.value|default:80 }}" class="filled"><label>LTV (%) *</label><span class="f-hint">Loan-to-Value ratio</span></div>
-            <div class="field"><input type="text" name="loan_amount" inputmode="numeric" id="fLoan" data-money data-sum="loan" value="{{ form.loan_amount.value|default:'' }}"><label>Loan Amount (AED)</label><span class="f-hint" id="loanHint">Auto = LTV % × property value</span></div>
+            <div class="field"><input type="text" name="loan_amount" inputmode="numeric" id="fLoan" data-money data-sum="loan" value="{{ form.loan_amount.value|floatformat:'0'|default:'' }}"><label>Loan Amount (AED)</label><span class="f-hint" id="loanHint">Auto = LTV % × property value</span></div>
             <div class="field"><input type="text" inputmode="numeric" id="fDown" data-money><label>Down Payment (AED)</label><span class="f-hint" id="dpPct">Auto = remaining %</span></div>
             <div class="combo" id="cPropType" data-label="Property Type"></div>
             <div class="combo full" id="cArea" data-label="Preferred Area"></div>
