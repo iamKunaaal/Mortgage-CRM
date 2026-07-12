@@ -959,12 +959,31 @@ $('#rCreated').textContent=fmtD(L.created);
 $('#rDisbursedVal').textContent=L.disbursedAt||'—';
 (function(){
   const btn=$('#rDisbursedEdit');if(!btn)return;
+  let m=null;
+  function build(){
+    m=document.createElement('div');m.id='disbModal';
+    m.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:9999';
+    m.innerHTML=`<div style="background:var(--card,#fff);border-radius:14px;padding:22px;width:320px;box-shadow:0 20px 50px rgba(0,0,0,.25)" onclick="event.stopPropagation()">
+        <h3 style="margin:0 0 4px;font-size:16px;font-weight:700;color:var(--text,#0F172A)">Disbursement Date</h3>
+        <p style="margin:0 0 16px;font-size:12px;color:var(--text-2,#64748B)">Set or update when this loan was disbursed.</p>
+        <input type="date" id="disbPick" style="width:100%;padding:9px 10px;border:1px solid var(--border,#E2E8F0);border-radius:8px;font-size:13px;margin-bottom:18px;box-sizing:border-box;font-family:inherit">
+        <div style="display:flex;gap:10px">
+          <button type="button" id="disbClear" style="flex:1;padding:9px;border:1px solid var(--border,#E2E8F0);border-radius:8px;background:none;color:var(--danger,#DC2626);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Clear</button>
+          <button type="button" id="disbSave" style="flex:1.4;padding:9px;border:none;border-radius:8px;background:var(--primary,#05448B);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Save</button>
+        </div>
+        <button type="button" id="disbCancel" style="width:100%;margin-top:8px;padding:6px;background:none;border:none;color:var(--text-2,#64748B);font-size:12.5px;cursor:pointer;font-family:inherit">Cancel</button>
+      </div>`;
+    document.body.appendChild(m);
+    const close=()=>m.style.display='none';
+    m.addEventListener('click',close);
+    m.querySelector('#disbCancel').addEventListener('click',close);
+    m.querySelector('#disbSave').addEventListener('click',()=>{$('#disbDateInput').value=m.querySelector('#disbPick').value;$('#disbForm').submit();});
+    m.querySelector('#disbClear').addEventListener('click',()=>{$('#disbDateInput').value='';$('#disbForm').submit();});
+  }
   btn.addEventListener('click',()=>{
-    const cur=L.disbursedIso||new Date().toISOString().slice(0,10);
-    const val=prompt('Disbursement date (YYYY-MM-DD) — leave blank to clear:',cur);
-    if(val===null)return;
-    $('#disbDateInput').value=val.trim();
-    $('#disbForm').submit();
+    if(!m)build();
+    m.querySelector('#disbPick').value=L.disbursedIso||new Date().toISOString().slice(0,10);
+    m.style.display='flex';
   });
 })();
 $('#rAct').textContent=L.act;
