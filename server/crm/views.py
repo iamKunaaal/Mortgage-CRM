@@ -352,7 +352,12 @@ def lead_list(request):
         'bank': l.bank.name if l.bank else '—', 'source': l.source, 'stage': l.stage,
         'priority': l.priority, 'act': _act(l), 'created': l.created_at.strftime('%Y-%m-%d'),
     } for l in leads]
-    advisors = [u.get_full_name() or u.username for u in User.objects.filter(role=Role.ADVISOR)]
+    # own-scope users (advisors) must not see other advisors' names
+    own_scope = perm.is_own_scope(request.user, 'Leads')
+    if own_scope:
+        advisors = []
+    else:
+        advisors = [u.get_full_name() or u.username for u in User.objects.filter(role=Role.ADVISOR)]
     banks = [b.name for b in Bank.objects.all()]
     me = request.user.get_full_name() or request.user.username
     total_val = _f(kpis['value'])
@@ -377,9 +382,9 @@ def lead_list(request):
     customized_ids = list(Customization.objects.values_list('lead_id', flat=True)) \
         if request.user.role == Role.CEO else []
     data = {'leads': leads_js, 'advisors': advisors, 'banks': banks, 'sources': SOURCES,
-            'me': me, 'kpis': kpis_js, 'customizedIds': customized_ids}
+            'me': me, 'kpis': kpis_js, 'customizedIds': customized_ids, 'ownScope': own_scope}
     return render(request, 'crm/lead_list.html', {
-        'data': data, 'q': q, 'stage': stage, 'kpis': kpis,
+        'data': data, 'q': q, 'stage': stage, 'kpis': kpis, 'own_scope': own_scope,
         'stages': [s[0] for s in Lead.STAGE_CHOICES],
         'can_create': perm.can_create(request.user, 'Leads'),
         'can_delete': perm.can_delete(request.user, 'Leads'),
@@ -486,7 +491,9 @@ def lead_detail(request, pk):
         'documents': documents_js, 'tasks': tasks_js, 'notes': notes_js,
         'audits': audits_js,
     }
-    advisors = User.objects.filter(role=Role.ADVISOR)
+    # own-scope users can't reassign, so don't expose other advisors' names
+    advisors = User.objects.none() if perm.is_own_scope(request.user, 'Leads') \
+        else User.objects.filter(role=Role.ADVISOR)
     return render(request, 'crm/lead_detail.html', {
         'lead': lead, 'documents': documents, 'tasks': tasks, 'data': data,
         'advisors': advisors,
@@ -651,7 +658,8 @@ def lead_pipeline(request):
         'days': _days(l), 'pipelineMonth': l.pipeline_month or None,
     } for l in base.order_by('-created_at')]
 
-    advisors = [u.get_full_name() or u.username for u in User.objects.filter(role=Role.ADVISOR)]
+    advisors = [] if perm.is_own_scope(request.user, 'Leads') \
+        else [u.get_full_name() or u.username for u in User.objects.filter(role=Role.ADVISOR)]
     banks = [b.name for b in Bank.objects.all()]
 
     active = base.exclude(stage__in=disbursed_stages + ['Declined'])
@@ -729,7 +737,8 @@ def lead_sources(request):
         })
     sources_js.sort(key=lambda x: x['revenue'], reverse=True)
 
-    advisors = [u.get_full_name() or u.username for u in User.objects.filter(role=Role.ADVISOR)]
+    advisors = [] if perm.is_own_scope(request.user, 'Leads') \
+        else [u.get_full_name() or u.username for u in User.objects.filter(role=Role.ADVISOR)]
     banks = [b.name for b in Bank.objects.all()]
 
     partners_js = []
@@ -818,7 +827,8 @@ def lost_leads(request):
             'created': l.created_at.strftime('%Y-%m-%d'),
         })
 
-    advisors = [u.get_full_name() or u.username for u in User.objects.filter(role=Role.ADVISOR)]
+    advisors = [] if perm.is_own_scope(request.user, 'Leads') \
+        else [u.get_full_name() or u.username for u in User.objects.filter(role=Role.ADVISOR)]
     banks = [b.name for b in Bank.objects.all()]
 
     assigned = {a: 0 for a in advisors}

@@ -332,7 +332,7 @@ input[type=checkbox].cbx{width:15px;height:15px;accent-color:var(--primary);curs
       </div>
       <!-- dropdowns injected by JS -->
       <div class="f-dd" data-filter="stage"></div>
-      <div class="f-dd" data-filter="advisor"></div>
+      {% if not own_scope %}<div class="f-dd" data-filter="advisor"></div>{% endif %}
       <div class="f-dd" data-filter="bank"></div>
       <div class="f-dd" data-filter="source"></div>
       <div class="f-dd" data-filter="priority"></div>
