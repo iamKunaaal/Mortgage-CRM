@@ -15,7 +15,7 @@
         <a class="nav-item {% if active_sub == 'lead_pipeline' %}active{% endif %}" href="{% url 'lead_pipeline' %}">Lead Pipeline</a>
         <a class="nav-item {% if active_sub == 'lead_sources' %}active{% endif %}" href="{% url 'lead_sources' %}">Lead Sources</a>
         <a class="nav-item {% if active_sub == 'lost_leads' %}active{% endif %}" href="{% url 'lost_leads' %}">Lost Leads</a>
-        {% if is_ceo %}<a class="nav-item {% if active_sub == 'customization' %}active{% endif %}" href="{% url 'customization_list' %}">Customization</a>{% endif %}
+        {% if is_ceo %}<a class="nav-item {% if active_sub == 'customization' %}active{% endif %}" href="{% url 'customization_list' %}">Monthly Disbursed Pipeline</a>{% endif %}
       </div>
     </div>{% endif %}
     {% if 'Tasks' in allowed %}<div class="nav-group {% if active_nav == 'Tasks' %}open{% endif %}">
