@@ -311,7 +311,7 @@ input[type=checkbox].cbx{width:15px;height:15px;accent-color:var(--primary);curs
       </div>
       <div class="actions">
         <button class="btn btn-ghost" id="refreshBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>Refresh</button>
-        <a class="btn btn-ghost" id="exportBtn" href="{% url 'lead_export' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export Leads</a>
+        <button type="button" class="btn btn-ghost" id="exportBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export Leads</button>
         <a class="btn btn-primary" href="{% url 'lead_create' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Create Lead</a>
       </div>
     </div>
@@ -570,14 +570,27 @@ function openCustomRange(dd,btn,def){
 }
 document.addEventListener('click',()=>$$('.f-dd.open').forEach(o=>o.classList.remove('open')));
 $('#tblSearch').addEventListener('input',e=>{state.search=e.target.value.toLowerCase();state.page=1;render();});
-/* keep Export link in sync with current search + stage filter */
-function syncExport(){
-  const base="{% url 'lead_export' %}";
-  const p=new URLSearchParams();
-  if(state.search)p.set('q',state.search);
-  if(state.stage)p.set('stage',state.stage);
-  $('#exportBtn').href=base+(p.toString()?'?'+p.toString():'');
+/* export exactly the currently filtered rows (honors custom date range + all filters) */
+function syncExport(){}
+function exportCSV(){
+  const rows=filtered();
+  if(!rows.length){toast('No leads to export');return;}
+  const cols=[['ID','id'],['Name','name'],['Mobile','mobile'],['Email','email'],
+    ['Nationality','nat'],['Property Value','propVal'],['Loan Amount','loan'],
+    ['Advisor','advisor'],['Bank','bank'],['Source','source'],['Stage','stage'],
+    ['Priority','priority'],['Created','created']];
+  const esc=v=>{v=(v==null?'':String(v));return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  const fmtCell=(l,k)=>k==='created'?(l.created instanceof Date?l.created.toISOString().slice(0,10):l.created):l[k];
+  const lines=[cols.map(c=>c[0]).join(',')];
+  rows.forEach(l=>lines.push(cols.map(c=>esc(fmtCell(l,c[1]))).join(',')));
+  const blob=new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  const stamp=new Date().toISOString().slice(0,10);
+  a.href=url;a.download=`leads-${stamp}.csv`;document.body.appendChild(a);a.click();
+  a.remove();URL.revokeObjectURL(url);
+  toast(`Exported ${rows.length} lead(s)`);
 }
+$('#exportBtn').addEventListener('click',exportCSV);
 function clearAll(){
   state.search='';$('#tblSearch').value='';
   state.customFrom=null;state.customTo=null;

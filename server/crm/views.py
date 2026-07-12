@@ -346,7 +346,7 @@ def lead_list(request):
     def _act(l):
         return l.updated_at.strftime('%d %b %Y')
     leads_js = [{
-        'id': l.pk, 'name': l.name, 'mobile': l.mobile or '—',
+        'id': l.pk, 'name': l.name, 'mobile': l.mobile or '—', 'email': l.email or '—',
         'nat': l.nationality or '—', 'propVal': _f(l.property_value), 'loan': _f(l.loan_amount),
         'advisor': (l.advisor.get_full_name() or l.advisor.username) if l.advisor else 'Unassigned',
         'bank': l.bank.name if l.bank else '—', 'source': l.source, 'stage': l.stage,
