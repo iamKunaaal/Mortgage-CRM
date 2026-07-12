@@ -49,6 +49,16 @@ def _snapshot(lead):
     return {f: val(f) for f in _AUDIT_FIELDS}
 
 
+def _apply_disbursed(lead, user=None):
+    """Auto-set disbursed_at the first time a lead enters a disbursed stage."""
+    if lead.stage in DISBURSED_STAGES and not lead.disbursed_at:
+        lead.disbursed_at = timezone.localdate()
+        if user is not None:
+            _audit(lead, user, 'Disbursed', 'Disbursed At', '', lead.disbursed_at.strftime('%d %b %Y'))
+        return True
+    return False
+
+
 def _audit_diff(lead, user, before):
     """Compare a pre-edit snapshot to current lead state; log each changed field."""
     after = _snapshot(lead)
@@ -428,6 +438,8 @@ def lead_detail(request, pk):
         'source': lead.source, 'stage': lead.stage, 'priority': lead.priority,
         'created': lead.created_at.isoformat(), 'act': lead.updated_at.strftime('%d %b %Y'),
         'initials': lead.initials,
+        'disbursedAt': lead.disbursed_at.strftime('%d %b %Y') if lead.disbursed_at else '',
+        'disbursedIso': lead.disbursed_at.isoformat() if lead.disbursed_at else '',
     }
 
     def _doc_badge(status):
@@ -506,6 +518,7 @@ def lead_stage_update(request, pk):
         lead.stage = stage
         if stage == 'Declined':
             lead.lost_reason = request.POST.get('lost_reason', '') or lead.lost_reason
+        _apply_disbursed(lead, request.user)
         lead.save()
         if old != stage:
             _audit(lead, request.user, 'Stage changed', 'Stage', old, stage)
@@ -540,6 +553,29 @@ def lead_assign(request, pk):
 @login_required
 @perm.module_required('Leads', 'edit')
 @require_POST
+def lead_disbursed_date(request, pk):
+    from datetime import datetime
+    lead = get_object_or_404(visible_leads(request.user), pk=pk)
+    raw = request.POST.get('date', '').strip()
+    old = lead.disbursed_at.strftime('%d %b %Y') if lead.disbursed_at else '—'
+    if raw:
+        try:
+            lead.disbursed_at = datetime.strptime(raw, '%Y-%m-%d').date()
+        except ValueError:
+            messages.error(request, 'Invalid date.')
+            return redirect('lead_detail', pk=pk)
+    else:
+        lead.disbursed_at = None
+    lead.save(update_fields=['disbursed_at'])
+    new = lead.disbursed_at.strftime('%d %b %Y') if lead.disbursed_at else '—'
+    _audit(lead, request.user, 'Field updated', 'Disbursed At', old, new)
+    messages.success(request, 'Disbursement date updated.')
+    return redirect('lead_detail', pk=pk)
+
+
+@login_required
+@perm.module_required('Leads', 'edit')
+@require_POST
 def lead_bulk(request):
     action = request.POST.get('action', '')
     ids = request.POST.getlist('ids')
@@ -560,6 +596,8 @@ def lead_bulk(request):
         stage = request.POST.get('stage', '')
         if stage in dict(Lead.STAGE_CHOICES):
             qs.update(stage=stage)
+            if stage in DISBURSED_STAGES:
+                qs.filter(disbursed_at__isnull=True).update(disbursed_at=timezone.localdate())
             messages.success(request, f'{n} lead(s) moved to "{stage}".')
     return redirect('lead_list')
 
@@ -962,6 +1000,8 @@ def lead_edit(request, pk):
     form = LeadForm(request.POST or None, request.FILES or None, instance=lead)
     if request.method == 'POST' and form.is_valid():
         form.save()
+        if _apply_disbursed(lead, request.user):
+            lead.save(update_fields=['disbursed_at'])
         lead.refresh_from_db()
         _audit_diff(lead, request.user, before)
         uploader = request.user.get_full_name() or request.user.username
@@ -1710,6 +1750,7 @@ def lead_document_upload(request, pk):
         if new_stage in dict(Lead.STAGE_CHOICES) and perm.can_edit(request.user, 'Leads'):
             old = lead.stage
             lead.stage = new_stage
+            _apply_disbursed(lead, request.user)
             lead.save()
             if old != new_stage:
                 _audit(lead, request.user, 'Stage changed', 'Stage', old, new_stage)

@@ -18,6 +18,7 @@ urlpatterns = [
     path('leads/<int:pk>/delete/', views.lead_delete, name='lead_delete'),
     path('leads/<int:pk>/stage/', views.lead_stage_update, name='lead_stage_update'),
     path('leads/<int:pk>/assign/', views.lead_assign, name='lead_assign'),
+    path('leads/<int:pk>/disbursed-date/', views.lead_disbursed_date, name='lead_disbursed_date'),
     path('leads/<int:pk>/note/', views.lead_note_add, name='lead_note_add'),
     path('leads/<int:pk>/documents/upload/', views.lead_document_upload, name='lead_document_upload'),
     path('leads/<int:pk>/restore/', views.lead_restore, name='lead_restore'),
