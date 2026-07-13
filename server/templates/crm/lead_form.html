@@ -332,6 +332,8 @@ a{color:inherit;text-decoration:none}
         <input type="hidden" name="advisor" id="hAdvisor" value="{{ form.advisor.value|default:'' }}">
         <input type="hidden" name="bank" id="hBank" value="{{ form.bank.value|default:'' }}">
         <input type="hidden" name="source" id="hSource" value="{{ form.source.value|default:'Website' }}">
+        <input type="hidden" name="employment_type" id="hEmpType" value="{{ form.employment_type.value|default:'' }}">
+        <input type="hidden" name="industry" id="hIndustry" value="{{ form.industry.value|default:'' }}">
         <input type="hidden" name="stage" id="hStage" value="{{ form.stage.value|default:'Lead Received' }}">
         <input type="hidden" name="priority" id="hPriority" value="{{ form.priority.value|default:'Medium' }}">
         <input type="hidden" name="referral_partner" id="hPartner" value="{{ form.referral_partner.value|default:'' }}">
@@ -366,15 +368,15 @@ a{color:inherit;text-decoration:none}
             <div><h2>Employment Information</h2><p>Income and employment profile used for affordability checks.</p></div>
           </div>
           <div class="fgrid">
-            <div class="field"><input type="text" id="fEmployer"><label>Employer Name</label></div>
+            <div class="field"><input type="text" name="employer" id="fEmployer" value="{{ form.employer.value|default:'' }}"><label>Employer Name</label></div>
             <div class="combo" id="cEmpType" data-label="Employment Type"></div>
-            <div class="field"><input type="text" inputmode="numeric" id="fIncome" data-money><label>Monthly Income (AED)</label></div>
-            <div class="field"><input type="number" min="0" step="0.5" id="fYears"><label>Years of Employment</label></div>
+            <div class="field"><input type="text" name="monthly_income" inputmode="numeric" id="fIncome" data-money value="{{ form.monthly_income.value|floatformat:'0'|default:'' }}"><label>Monthly Income (AED)</label></div>
+            <div class="field"><input type="number" name="years_employment" min="0" step="0.5" id="fYears" value="{{ form.years_employment.value|floatformat:'-1'|default:'' }}"><label>Years of Employment</label></div>
             <div class="combo full" id="cIndustry" data-label="Industry"></div>
             <!-- self-employed only -->
-            <div class="field se-only" style="display:none"><input type="text" id="fCompany"><label>Company Name</label></div>
-            <div class="field se-only" style="display:none"><input type="text" inputmode="numeric" id="fTurnover" data-money><label>Annual Turnover (AED)</label></div>
-            <div class="field se-only full" style="display:none"><input type="number" min="0" step="0.5" id="fBizYears"><label>Length of Business (Years)</label></div>
+            <div class="field se-only" style="display:none"><input type="text" name="company_name" id="fCompany" value="{{ form.company_name.value|default:'' }}"><label>Company Name</label></div>
+            <div class="field se-only" style="display:none"><input type="text" name="annual_turnover" inputmode="numeric" id="fTurnover" data-money value="{{ form.annual_turnover.value|floatformat:'0'|default:'' }}"><label>Annual Turnover (AED)</label></div>
+            <div class="field se-only full" style="display:none"><input type="number" name="business_years" min="0" step="0.5" id="fBizYears" value="{{ form.business_years.value|floatformat:'-1'|default:'' }}"><label>Length of Business (Years)</label></div>
           </div>
         </section>
 
@@ -633,6 +635,8 @@ function presetMulti(id,val){
   presetCombo('cNat',I.nationality);
   presetCombo('cAdvisor',I.advisor_name);
   presetCombo('cSource',I.source);
+  presetCombo('cEmpType',I.employment_type);
+  presetCombo('cIndustry',I.industry);
   presetMulti('cBank',I.bank_name);
   if(I.priority){$$('#prPills .pill').forEach(p=>p.classList.toggle('on',p.textContent.trim()===I.priority));}
 })();
@@ -730,6 +734,8 @@ function update(){
   $('#hAdvisor').value=comboState['cAdvisor']?(ADVISOR_MAP[comboState['cAdvisor']]||''):'';
   $('#hBank').value=multiState.cBank.length?(BANK_MAP[multiState.cBank[0]]||''):'';
   $('#hSource').value=comboState['cSource']||'Website';
+  $('#hEmpType').value=comboState['cEmpType']||'';
+  $('#hIndustry').value=comboState['cIndustry']||'';
   {
     const prNow=$('#prPills .on')?.textContent?.trim()||'Medium';
     $('#hPriority').value=prNow;
@@ -836,7 +842,7 @@ $('#leadForm').addEventListener('submit',e=>{
   update();
   if(!validate()){e.preventDefault();toast('Please complete the required fields');return;}
   /* strip thousands separators so DecimalField accepts the numbers */
-  ['#fPropVal','#fLoan'].forEach(sel=>{const el=$(sel);if(el)el.value=el.value.replace(/[^\d.]/g,'');});
+  ['#fPropVal','#fLoan','#fIncome','#fTurnover'].forEach(sel=>{const el=$(sel);if(el)el.value=el.value.replace(/[^\d.]/g,'');});
 });
 /* ---------- stepper / scroll-spy ---------- */
 const steps=$$('.step'),secs=$$('.fcard[id]');

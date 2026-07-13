@@ -446,6 +446,11 @@ def lead_detail(request, pk):
         'initials': lead.initials,
         'disbursedAt': lead.disbursed_at.strftime('%d %b %Y') if lead.disbursed_at else '',
         'disbursedIso': lead.disbursed_at.isoformat() if lead.disbursed_at else '',
+        'employer': lead.employer or '', 'empType': lead.employment_type or '',
+        'income': float(lead.monthly_income or 0), 'years': float(lead.years_employment or 0),
+        'industry': lead.industry or '',
+        'company': lead.company_name or '', 'turnover': float(lead.annual_turnover or 0),
+        'bizYears': float(lead.business_years or 0),
     }
 
     def _doc_badge(status):
@@ -1035,6 +1040,8 @@ def lead_edit(request, pk):
             'advisor_name': (lead.advisor.get_full_name() or lead.advisor.username) if lead.advisor else '',
             'bank_name': lead.bank.name if lead.bank else '',
             'source': lead.source, 'priority': lead.priority,
+            'employment_type': lead.employment_type or '',
+            'industry': lead.industry or '',
         },
     }
     return render(request, 'crm/lead_form.html', {
@@ -1220,7 +1227,7 @@ def bank_create(request):
 
 
 @login_required
-@perm.module_required('Banks', 'edit')
+@perm.module_required('Banks', 'access')
 def bank_edit(request, pk):
     bank = get_object_or_404(Bank, pk=pk)
     form = BankForm(request.POST or None, instance=bank)

@@ -26,7 +26,10 @@ class LoginForm(AuthenticationForm):
 class LeadForm(StyledMixin, forms.ModelForm):
     class Meta:
         model = Lead
-        fields = ['name', 'mobile', 'email', 'nationality', 'property_value', 'ltv',
+        fields = ['name', 'mobile', 'email', 'nationality',
+                  'employer', 'employment_type', 'monthly_income', 'years_employment',
+                  'industry', 'company_name', 'annual_turnover', 'business_years',
+                  'property_value', 'ltv',
                   'loan_amount', 'advisor', 'bank', 'source', 'stage', 'priority',
                   'referral_partner']
 

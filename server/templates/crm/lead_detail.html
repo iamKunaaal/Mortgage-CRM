@@ -527,9 +527,10 @@ a{color:inherit;text-decoration:none}
           <h3>Customer Financial Profile</h3>
           <div class="r-row"><label>Monthly Income</label><b id="fpIncome"></b></div>
           <div class="r-row"><label>Existing Liabilities</label><b id="fpLiab"></b></div>
-          <div class="r-row"><label>Employment Type</label><b>Salaried</b></div>
+          <div class="r-row"><label>Employment Type</label><b id="fpEmpType">—</b></div>
           <div class="r-row"><label>Employer</label><b id="fpEmployer"></b></div>
           <div class="r-row"><label>Years of Employment</label><b id="fpYears"></b></div>
+          <div class="r-row"><label>Industry</label><b id="fpIndustry">—</b></div>
           <div class="r-row"><label>Residency Status</label><b>UAE Resident</b></div>
           <div class="r-row"><label>Nationality</label><b id="fpNat"></b></div>
         </div>
@@ -806,10 +807,13 @@ const risk=score>=75?['Low Risk','#EDFAF1','#16A34A']:score>=50?['Medium Risk','
 })();
 
 /* ---------- financial profile ---------- */
-$('#fpIncome').textContent='AED '+Math.round(L.loan/48).toLocaleString();
-$('#fpLiab').textContent='AED '+Math.round(L.loan/48*0.18).toLocaleString()+' / mo';
-$('#fpEmployer').textContent='—';
-$('#fpYears').textContent=(3+sIdx%9)+' years';
+const selfEmp=(L.empType||'').toLowerCase().includes('self')||(L.empType||'').toLowerCase().includes('business');
+$('#fpIncome').textContent=L.income?'AED '+Math.round(L.income).toLocaleString():'—';
+$('#fpLiab').textContent=L.income?'AED '+Math.round(L.income*0.18).toLocaleString()+' / mo':'—';
+$('#fpEmpType').textContent=L.empType||'—';
+$('#fpEmployer').textContent=(selfEmp?L.company:L.employer)||L.employer||'—';
+$('#fpYears').textContent=(selfEmp?L.bizYears:L.years)?((selfEmp?L.bizYears:L.years)+' years'):'—';
+$('#fpIndustry').textContent=L.industry||'—';
 $('#fpNat').textContent=L.nat;
 
 /* ---------- tabs ---------- */
