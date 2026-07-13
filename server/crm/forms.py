@@ -26,11 +26,11 @@ class LoginForm(AuthenticationForm):
 class LeadForm(StyledMixin, forms.ModelForm):
     class Meta:
         model = Lead
-        fields = ['name', 'mobile', 'email', 'nationality',
+        fields = ['name', 'mobile', 'email', 'nationality', 'date_of_birth',
                   'employer', 'employment_type', 'monthly_income', 'years_employment',
                   'industry', 'company_name', 'annual_turnover', 'business_years',
-                  'property_value', 'ltv',
-                  'loan_amount', 'advisor', 'bank', 'source', 'stage', 'priority',
+                  'property_value', 'property_type', 'preferred_area', 'ltv',
+                  'loan_amount', 'bank_notes', 'advisor', 'bank', 'source', 'stage', 'priority',
                   'referral_partner']
 
     def __init__(self, *args, **kwargs):

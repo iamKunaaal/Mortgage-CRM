@@ -334,6 +334,8 @@ a{color:inherit;text-decoration:none}
         <input type="hidden" name="source" id="hSource" value="{{ form.source.value|default:'Website' }}">
         <input type="hidden" name="employment_type" id="hEmpType" value="{{ form.employment_type.value|default:'' }}">
         <input type="hidden" name="industry" id="hIndustry" value="{{ form.industry.value|default:'' }}">
+        <input type="hidden" name="property_type" id="hPropType" value="{{ form.property_type.value|default:'' }}">
+        <input type="hidden" name="preferred_area" id="hArea" value="{{ form.preferred_area.value|default:'' }}">
         <input type="hidden" name="stage" id="hStage" value="{{ form.stage.value|default:'Lead Received' }}">
         <input type="hidden" name="priority" id="hPriority" value="{{ form.priority.value|default:'Medium' }}">
         <input type="hidden" name="referral_partner" id="hPartner" value="{{ form.referral_partner.value|default:'' }}">
@@ -349,7 +351,7 @@ a{color:inherit;text-decoration:none}
             <div class="field prefix-field"><span class="prefix">+971</span><input type="tel" name="mobile" id="fMobile" data-req style="padding-left:58px" value="{{ form.mobile.value|default:'' }}"><label style="left:58px">Mobile Number *</label><span class="f-msg">Enter a valid UAE mobile (e.g. 50 123 4567).</span></div>
             <div class="field"><input type="email" name="email" id="fEmail" data-req value="{{ form.email.value|default:'' }}"><label>Email Address *</label><span class="f-msg">Enter a valid email address.</span></div>
             <div class="combo" id="cNat" data-label="Nationality"></div>
-            <div class="field"><input type="date" class="filled" id="fDob"><label>Date of Birth</label></div>
+            <div class="field"><input type="date" class="filled" name="date_of_birth" id="fDob" value="{{ form.date_of_birth.value|date:'Y-m-d'|default:'' }}"><label>Date of Birth</label></div>
             <div class="pill-wrap full">
               <label class="t">UAE Residency Status</label>
               <div class="pill-row" data-single id="resPills">
@@ -411,7 +413,7 @@ a{color:inherit;text-decoration:none}
                 <button type="button" class="pill">Islamic</button>
               </div>
             </div>
-            <div class="field ta full"><textarea id="fBankNotes"></textarea><label>Special Notes</label></div>
+            <div class="field ta full"><textarea name="bank_notes" id="fBankNotes">{{ form.bank_notes.value|default:'' }}</textarea><label>Special Notes</label></div>
           </div>
         </section>
 
@@ -637,6 +639,8 @@ function presetMulti(id,val){
   presetCombo('cSource',I.source);
   presetCombo('cEmpType',I.employment_type);
   presetCombo('cIndustry',I.industry);
+  presetCombo('cPropType',I.property_type);
+  presetCombo('cArea',I.preferred_area);
   presetMulti('cBank',I.bank_name);
   if(I.priority){$$('#prPills .pill').forEach(p=>p.classList.toggle('on',p.textContent.trim()===I.priority));}
 })();
@@ -736,6 +740,8 @@ function update(){
   $('#hSource').value=comboState['cSource']||'Website';
   $('#hEmpType').value=comboState['cEmpType']||'';
   $('#hIndustry').value=comboState['cIndustry']||'';
+  $('#hPropType').value=comboState['cPropType']||'';
+  $('#hArea').value=comboState['cArea']||'';
   {
     const prNow=$('#prPills .on')?.textContent?.trim()||'Medium';
     $('#hPriority').value=prNow;

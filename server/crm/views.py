@@ -1042,6 +1042,8 @@ def lead_edit(request, pk):
             'source': lead.source, 'priority': lead.priority,
             'employment_type': lead.employment_type or '',
             'industry': lead.industry or '',
+            'property_type': lead.property_type or '',
+            'preferred_area': lead.preferred_area or '',
         },
     }
     return render(request, 'crm/lead_form.html', {

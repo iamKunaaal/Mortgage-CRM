@@ -92,6 +92,7 @@ class Lead(models.Model):
     mobile = models.CharField(max_length=30, blank=True)
     email = models.EmailField(blank=True)
     nationality = models.CharField(max_length=60, blank=True)
+    date_of_birth = models.DateField(null=True, blank=True)
     # employment profile
     employer = models.CharField(max_length=160, blank=True)
     employment_type = models.CharField(max_length=40, blank=True)
@@ -102,8 +103,11 @@ class Lead(models.Model):
     annual_turnover = models.DecimalField(max_digits=16, decimal_places=2, default=0, null=True, blank=True)
     business_years = models.DecimalField(max_digits=5, decimal_places=1, default=0, null=True, blank=True)
     property_value = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    property_type = models.CharField(max_length=60, blank=True)
+    preferred_area = models.CharField(max_length=120, blank=True)
     ltv = models.PositiveIntegerField(default=80)
     loan_amount = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    bank_notes = models.TextField(blank=True)
     advisor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
                                 related_name='leads', limit_choices_to={'role': Role.ADVISOR})
     bank = models.ForeignKey(Bank, on_delete=models.SET_NULL, null=True, blank=True)

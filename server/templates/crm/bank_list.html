@@ -636,7 +636,7 @@ function openModal(bank){
   editing=bank||null;
   $('#modalTitle').textContent=bank?'Edit Bank':'Add Bank';
   $('#modalSub').textContent=bank?'Update lending partner details':'Register a new lending partner';
-  $('#fName').value=bank?bank.name:'';$('#fName').readOnly=!!bank;
+  $('#fName').value=bank?bank.name:'';$('#fName').readOnly=false;
   $('#fType').value=bank?bank.type:'Conventional';
   $('#fStatus').value=bank?bank.status:'Active';
   $('#fContact').value=bank?bank.contact:'';
