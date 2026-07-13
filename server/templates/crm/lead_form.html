@@ -512,7 +512,13 @@ $$('[data-toggle]').forEach(b=>b.addEventListener('click',()=>{
 function syncFloat(el){el.classList.toggle('filled',!!el.value)}
 $$('.field input,.field textarea').forEach(el=>{
   syncFloat(el);
-  el.addEventListener('input',()=>{syncFloat(el);el.closest('.field').classList.remove('err');update();});
+  el.addEventListener('input',()=>{
+    syncFloat(el);el.closest('.field').classList.remove('err');
+    /* set financing mode BEFORE recalculating so the driving field isn't overwritten */
+    if(el.id==='fLoan')calcMode='loan';
+    else if(el.id==='fLtv')calcMode='ltv';
+    update();
+  });
 });
 
 /* money formatting */
@@ -729,6 +735,8 @@ renderDocs('salaried');
 
 /* ---------- live summary + progress ---------- */
 const PR_COLORS={High:['#FEE2E2','#DC2626'],Medium:['#FEF3E2','#B45309'],Low:['#EDFAF1','#16A34A']};
+/* which field drives the financing math: 'ltv' (loan auto) or 'loan' (loan manual, LTV derived) */
+let calcMode='ltv';
 function update(){
   const name=$('#fName').value.trim();
   $('#sumName').textContent=name||'New Customer';
@@ -785,20 +793,36 @@ function update(){
   const [bg,fg]=PR_COLORS[pr];
   const pb=$('#sumPriority');pb.textContent=pr;pb.style.background=bg;pb.style.color=fg;
 
-  /* LTV-driven auto-calc: Loan = LTV% × value, Down Payment = remaining */
+  /* financing math — two-way:
+     - calcMode 'ltv'  : Loan = LTV% × value        (auto loan)
+     - calcMode 'loan' : LTV  = Loan ÷ value × 100   (manual loan) */
   let ltv=parseFloat($('#fLtv').value);
   if(isNaN(ltv))ltv=0; if(ltv>100)ltv=100; if(ltv<0)ltv=0;
+  const loanTyped=moneyVal('#fLoan');
   if(prop){
-    const loanCalc=Math.round(prop*ltv/100);
-    const downCalc=prop-loanCalc;
-    $('#fLoan').value=loanCalc?loanCalc.toLocaleString('en-US'):'';
-    $('#fDown').value=downCalc?downCalc.toLocaleString('en-US'):'';
-    syncFloat($('#fLoan'));syncFloat($('#fDown'));
+    if(calcMode==='loan'&&loanTyped>0){
+      const loanV=Math.min(loanTyped,prop);
+      ltv=Math.round(loanV/prop*100);
+      $('#fLtv').value=ltv;syncFloat($('#fLtv'));
+      const downCalc=prop-loanV;
+      $('#fDown').value=downCalc?downCalc.toLocaleString('en-US'):'';
+      syncFloat($('#fDown'));
+      $('#loanHint').textContent='Manually entered · LTV auto-updated';
+      setSum('sumLoan',fmt(loanV));
+    }else{
+      const loanCalc=Math.round(prop*ltv/100);
+      const downCalc=prop-loanCalc;
+      $('#fLoan').value=loanCalc?loanCalc.toLocaleString('en-US'):'';
+      $('#fDown').value=downCalc?downCalc.toLocaleString('en-US'):'';
+      syncFloat($('#fLoan'));syncFloat($('#fDown'));
+      $('#loanHint').textContent='Auto = LTV % × property value (or type a loan amount)';
+      setSum('sumLoan',fmt(loanCalc));
+    }
     $('#dpPct').textContent=`Auto = ${100-ltv}% of property value`;
-    setSum('sumLoan',fmt(loanCalc));
   }else{
-    $('#fLoan').value='';$('#fDown').value='';
-    syncFloat($('#fLoan'));syncFloat($('#fDown'));
+    /* no property value yet: keep a manually typed loan, otherwise clear */
+    if(calcMode!=='loan'){$('#fLoan').value='';syncFloat($('#fLoan'));}
+    $('#fDown').value='';syncFloat($('#fDown'));
   }
 
   /* completion: required + key optional fields */
@@ -817,7 +841,13 @@ function setSum(id,val,emptyText='—'){
   el.textContent=val||emptyText;
   el.classList.toggle('empty-v',!val);
 }
-$('#fLoan').addEventListener('input',()=>{$('#fLoan').dataset.touched='1';});
+/* on edit-load, if the saved loan doesn't match LTV × value, treat it as manually set
+   so it isn't overwritten by the auto calc */
+(function(){
+  const prop=moneyVal('#fPropVal'),loan=moneyVal('#fLoan');
+  const l=parseFloat($('#fLtv').value)||0;
+  if(prop&&loan&&Math.round(prop*l/100)!==loan)calcMode='loan';
+})();
 update();
 
 /* ---------- validation ---------- */
