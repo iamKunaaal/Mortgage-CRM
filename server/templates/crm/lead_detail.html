@@ -736,7 +736,13 @@ if(declined){$('#trackPct').style.color='var(--danger)';}
 
 /* ---------- detailed workflow checklist ---------- */
 const UPDATER=L.advisor;
-function stageDate(i){const d=new Date(L.created);d.setDate(d.getDate()+i*2+(i%3));return fmtD(d);}
+/* spread completed stages between the created date and today, so no date is ever in the future */
+function stageDate(i){
+  const start=new Date(L.created),now=new Date();
+  const span=Math.max(0,now-start),denom=Math.max(sIdx,1);
+  const d=new Date(start.getTime()+span*Math.min(i,denom)/denom);
+  return fmtD(d);
+}
 const CHECK='<path d="M20 6 9 17l-5-5"/>',DOT_CUR='<circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/>',X='<path d="M18 6 6 18M6 6l12 12"/>';
 $('#wfList').innerHTML=STAGE_ORDER.map((s,i)=>{
   const isDeclined=s==='Declined';
