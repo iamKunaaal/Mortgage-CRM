@@ -422,7 +422,8 @@ def lead_create(request):
         'init': {},
     }
     return render(request, 'crm/lead_form.html', {
-        'form': form, 'title': 'Create Lead', 'data': data, 'active_nav': 'Leads'})
+        'form': form, 'title': 'Create Lead', 'submit_label': 'Create Lead',
+        'data': data, 'active_nav': 'Leads'})
 
 
 @login_required
@@ -1037,7 +1038,8 @@ def lead_edit(request, pk):
         },
     }
     return render(request, 'crm/lead_form.html', {
-        'form': form, 'title': 'Edit Lead', 'data': data, 'active_nav': 'Leads'})
+        'form': form, 'title': 'Edit Lead', 'submit_label': 'Save Changes',
+        'data': data, 'active_nav': 'Leads'})
 
 
 # ---------- tasks ----------
@@ -1206,7 +1208,7 @@ def bank_list(request):
 
 
 @login_required
-@perm.module_required('Banks', 'edit')
+@perm.module_required('Banks', 'access')
 def bank_create(request):
     form = BankForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
@@ -1313,6 +1315,9 @@ def advisor_list(request):
 @perm.module_required('Referral Partners')
 def partner_list(request):
     partners = ReferralPartner.objects.order_by('-created_at')
+    # CEO sees every partner; all other roles see only the ones they added.
+    if request.user.role != Role.CEO:
+        partners = partners.filter(created_by=request.user)
     kpis = {
         'total': partners.count(),
         'active': partners.filter(status='Active').count(),
@@ -1375,11 +1380,13 @@ def partner_list(request):
 
 
 @login_required
-@perm.module_required('Referral Partners', 'create')
+@perm.module_required('Referral Partners', 'access')
 def partner_create(request):
     form = PartnerForm(request.POST or None, request.FILES or None)
     if request.method == 'POST' and form.is_valid():
-        form.save()
+        partner = form.save(commit=False)
+        partner.created_by = request.user
+        partner.save()
         messages.success(request, 'Referral partner created with documents.')
         return redirect('partner_list')
     return render(request, 'crm/partner_form.html', {'form': form, 'active_nav': 'Referral Partners'})
@@ -1633,9 +1640,12 @@ def advisor_export(request):
 @login_required
 @perm.module_required('Referral Partners')
 def partner_export(request):
+    qs = ReferralPartner.objects.all()
+    if request.user.role != Role.CEO:
+        qs = qs.filter(created_by=request.user)
     return _csv('partners.csv', ['Name', 'Company', 'Type', 'Mobile', 'Email', 'Status'],
                 [[p.name, p.company, p.partner_type, p.mobile, p.email, p.status]
-                 for p in ReferralPartner.objects.all()])
+                 for p in qs])
 
 
 @login_required

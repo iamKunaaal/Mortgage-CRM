@@ -64,6 +64,8 @@ class ReferralPartner(models.Model):
     status = models.CharField(max_length=20, default='Active')
     agreement = models.FileField(upload_to='partners/', blank=True, null=True)
     kyc_doc = models.FileField(upload_to='partners/', blank=True, null=True)
+    created_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name='referral_partners')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

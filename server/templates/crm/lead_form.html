@@ -454,7 +454,7 @@ a{color:inherit;text-decoration:none}
           <a class="btn btn-ghost" href="{% url 'lead_list' %}">Cancel</a>
           <span class="draft-note hide-sm" id="draftNote"></span>
           <span class="spacer"></span>
-          <button type="submit" class="btn btn-primary" id="createLead"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>{{ title }}</button>
+          <button type="submit" class="btn btn-primary" id="createLead"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>{{ submit_label|default:title }}</button>
         </div>
       </form>
 
@@ -813,7 +813,7 @@ function validate(){
   let ok=true,first=null;
   const reqs=[
     {el:'#fName',test:v=>v.trim().length>1},
-    {el:'#fMobile',test:v=>/^[\d\s]{7,}$/.test(v.trim())},
+    {el:'#fMobile',test:v=>/^[+\d\s()-]{7,}$/.test(v.trim())},
     {el:'#fEmail',test:v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim())},
     {el:'#fPropVal',test:v=>moneyVal('#fPropVal')>0},
     {el:'#fLoan',test:v=>moneyVal('#fLoan')>0}
