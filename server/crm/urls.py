@@ -5,6 +5,7 @@ urlpatterns = [
     path('login/', views.CRMLoginView.as_view(), name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('', views.dashboard, name='dashboard'),
+    path('search/', views.global_search, name='global_search'),
 
     path('leads/', views.lead_list, name='lead_list'),
     path('leads/new/', views.lead_create, name='lead_create'),
@@ -36,12 +37,14 @@ urlpatterns = [
     path('tasks/new/', views.task_create, name='task_create'),
     path('tasks/export/', views.task_export, name='task_export'),
     path('tasks/<int:pk>/complete/', views.task_complete, name='task_complete'),
+    path('tasks/<int:pk>/delete/', views.task_delete, name='task_delete'),
 
     path('banks/', views.bank_list, name='bank_list'),
     path('banks/new/', views.bank_create, name='bank_create'),
     path('banks/export/', views.bank_export, name='bank_export'),
     path('banks/<int:pk>/edit/', views.bank_edit, name='bank_edit'),
     path('banks/<int:pk>/toggle/', views.bank_toggle, name='bank_toggle'),
+    path('banks/<int:pk>/delete/', views.bank_delete, name='bank_delete'),
 
     path('advisors/', views.advisor_list, name='advisor_list'),
     path('advisors/export/', views.advisor_export, name='advisor_export'),
@@ -49,9 +52,11 @@ urlpatterns = [
     path('partners/', views.partner_list, name='partner_list'),
     path('partners/new/', views.partner_create, name='partner_create'),
     path('partners/export/', views.partner_export, name='partner_export'),
+    path('partners/<int:pk>/delete/', views.partner_delete, name='partner_delete'),
 
     path('documents/', views.document_list, name='document_list'),
     path('documents/export/', views.document_export, name='document_export'),
+    path('documents/<int:pk>/delete/', views.document_delete, name='document_delete'),
     path('documents/<int:pk>/<str:action>/', views.document_action, name='document_action'),
 
     path('finance/', views.finance, name='finance'),
@@ -63,6 +68,7 @@ urlpatterns = [
     path('users/new/', views.user_create, name='user_create'),
     path('users/export/', views.user_export, name='user_export'),
     path('users/<int:pk>/edit/', views.user_edit, name='user_edit'),
+    path('users/<int:pk>/delete/', views.user_delete, name='user_delete'),
 
     path('roles/', views.role_list, name='role_list'),
     path('roles/save/', views.role_perm_save, name='role_perm_save'),

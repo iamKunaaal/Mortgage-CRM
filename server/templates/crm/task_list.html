@@ -377,6 +377,7 @@ canvas{display:block;width:100%}
 <div class="menu-pop" id="rowMenu">
   <button class="primary" data-act="viewlead"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>View Lead</button>
   <button data-act="complete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>Mark Complete</button>
+  {% if is_ceo %}<div class="menu-sep"></div><button class="danger" data-act="delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13.5px;height:13.5px"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>Delete</button>{% endif %}
 </div>
 
 <!-- CREATE TASK MODAL -->
@@ -568,6 +569,12 @@ $('#rowMenu').addEventListener('click',e=>{
   if(b.dataset.act==='viewlead'){if(t&&t.leadId)location.href=`/leads/${t.leadId}/`;else toast('No linked lead');return;}
   if(b.dataset.act==='complete'){
     const f=document.createElement('form');f.method='post';f.action=`/tasks/${id}/complete/`;
+    f.innerHTML=`<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">`;
+    document.body.appendChild(f);f.submit();return;
+  }
+  if(b.dataset.act==='delete'){
+    if(!confirm('Delete this permanently? This cannot be undone.'))return;
+    const f=document.createElement('form');f.method='post';f.action=`/tasks/${id}/delete/`;
     f.innerHTML=`<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">`;
     document.body.appendChild(f);f.submit();return;
   }

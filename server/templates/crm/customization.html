@@ -293,6 +293,25 @@ a{color:inherit;text-decoration:none}
 .cz-empty{text-align:center;padding:60px 20px;color:var(--text-3)}
 .cz-remove{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--danger);border:1px solid var(--border)}
 .cz-remove:hover{background:#FEE2E2;border-color:#FCA5A5}
+.seg{display:inline-flex;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:3px;gap:2px}
+.seg-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:7px;font-size:12.5px;font-weight:600;color:var(--text-2);transition:all .14s}
+.seg-btn svg{width:14px;height:14px}
+.seg-btn.on{background:#fff;color:var(--primary);box-shadow:var(--sh-xs)}
+.cz-view{font-variant-numeric:tabular-nums;color:var(--text)}
+/* preview mode table polish */
+.tbl.preview{min-width:1480px}
+.tbl.preview thead th{background:#F4F8FD;color:var(--text-2);padding:13px}
+.tbl.preview tbody tr:nth-child(even){background:#FAFCFE}
+.tbl.preview tbody tr:hover{background:var(--blue-50)}
+.tbl.preview td{padding:13px 14px;border-bottom:1px solid var(--border-soft)}
+.tbl.preview th:last-child,.tbl.preview td:last-child{display:none}
+.cz-idx{color:var(--text-3);font-weight:600}
+.cz-client{font-weight:700;color:var(--text)}
+.cz-strong{font-weight:700}
+.cz-sec{color:var(--text-3)}
+.cz-final{color:var(--success);font-weight:800}
+.cz-pill{display:inline-flex;align-items:center;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:99px;white-space:nowrap}
+.cz-tag{display:inline-flex;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;background:var(--blue-50);color:var(--primary)}
 </style>
 </head>
 <body>
@@ -311,6 +330,10 @@ a{color:inherit;text-decoration:none}
         <p>CEO revenue sheet — fill the Slab %, everything else calculates automatically.</p>
       </div>
       <div class="actions">
+        <div class="seg" id="modeToggle">
+          <button class="seg-btn on" data-mode="preview" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Preview</button>
+          <button class="seg-btn" data-mode="edit" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>Edit</button>
+        </div>
         <a class="btn btn-ghost" href="{% url 'lead_list' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back to Leads</a>
         <a class="btn btn-ghost" href="{% url 'customization_export' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export CSV</a>
       </div>
@@ -318,15 +341,27 @@ a{color:inherit;text-decoration:none}
 
     <div class="totbar" id="totbar"></div>
 
+    <div class="filter-bar" id="filterBar">
+      <div class="f-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="czSearch" placeholder="Search client, bank, RM or CP…" autocomplete="off">
+      </div>
+      <div class="f-dd" data-filter="status"></div>
+      <div class="f-dd" data-filter="bank"></div>
+      <div class="f-dd" data-filter="month"></div>
+      <div class="f-dd" data-filter="range"></div>
+      <button class="clear-btn" id="czClear" type="button">✕&nbsp; Clear</button>
+    </div>
+
     <div class="card" style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-sm)">
       <div class="tbl-wrap">
-        <table class="tbl" style="min-width:1600px">
+        <table class="tbl" id="czTable" style="min-width:1600px">
           <thead><tr>
-            <th>#</th><th>Month</th><th>Client Name</th><th>Bank RM</th><th>MOB</th>
+            <th>#</th><th>Month</th><th>Client Name</th>
             <th class="r">Loan Amount</th><th>Bank</th><th>RM Name</th>
             <th class="r">Slab %</th><th class="r">Actual Rev</th><th class="r">VAT</th>
             <th class="r">With VAT</th><th class="r">Broker %</th><th class="r">Broker Rev</th>
-            <th class="r">Broker Payout</th><th class="r">Final Rev</th><th>CP</th><th>Status</th><th></th>
+            <th class="r">Broker Slab %</th><th class="r">Broker Payout</th><th class="r">Final Rev</th><th>CP</th><th>Status</th><th></th>
           </tr></thead>
           <tbody id="czBody"></tbody>
         </table>
@@ -353,49 +388,172 @@ const fmt2=v=>Number(v||0).toLocaleString('en-US',{minimumFractionDigits:2,maxim
 function calc(r){
   const actual=r.loan*r.slab;
   const vat=(r.vatOverride!=null)?r.vatOverride:actual*0.05;
+  const brokerRev=r.loan*r.brokerPct/100;               // Broker Revenue = Loan × Broker%
+  const brokerPayout=brokerRev*(r.brokerSlab||0)/100;   // Broker Payout = Broker Revenue × Broker Slab%
   return {actual, vat, withVat:actual+vat,
-          brokerRev:actual*r.brokerPct/100, brokerPayout:actual*(100-r.brokerPct)/100,
-          finalRev:actual*r.brokerPct/100};
+          brokerRev, brokerPayout, finalRev:brokerRev};
 }
 function toast(m){$('#toastMsg').textContent=m;const t=$('#toast');t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';clearTimeout(t._t);t._t=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(80px)';},1800);}
 
 const STATUS_C={'Disbursed':'#16A34A','FOL Signed':'#16A34A','Declined':'#DC2626','Pre-Approved':'#0B5AB3'};
 
-function render(){
-  const b=$('#czBody');
-  if(!ROWS.length){b.innerHTML='';$('#czEmpty').style.display='block';renderTotals();return;}
-  $('#czEmpty').style.display='none';
-  b.innerHTML=ROWS.map((r,i)=>{
-    const c=calc(r);
-    const sc=STATUS_C[r.status]||'#64748B';
-    return `<tr data-id="${r.id}">
-      <td>${i+1}</td>
-      <td>${r.month}</td>
-      <td style="font-weight:600">${r.client}</td>
-      <td><input class="cz-in cz-txt" data-f="bank_rm" value="${(r.bankRm||'').replace(/"/g,'&quot;')}" placeholder="Bank RM"></td>
-      <td>${r.mob}</td>
-      <td class="r cz-calc">${fmt(r.loan)}</td>
-      <td>${r.bank}</td>
-      <td>${r.rm}</td>
-      <td class="r"><input class="cz-in num cz-slab" data-f="slab" type="number" step="0.01" min="0" value="${(r.slab*100).toFixed(2)}"> %</td>
-      <td class="r cz-calc" data-c="actual">${fmt2(c.actual)}</td>
-      <td class="r"><input class="cz-in num cz-slab" data-f="vat" type="number" step="0.01" min="0" value="${c.vat.toFixed(2)}" title="Auto 5% — edit to override, clear to reset"></td>
-      <td class="r cz-calc" data-c="withVat">${fmt2(c.withVat)}</td>
-      <td class="r"><input class="cz-in num cz-slab" data-f="broker_pct" type="number" step="1" min="0" max="100" value="${r.brokerPct}"> %</td>
-      <td class="r cz-calc" data-c="brokerRev">${fmt2(c.brokerRev)}</td>
-      <td class="r cz-calc" data-c="brokerPayout">${fmt2(c.brokerPayout)}</td>
-      <td class="r cz-calc pos" data-c="finalRev">${fmt2(c.finalRev)}</td>
-      <td><input class="cz-in cz-txt" data-f="cp" value="${(r.cp||'').replace(/"/g,'&quot;')}" placeholder="CP"></td>
-      <td><span style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600"><i style="width:7px;height:7px;border-radius:50%;background:${sc}"></i>${r.status}</span></td>
-      <td><button class="cz-remove" data-remove title="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button></td>
-    </tr>`;}).join('');
-  renderTotals();
+/* ---------- search / filter ---------- */
+const state={search:'',status:null,bank:null,month:null,range:null,customFrom:null,customTo:null,mode:'preview'};
+const NOW=new Date();
+function inRange(d){
+  if(!state.range)return true;
+  const diff=(NOW-d)/864e5;
+  switch(state.range){
+    case 'Today':return d.getDate()===NOW.getDate()&&d.getMonth()===NOW.getMonth()&&d.getFullYear()===NOW.getFullYear();
+    case 'Last 7 Days':return diff<=7;
+    case 'Last 30 Days':return diff<=30;
+    case 'This Quarter':{const q=Math.floor(NOW.getMonth()/3);return d.getFullYear()===NOW.getFullYear()&&Math.floor(d.getMonth()/3)===q;}
+    case 'This Year':return d.getFullYear()===NOW.getFullYear();
+    case 'Custom':{
+      if(state.customFrom){const f=new Date(state.customFrom);f.setHours(0,0,0,0);if(d<f)return false;}
+      if(state.customTo){const t=new Date(state.customTo);t.setHours(23,59,59,999);if(d>t)return false;}
+      return true;
+    }
+  }return true;
 }
-function renderTotals(){
+function filtered(){
+  return ROWS.filter(r=>{
+    if(state.status&&r.status!==state.status)return false;
+    if(state.bank&&r.bank!==state.bank)return false;
+    if(state.month&&r.month!==state.month)return false;
+    if(state.range&&r.dateIso&&!inRange(new Date(r.dateIso)))return false;
+    if(state.search){
+      const hay=`${r.client} ${r.bank} ${r.rm} ${r.cp||''}`.toLowerCase();
+      if(!hay.includes(state.search))return false;
+    }
+    return true;
+  });
+}
+const uniq=a=>[...new Set(a.filter(x=>x&&x!=='—'))].sort();
+const FDEFS={
+  status:{label:'Status',opts:()=>uniq(ROWS.map(r=>r.status))},
+  bank:{label:'Bank',opts:()=>uniq(ROWS.map(r=>r.bank))},
+  month:{label:'Month',opts:()=>uniq(ROWS.map(r=>r.month))},
+  range:{label:'Date Range',opts:()=>['Today','Last 7 Days','Last 30 Days','This Quarter','This Year','Custom']},
+};
+function buildFilters(){
+  $$('.f-dd').forEach(dd=>{
+    const k=dd.dataset.filter,def=FDEFS[k],opts=def.opts();
+    dd.innerHTML=`<button class="f-dd-btn" type="button"><span class="lbl">${def.label}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="f-dd-menu">${opts.length?opts.map(o=>`<button type="button" data-v="${o.replace(/"/g,'&quot;')}">${o}</button>`).join(''):'<div style="padding:8px 10px;font-size:12px;color:var(--text-3)">None</div>'}</div>`;
+    dd.querySelector('.f-dd-btn').addEventListener('click',e=>{e.stopPropagation();const was=dd.classList.contains('open');$$('.f-dd.open').forEach(o=>o.classList.remove('open'));dd.classList.toggle('open',!was);});
+    dd.querySelectorAll('.f-dd-menu>button').forEach(ob=>ob.addEventListener('click',e=>{
+      const v=ob.dataset.v;
+      if(k==='range'&&v==='Custom'){e.stopPropagation();dd.classList.remove('open');openCustomRange(dd);return;}
+      const cur=(k==='range')?state.range:state[k];
+      const nv=(cur===v)?null:v;
+      if(k==='range'){state.range=nv;state.customFrom=null;state.customTo=null;}
+      else state[k]=nv;
+      dd.querySelector('.lbl').textContent=nv||def.label;
+      dd.querySelector('.f-dd-btn').classList.toggle('on',!!nv);
+      dd.querySelectorAll('.f-dd-menu>button').forEach(x=>x.classList.toggle('sel',x.dataset.v===nv));
+      dd.classList.remove('open');render();
+    }));
+  });
+}
+function openCustomRange(dd){
+  let m=document.getElementById('czRangeModal');
+  if(!m){
+    m=document.createElement('div');m.id='czRangeModal';
+    m.style.cssText='position:fixed;inset:0;background:rgba(17,24,39,.45);display:flex;align-items:center;justify-content:center;z-index:9999';
+    m.innerHTML=`<div style="background:#fff;border-radius:14px;padding:22px;width:320px;box-shadow:0 20px 50px rgba(0,0,0,.25)" onclick="event.stopPropagation()">
+        <h3 style="margin:0 0 4px;font-size:16px;font-weight:700;color:#111827">Custom Date Range</h3>
+        <p style="margin:0 0 16px;font-size:12px;color:#6b7280">Select a start and end date to filter entries.</p>
+        <label style="display:block;font-size:12px;color:#374151;margin-bottom:4px;font-weight:600">From</label>
+        <input type="date" id="crFrom" style="width:100%;padding:9px 10px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;margin-bottom:14px;box-sizing:border-box">
+        <label style="display:block;font-size:12px;color:#374151;margin-bottom:4px;font-weight:600">To</label>
+        <input type="date" id="crTo" style="width:100%;padding:9px 10px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;margin-bottom:20px;box-sizing:border-box">
+        <div style="display:flex;gap:10px">
+          <button id="crCancel" type="button" style="flex:1;padding:9px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;color:#374151;font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
+          <button id="crApply" type="button" style="flex:1;padding:9px;border:none;border-radius:8px;background:var(--primary);color:#fff;font-size:13px;font-weight:600;cursor:pointer">Apply</button>
+        </div>
+      </div>`;
+    document.body.appendChild(m);
+  }
+  const from=m.querySelector('#crFrom'),to=m.querySelector('#crTo');
+  from.value=state.customFrom||'';to.value=state.customTo||'';
+  m.style.display='flex';
+  const close=()=>{m.style.display='none';};
+  m.onclick=close;
+  m.querySelector('#crCancel').onclick=close;
+  m.querySelector('#crApply').onclick=()=>{
+    if(!from.value&&!to.value){close();return;}
+    state.range='Custom';state.customFrom=from.value||null;state.customTo=to.value||null;
+    const btn=dd.querySelector('.f-dd-btn');
+    btn.classList.add('on');
+    btn.querySelector('.lbl').textContent=(from.value||'…')+' → '+(to.value||'…');
+    close();render();
+  };
+}
+document.addEventListener('click',()=>$$('.f-dd.open').forEach(o=>o.classList.remove('open')));
+
+/* ---------- row builders ---------- */
+function editRow(r,i){
+  const c=calc(r),sc=STATUS_C[r.status]||'#64748B';
+  return `<tr data-id="${r.id}">
+    <td>${i+1}</td><td>${r.month}</td><td style="font-weight:600">${r.client}</td>
+    <td class="r cz-calc">${fmt(r.loan)}</td><td>${r.bank}</td><td>${r.rm}</td>
+    <td class="r"><input class="cz-in num cz-slab" data-f="slab" type="number" step="0.01" min="0" value="${(r.slab*100).toFixed(2)}"> %</td>
+    <td class="r cz-calc" data-c="actual">${fmt2(c.actual)}</td>
+    <td class="r"><input class="cz-in num cz-slab" data-f="vat" type="number" step="0.01" min="0" value="${c.vat.toFixed(2)}" title="Auto 5% — edit to override, clear to reset"></td>
+    <td class="r cz-calc" data-c="withVat">${fmt2(c.withVat)}</td>
+    <td class="r"><input class="cz-in num cz-slab" data-f="broker_pct" type="number" step="0.01" min="0" max="100" value="${r.brokerPct}"> %</td>
+    <td class="r cz-calc" data-c="brokerRev">${fmt2(c.brokerRev)}</td>
+    <td class="r"><input class="cz-in num cz-slab" data-f="broker_slab" type="number" step="0.01" min="0" max="100" value="${r.brokerSlab}"> %</td>
+    <td class="r cz-calc" data-c="brokerPayout">${fmt2(c.brokerPayout)}</td>
+    <td class="r cz-calc pos" data-c="finalRev">${fmt2(c.finalRev)}</td>
+    <td><input class="cz-in cz-txt" data-f="cp" value="${(r.cp||'').replace(/"/g,'&quot;')}" placeholder="CP"></td>
+    <td><span style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600"><i style="width:7px;height:7px;border-radius:50%;background:${sc}"></i>${r.status}</span></td>
+    <td><button class="cz-remove" data-remove title="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button></td>
+  </tr>`;
+}
+function previewRow(r,i){
+  const c=calc(r),sc=STATUS_C[r.status]||'#64748B';
+  return `<tr>
+    <td class="cz-idx">${i+1}</td>
+    <td>${r.month}</td>
+    <td class="cz-client">${r.client}</td>
+    <td class="r cz-view cz-strong">${fmt(r.loan)}</td>
+    <td>${r.bank}</td>
+    <td>${r.rm}</td>
+    <td class="r cz-view cz-sec">${(r.slab*100).toFixed(2)}%</td>
+    <td class="r cz-view">${fmt2(c.actual)}</td>
+    <td class="r cz-view cz-sec">${fmt2(c.vat)}</td>
+    <td class="r cz-view">${fmt2(c.withVat)}</td>
+    <td class="r cz-view cz-sec">${(+r.brokerPct).toFixed(2)}%</td>
+    <td class="r cz-view">${fmt2(c.brokerRev)}</td>
+    <td class="r cz-view cz-sec">${(+r.brokerSlab).toFixed(2)}%</td>
+    <td class="r cz-view">${fmt2(c.brokerPayout)}</td>
+    <td class="r cz-view cz-final">${fmt2(c.finalRev)}</td>
+    <td>${r.cp?`<span class="cz-tag">${r.cp}</span>`:'<span style="color:var(--text-3)">—</span>'}</td>
+    <td><span class="cz-pill" style="background:${sc}1A;color:${sc}">${r.status}</span></td>
+    <td></td>
+  </tr>`;
+}
+function render(){
+  const rows=filtered(),b=$('#czBody');
+  $('#czTable').classList.toggle('preview',state.mode==='preview');
+  if(!rows.length){
+    b.innerHTML='';
+    const e=$('#czEmpty');e.style.display='block';
+    e.innerHTML=ROWS.length?'No entries match your search / filters.':'No leads added yet. Go to <b>All Leads</b> → row menu → <b>Add to Monthly Disbursed Pipeline</b>.';
+    renderTotals(rows);return;
+  }
+  $('#czEmpty').style.display='none';
+  b.innerHTML=rows.map((r,i)=>state.mode==='preview'?previewRow(r,i):editRow(r,i)).join('');
+  renderTotals(rows);
+}
+function renderTotals(rows){
+  rows=rows||filtered();
   let actual=0,final=0,payout=0;
-  ROWS.forEach(r=>{const c=calc(r);actual+=c.actual;final+=c.finalRev;payout+=c.brokerPayout;});
+  rows.forEach(r=>{const c=calc(r);actual+=c.actual;final+=c.finalRev;payout+=c.brokerPayout;});
   $('#totbar').innerHTML=`
-    <div><div class="t">Entries</div><div class="v">${ROWS.length}</div></div>
+    <div><div class="t">Entries</div><div class="v">${rows.length}</div></div>
     <div><div class="t">Total Actual Revenue</div><div class="v">AED ${fmt2(actual)}</div></div>
     <div><div class="t">Total Final Revenue</div><div class="v">AED ${fmt2(final)}</div></div>
     <div><div class="t">Total Broker Payout</div><div class="v">AED ${fmt2(payout)}</div></div>`;
@@ -429,8 +587,8 @@ $('#czBody').addEventListener('input',e=>{
   const f=inp.dataset.f;
   if(f==='slab')r.slab=(parseFloat(inp.value)||0)/100;
   else if(f==='broker_pct')r.brokerPct=parseFloat(inp.value)||0;
+  else if(f==='broker_slab')r.brokerSlab=parseFloat(inp.value)||0;
   else if(f==='vat')r.vatOverride=(inp.value===''?null:(parseFloat(inp.value)||0));
-  else if(f==='bank_rm')r.bankRm=inp.value;
   else if(f==='cp')r.cp=inp.value;
   liveUpdateRow(tr,r);
 });
@@ -440,7 +598,7 @@ $('#czBody').addEventListener('change',e=>{
   const f=inp.dataset.f;
   let val=inp.value;
   if(f==='slab')val=((parseFloat(inp.value)||0)/100).toString();
-  else if(f==='broker_pct')val=(parseFloat(inp.value)||0).toString();
+  else if(f==='broker_pct'||f==='broker_slab')val=(parseFloat(inp.value)||0).toString();
   saveField(id,f,val,tr);
 });
 $('#czBody').addEventListener('click',e=>{
@@ -452,9 +610,32 @@ $('#czBody').addEventListener('click',e=>{
   document.body.appendChild(f);f.submit();
 });
 
+/* search / clear / mode toggle */
+$('#czSearch').addEventListener('input',e=>{state.search=e.target.value.trim().toLowerCase();render();});
+$('#czClear').addEventListener('click',()=>{
+  state.search='';state.status=null;state.bank=null;state.month=null;
+  state.range=null;state.customFrom=null;state.customTo=null;
+  $('#czSearch').value='';
+  $$('.f-dd').forEach(dd=>{const k=dd.dataset.filter;dd.querySelector('.lbl').textContent=FDEFS[k].label;dd.querySelector('.f-dd-btn').classList.remove('on');dd.querySelectorAll('.f-dd-menu>button').forEach(x=>x.classList.remove('sel'));});
+  render();
+});
+$('#modeToggle').addEventListener('click',e=>{
+  const btn=e.target.closest('.seg-btn');if(!btn)return;
+  state.mode=btn.dataset.mode;
+  $$('#modeToggle .seg-btn').forEach(x=>x.classList.toggle('on',x===btn));
+  render();
+});
+
 /* sidebar toggle (mobile) */
 const hb=$('#hamburger');if(hb)hb.addEventListener('click',()=>document.getElementById('sidebar')?.classList.toggle('open'));
+/* sidebar nav-group expand/collapse (so all menus are reachable) */
+$$('[data-toggle]').forEach(b=>b.addEventListener('click',()=>{
+  const g=b.closest('.nav-group'),was=g.classList.contains('open');
+  $$('.nav-group.open').forEach(o=>o!==g&&o.classList.remove('open'));
+  g.classList.toggle('open',!was);
+}));
 
+buildFilters();
 render();
 </script>
 </body>

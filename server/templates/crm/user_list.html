@@ -413,6 +413,7 @@ canvas{display:block;width:100%}
 <div class="menu-pop" id="rowMenu">
   <button class="primary" data-act="view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>View User</button>
   <button data-act="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>Edit User</button>
+  {% if is_ceo %}<div class="menu-sep"></div><button class="danger" data-act="delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13.5px;height:13.5px"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>Delete</button>{% endif %}
 </div>
 
 <!-- VIEW MODAL -->
@@ -432,6 +433,7 @@ canvas{display:block;width:100%}
 
 {{ data|json_script:"page-data" }}
 <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span id="toastMsg"></span></div>
+<form id="csrfForm" style="display:none">{% csrf_token %}</form>
 
 <script>
 const D=JSON.parse(document.getElementById('page-data').textContent);
@@ -567,6 +569,13 @@ $('#rowMenu').addEventListener('click',e=>{
   $('#rowMenu').classList.remove('show');
   if(act==='view')openView(u);
   else if(act==='edit')location.href=`/users/${u.id}/edit/`;
+  else if(act==='delete'){
+    if(!u||!u.id){toast('Cannot delete — unknown user');return;}
+    if(!confirm('Delete this permanently? This cannot be undone.'))return;
+    const f=document.createElement('form');f.method='post';f.action=`/users/${u.id}/delete/`;
+    f.innerHTML='<input type="hidden" name="csrfmiddlewaretoken" value="'+$('#csrfForm [name=csrfmiddlewaretoken]').value+'">';
+    document.body.appendChild(f);f.submit();
+  }
 });
 
 /* ---------- role donut ---------- */

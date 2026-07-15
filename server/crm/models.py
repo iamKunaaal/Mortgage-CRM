@@ -234,7 +234,8 @@ class Customization(models.Model):
     bank_rm = models.CharField(max_length=120, blank=True)   # Bank RM (col D)
     cp = models.CharField(max_length=120, blank=True)        # Channel Partner (col P)
     slab = models.DecimalField(max_digits=6, decimal_places=4, default=0)   # e.g. 0.01 = 1%
-    broker_pct = models.DecimalField(max_digits=5, decimal_places=2, default=80)  # broker revenue %
+    broker_pct = models.DecimalField(max_digits=5, decimal_places=2, default=80)  # broker revenue % (of loan)
+    broker_slab = models.DecimalField(max_digits=6, decimal_places=2, default=0)  # broker payout % (of broker revenue)
     vat_override = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)  # None = auto 5%
     added_at = models.DateTimeField(auto_now_add=True)
 
@@ -261,15 +262,15 @@ class Customization(models.Model):
         return self.actual_revenue + self.vat
 
     @property
-    def broker_revenue(self):          # M = Actual × broker%
-        return self.actual_revenue * float(self.broker_pct or 0) / 100
+    def broker_revenue(self):          # Broker Revenue = Loan × broker%
+        return self.loan_amount * float(self.broker_pct or 0) / 100
 
     @property
-    def broker_payout(self):           # N = Actual × (100 − broker%)
-        return self.actual_revenue * (100 - float(self.broker_pct or 0)) / 100
+    def broker_payout(self):           # Broker Payout = Broker Revenue × broker slab%
+        return self.broker_revenue * float(self.broker_slab or 0) / 100
 
     @property
-    def final_revenue(self):           # O = Broker Revenue
+    def final_revenue(self):           # Final Revenue = Broker Revenue
         return self.broker_revenue
 
     def __str__(self):

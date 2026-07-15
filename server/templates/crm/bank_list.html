@@ -181,6 +181,8 @@ a{color:inherit;text-decoration:none}
 .menu-pop button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:7.5px 10px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--text-2);transition:background .12s}
 .menu-pop button:hover{background:var(--bg);color:var(--text)}
 .menu-pop button.primary{color:var(--primary);font-weight:600}
+.menu-pop button.danger{color:var(--danger)}
+.menu-pop button.danger:hover{background:#FEF2F2}
 .menu-pop svg{width:13.5px;height:13.5px}
 .menu-sep{height:1px;background:var(--border-soft);margin:4px 6px}
 
@@ -386,6 +388,7 @@ canvas{display:block;width:100%}
 <div class="menu-pop" id="rowMenu">
   <button class="primary" data-act="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>Edit Bank</button>
   <button data-act="toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"/></svg><span class="tgl-lbl">Activate / Deactivate</span></button>
+  {% if is_ceo %}<div class="menu-sep"></div><button class="danger" data-act="delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13.5px;height:13.5px"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>Delete</button>{% endif %}
 </div>
 
 <!-- ADD / EDIT MODAL -->
@@ -400,13 +403,7 @@ canvas{display:block;width:100%}
     {% csrf_token %}
     <div class="modal-body">
       <div class="fld full"><label>Bank Name</label><input type="text" id="fName" name="name" placeholder="e.g. Dubai Islamic Bank"></div>
-      <div class="fld"><label>Bank Type</label><select id="fType" name="bank_type"><option>Conventional</option><option>Islamic</option></select></div>
-      <div class="fld"><label>Status</label><select id="fStatus" name="status"><option>Active</option><option>Partner</option><option>Inactive</option></select></div>
-      <div class="fld"><label>Contact Person</label><input type="text" id="fContact" name="contact_person" placeholder="Full name"></div>
-      <div class="fld"><label>Commission %</label><input type="number" id="fComm" name="commission_rate" step="0.1" min="0" placeholder="e.g. 1.1"></div>
-      <div class="fld"><label>Email</label><input type="email" id="fEmail" name="email" placeholder="name@bank.com"></div>
-      <div class="fld"><label>Phone</label><input type="tel" id="fPhone" name="phone" placeholder="+971 4 000 0000"></div>
-      <div class="fld full"><label>Notes</label><textarea id="fNotes" name="notes" placeholder="Internal notes about this bank…"></textarea></div>
+      <div class="fld full"><label>Bank Type</label><select id="fType" name="bank_type"><option>Conventional</option><option>Islamic</option></select></div>
     </div>
     <div class="modal-foot">
       <button type="button" class="btn btn-ghost" id="mCancel">Cancel</button>
@@ -561,6 +558,13 @@ $('#rowMenu').addEventListener('click',e=>{
     postForm(`/banks/${pk}/toggle/`);
     return;
   }
+  if(act==='delete'){
+    const pk=bk.pk;
+    if(!pk){toast('Cannot delete — unknown bank');return;}
+    if(!confirm('Delete this permanently? This cannot be undone.'))return;
+    postForm(`/banks/${pk}/delete/`);
+    return;
+  }
 });
 function postForm(action){
   const f=document.createElement('form');f.method='post';f.action=action;
@@ -638,12 +642,6 @@ function openModal(bank){
   $('#modalSub').textContent=bank?'Update lending partner details':'Register a new lending partner';
   $('#fName').value=bank?bank.name:'';$('#fName').readOnly=false;
   $('#fType').value=bank?bank.type:'Conventional';
-  $('#fStatus').value=bank?bank.status:'Active';
-  $('#fContact').value=bank?bank.contact:'';
-  $('#fComm').value=bank?(bank.comm||''):'';
-  $('#fEmail').value=bank?(bank.email||''):'';
-  $('#fPhone').value=bank?(bank.phone||''):'';
-  $('#fNotes').value=bank?(bank.notes||''):'';
   $('#bankModal').classList.add('show');
 }
 function closeModal(){$('#bankModal').classList.remove('show');editing=null;}

@@ -646,7 +646,7 @@ $('#partnerRows').innerHTML=PARTNERS.length?PARTNERS.map(p=>`
       <animate attributeName="height" from="0" to="${h}" dur=".65s" begin="${i*0.045}s" fill="freeze" calcMode="spline" keySplines="0.4 0 0.2 1"/>
       <animate attributeName="y" from="${H-pad.b}" to="${y}" dur=".65s" begin="${i*0.045}s" fill="freeze" calcMode="spline" keySplines="0.4 0 0.2 1"/></rect>
       <text x="${pad.l+i*bw+bw/2}" y="${H-4}" text-anchor="middle" font-size="9.5" fill="#94A3B8" font-family="Inter">${M_LABELS[i]}</text>`;
-    if(last&&v)g+=`<text x="${x+w/2}" y="${y-6}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#05448B" font-family="Inter">${v}M</text>`;
+    if(last&&v)g+=`<text x="${x+w/2}" y="${y-6}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#05448B" font-family="Inter">AED ${v.toLocaleString('en-US')}</text>`;
   });
   svg.innerHTML=g;
 })();

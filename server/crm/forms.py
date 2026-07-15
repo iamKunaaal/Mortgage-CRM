@@ -79,8 +79,7 @@ class TaskForm(StyledMixin, forms.ModelForm):
 class BankForm(StyledMixin, forms.ModelForm):
     class Meta:
         model = Bank
-        fields = ['name', 'bank_type', 'contact_person', 'status',
-                  'commission_rate', 'email', 'phone', 'notes']
+        fields = ['name', 'bank_type']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

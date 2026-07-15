@@ -6,7 +6,8 @@ from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from .models import (User, Lead, Bank, Task, ReferralPartner, Document, Role, STAGES, SOURCES,
@@ -126,7 +127,7 @@ def management_dashboard(request):
         ('Applications Submitted', leads.filter(stage__in=submitted_stages).count(), '', '', 'in progress'),
         ('Pre-Approval', leads.filter(stage='Pre-Approved').count(), '', '', 'awaiting final'),
         ('Loan Disbursed', n_disbursed, '', '', f'AED {disbursed_val:,.0f} value'),
-        ('Pending Title Deed', leads.filter(stage__in=['Property Transfer Scheduled', 'Property Transfer']).count(), '', '', 'awaiting transfer'),
+        ('Pending Title Deed', leads.filter(stage__in=['Disbursed', 'Property Transfer Scheduled', 'Property Transfer']).count(), '', '', 'awaiting transfer'),
         ('Revenue This Month', round(revenue), '', 'AED ', 'commission est.'),
         ('Net Profit', round(net_profit), '', 'AED ', '70.5% margin'),
     ]
@@ -220,11 +221,11 @@ def management_dashboard(request):
 
     # ---- finance summary ----
     finance = {
-        'revenue': f'{revenue/1e6:.2f}M', 'vat': f'{revenue*0.05/1000:.1f}K',
-        'adv_comm': f'{revenue*0.159/1000:.1f}K', 'ref_comm': f'{revenue*0.086/1000:.1f}K',
-        'net': f'{net_profit/1e6:.2f}M', 'projected': f'{revenue*1.1/1e6:.2f}M',
+        'revenue': f'{revenue:,.0f}', 'vat': f'{revenue*0.05:,.0f}',
+        'adv_comm': f'{revenue*0.159:,.0f}', 'ref_comm': f'{revenue*0.086:,.0f}',
+        'net': f'{net_profit:,.0f}', 'projected': f'{revenue*1.1:,.0f}',
     }
-    profit_bars = [0] * 11 + [round(net_profit / 1e6, 2)]
+    profit_bars = [0] * 11 + [round(net_profit)]
 
     # ---- action required ----
     unassigned = leads.filter(advisor__isnull=True).count()
@@ -242,14 +243,14 @@ def management_dashboard(request):
                         'p': 'Tasks past their due date.', 'due': 'Overdue', 'dc': 'var(--warning)'})
 
     hero = {
-        'revenue': f'{revenue/1e6:.2f}M', 'approval': f'{approval_val/1e6:.1f}M',
-        'disbursement': f'{disbursed_val/1e6:.1f}M',
+        'revenue': f'{revenue:,.0f}', 'approval': f'{approval_val:,.0f}',
+        'disbursement': f'{disbursed_val:,.0f}',
     }
 
     dash = {
         'hero': hero, 'kpis': kpis_js, 'series_m': series_m, 'series_q': series_q,
         'funnel': funnel, 'approval_ratio': approval_ratio,
-        'pipeline_value': f'{pipeline_val/1e6:.1f}M',
+        'pipeline_value': f'{pipeline_val:,.0f}',
         'advisors': advisors_js, 'banks': banks_js, 'sources': sources_js,
         'partners': partners_js, 'finance': finance, 'profit': profit_bars,
         'actions': actions,
@@ -1149,6 +1150,17 @@ def task_complete(request, pk):
     return redirect('task_list')
 
 
+@login_required
+@perm.module_required('Tasks', 'delete')
+@require_POST
+def task_delete(request, pk):
+    t = get_object_or_404(Task, pk=pk)
+    title = t.title
+    t.delete()
+    messages.success(request, f'Task "{title}" deleted.')
+    return redirect('task_list')
+
+
 # ---------- banks ----------
 @login_required
 @perm.module_required('Banks')
@@ -1246,6 +1258,17 @@ def bank_toggle(request, pk):
     bank.status = 'Inactive' if bank.status != 'Inactive' else 'Active'
     bank.save()
     messages.success(request, f'{bank.name} {"deactivated" if bank.status == "Inactive" else "activated"}.')
+    return redirect('bank_list')
+
+
+@login_required
+@perm.module_required('Banks', 'delete')
+@require_POST
+def bank_delete(request, pk):
+    bank = get_object_or_404(Bank, pk=pk)
+    name = bank.name
+    bank.delete()
+    messages.success(request, f'Bank "{name}" deleted.')
     return redirect('bank_list')
 
 
@@ -1401,6 +1424,17 @@ def partner_create(request):
     return render(request, 'crm/partner_form.html', {'form': form, 'active_nav': 'Referral Partners'})
 
 
+@login_required
+@perm.module_required('Referral Partners', 'delete')
+@require_POST
+def partner_delete(request, pk):
+    p = get_object_or_404(ReferralPartner, pk=pk)
+    name = p.name
+    p.delete()
+    messages.success(request, f'Referral partner "{name}" deleted.')
+    return redirect('partner_list')
+
+
 # ---------- documents ----------
 @login_required
 @perm.module_required('Documents')
@@ -1499,6 +1533,17 @@ def document_action(request, pk, action):
     return redirect('document_list')
 
 
+@login_required
+@perm.module_required('Documents', 'delete')
+@require_POST
+def document_delete(request, pk):
+    doc = get_object_or_404(Document, pk=pk)
+    name = doc.doc_type
+    doc.delete()
+    messages.success(request, f'Document "{name}" deleted.')
+    return redirect('document_list')
+
+
 # ---------- users ----------
 @login_required
 @perm.module_required('Users')
@@ -1592,6 +1637,20 @@ def user_edit(request, pk):
         messages.success(request, 'User updated.')
         return redirect('user_list')
     return render(request, 'crm/user_form.html', {'form': form, 'title': 'Edit User', 'active_nav': 'Users'})
+
+
+@login_required
+@perm.module_required('Users', 'delete')
+@require_POST
+def user_delete(request, pk):
+    obj = get_object_or_404(User, pk=pk)
+    if obj.pk == request.user.pk:
+        messages.error(request, "You can't delete your own account.")
+        return redirect('user_list')
+    name = obj.get_full_name() or obj.username
+    obj.delete()
+    messages.success(request, f'User "{name}" deleted.')
+    return redirect('user_list')
 
 
 # ---------- CSV exports ----------
@@ -1876,14 +1935,14 @@ def _cz_row(c):
     return {
         'id': c.pk, 'leadId': l.pk,
         'month': l.created_at.strftime('%b %Y'),
+        'dateIso': (l.disbursed_at or l.created_at.date()).strftime('%Y-%m-%d'),
         'client': l.name,
-        'bankRm': c.bank_rm,
-        'mob': l.mobile or '—',
         'loan': float(l.loan_amount or 0),
         'bank': l.bank.name if l.bank else '—',
         'rm': (l.advisor.get_full_name() or l.advisor.username) if l.advisor else '—',
         'slab': float(c.slab or 0),
         'brokerPct': float(c.broker_pct or 0),
+        'brokerSlab': float(c.broker_slab or 0),
         'vatOverride': (float(c.vat_override) if c.vat_override is not None else None),
         'actualRevenue': c.actual_revenue,
         'vat': c.vat,
@@ -1929,7 +1988,7 @@ def customization_add(request, pk):
 def customization_update(request, pk):
     c = get_object_or_404(Customization, pk=pk)
     from decimal import Decimal, InvalidOperation
-    for field, attr in (('slab', 'slab'), ('broker_pct', 'broker_pct')):
+    for field, attr in (('slab', 'slab'), ('broker_pct', 'broker_pct'), ('broker_slab', 'broker_slab')):
         if field in request.POST:
             try:
                 setattr(c, attr, Decimal(request.POST[field] or '0'))
@@ -1944,7 +2003,7 @@ def customization_update(request, pk):
                 c.vat_override = Decimal(raw)
             except (InvalidOperation, ValueError):
                 return HttpResponse('bad number', status=400)
-    for field in ('bank_rm', 'cp'):
+    for field in ('cp',):
         if field in request.POST:
             setattr(c, field, request.POST[field].strip())
     c.save()
@@ -1969,13 +2028,100 @@ def customization_export(request):
     resp = HttpResponse(content_type='text/csv')
     resp['Content-Disposition'] = 'attachment; filename="customization.csv"'
     w = csv.writer(resp)
-    w.writerow(['Month', 'Client Name', 'Bank RM', 'MOB', 'Loan Amount', 'Bank Name',
-                'RM Name', 'Slab', 'Actual Revenue', 'VAT', 'With VAT', 'Broker Revenue',
-                'Broker Payout', 'Final Revenue', 'CP', 'Status'])
+    w.writerow(['Month', 'Client Name', 'Loan Amount', 'Bank Name',
+                'RM Name', 'Slab', 'Actual Revenue', 'VAT', 'With VAT', 'Broker %', 'Broker Revenue',
+                'Broker Slab', 'Broker Payout', 'Final Revenue', 'CP', 'Status'])
     for c in Customization.objects.select_related('lead', 'lead__advisor', 'lead__bank'):
         r = _cz_row(c)
-        w.writerow([r['month'], r['client'], r['bankRm'], r['mob'], r['loan'], r['bank'],
+        w.writerow([r['month'], r['client'], r['loan'], r['bank'],
                     r['rm'], r['slab'], round(r['actualRevenue'], 2), round(r['vat'], 2),
-                    round(r['withVat'], 2), round(r['brokerRevenue'], 2),
-                    round(r['brokerPayout'], 2), round(r['finalRevenue'], 2), r['cp'], r['status']])
+                    round(r['withVat'], 2), r['brokerPct'], round(r['brokerRevenue'], 2),
+                    r['brokerSlab'], round(r['brokerPayout'], 2), round(r['finalRevenue'], 2),
+                    r['cp'], r['status']])
     return resp
+
+
+# ---------- global search ----------
+@login_required
+def global_search(request):
+    """Role-scoped global search across the platform (powers the header ⌘K box)."""
+    q = request.GET.get('q', '').strip()
+    if len(q) < 2:
+        return JsonResponse({'q': q, 'groups': []})
+    u = request.user
+    groups = []
+
+    def add(cat, items):
+        if items:
+            groups.append({'cat': cat, 'items': items})
+
+    # Leads (own-scope aware via visible_leads)
+    if perm.can_access(u, 'Leads'):
+        lqs = visible_leads(u).filter(
+            Q(name__icontains=q) | Q(mobile__icontains=q) | Q(email__icontains=q)
+        ).select_related('bank')[:6]
+        add('Leads', [{
+            'label': l.name,
+            'sub': f'{l.stage} · {l.mobile or "—"}',
+            'url': reverse('lead_detail', args=[l.pk]),
+        } for l in lqs])
+
+    # Banks
+    if perm.can_access(u, 'Banks'):
+        bqs = Bank.objects.filter(
+            Q(name__icontains=q) | Q(contact_person__icontains=q)
+        )[:6]
+        add('Banks', [{
+            'label': b.name, 'sub': b.bank_type, 'url': reverse('bank_list'),
+        } for b in bqs])
+
+    # Referral Partners (CEO sees all; others only their own)
+    if perm.can_access(u, 'Referral Partners'):
+        pqs = ReferralPartner.objects.all()
+        if u.role != Role.CEO:
+            pqs = pqs.filter(created_by=u)
+        pqs = pqs.filter(
+            Q(name__icontains=q) | Q(company__icontains=q) | Q(mobile__icontains=q)
+        )[:6]
+        add('Referral Partners', [{
+            'label': p.name, 'sub': p.company or p.partner_type,
+            'url': reverse('partner_list'),
+        } for p in pqs])
+
+    # Tasks (own-scope aware via visible_tasks)
+    if perm.can_access(u, 'Tasks'):
+        tqs = visible_tasks(u).filter(Q(title__icontains=q)).select_related('lead')[:6]
+        add('Tasks', [{
+            'label': t.title,
+            'sub': f'{t.status}' + (f' · {t.lead.name}' if t.lead else ''),
+            'url': reverse('task_list'),
+        } for t in tqs])
+
+    # Documents (own-scope: advisor sees only docs on their leads)
+    if perm.can_access(u, 'Documents'):
+        dqs = Document.objects.select_related('lead')
+        if perm.is_own_scope(u, 'Documents'):
+            dqs = dqs.filter(lead__advisor=u)
+        dqs = dqs.filter(Q(doc_type__icontains=q) | Q(lead__name__icontains=q))[:6]
+        add('Documents', [{
+            'label': d.doc_type, 'sub': d.lead.name if d.lead else '',
+            'url': reverse('document_list'),
+        } for d in dqs])
+
+    # People — Users (full) or Advisors (limited)
+    people_q = Q(first_name__icontains=q) | Q(last_name__icontains=q) | \
+        Q(username__icontains=q) | Q(email__icontains=q)
+    if perm.can_access(u, 'Users'):
+        uqs = User.objects.filter(people_q)[:6]
+        add('Users', [{
+            'label': x.get_full_name() or x.username, 'sub': x.role_label,
+            'url': reverse('user_list'),
+        } for x in uqs])
+    elif perm.can_access(u, 'Advisors'):
+        aqs = User.objects.filter(role=Role.ADVISOR).filter(people_q)[:6]
+        add('Advisors', [{
+            'label': x.get_full_name() or x.username, 'sub': 'Advisor',
+            'url': reverse('advisor_list'),
+        } for x in aqs])
+
+    return JsonResponse({'q': q, 'groups': groups})
