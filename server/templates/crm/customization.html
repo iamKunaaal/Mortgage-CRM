@@ -388,10 +388,10 @@ const fmt2=v=>Number(v||0).toLocaleString('en-US',{minimumFractionDigits:2,maxim
 function calc(r){
   const actual=r.loan*r.slab;
   const vat=(r.vatOverride!=null)?r.vatOverride:actual*0.05;
-  const brokerRev=r.loan*r.brokerPct/100;               // Broker Revenue = Loan × Broker%
+  const brokerRev=r.loan*r.brokerPct/100;               // Broker Revenue = Loan Amount × Broker%
   const brokerPayout=brokerRev*(r.brokerSlab||0)/100;   // Broker Payout = Broker Revenue × Broker Slab%
   return {actual, vat, withVat:actual+vat,
-          brokerRev, brokerPayout, finalRev:brokerRev};
+          brokerRev, brokerPayout, finalRev:brokerRev-brokerPayout};
 }
 function toast(m){$('#toastMsg').textContent=m;const t=$('#toast');t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';clearTimeout(t._t);t._t=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(80px)';},1800);}
 

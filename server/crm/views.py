@@ -115,8 +115,12 @@ def management_dashboard(request):
     disbursed_val = _f(leads.filter(stage__in=DISB).aggregate(v=Sum('loan_amount'))['v'])
     approval_val = _f(leads.filter(stage__in=['Pre-Approved'] + submitted_stages).aggregate(v=Sum('loan_amount'))['v'])
     pipeline_val = _f(active.aggregate(v=Sum('loan_amount'))['v'])
-    revenue = disbursed_val * 0.011
-    net_profit = revenue * 0.705
+    # Revenue & Net Profit come straight from the Monthly Disbursed Pipeline (Customization) sheet:
+    #   Revenue = sum of Actual Revenue,  Net Profit = sum of Final Revenue.
+    _cz = list(Customization.objects.only('slab', 'broker_pct', 'broker_slab', 'vat_override', 'lead')
+               .select_related('lead'))
+    revenue = sum(c.actual_revenue for c in _cz)
+    net_profit = sum(c.final_revenue for c in _cz)
     n_total = leads.count()
     n_disbursed = leads.filter(stage__in=DISB).count()
 
@@ -128,8 +132,8 @@ def management_dashboard(request):
         ('Pre-Approval', leads.filter(stage='Pre-Approved').count(), '', '', 'awaiting final'),
         ('Loan Disbursed', n_disbursed, '', '', f'AED {disbursed_val:,.0f} value'),
         ('Pending Title Deed', leads.filter(stage__in=['Disbursed', 'Property Transfer Scheduled', 'Property Transfer']).count(), '', '', 'awaiting transfer'),
-        ('Revenue This Month', round(revenue), '', 'AED ', 'commission est.'),
-        ('Net Profit', round(net_profit), '', 'AED ', '70.5% margin'),
+        ('Revenue This Month', round(revenue), '', 'AED ', 'net commission · excl VAT'),
+        ('Net Profit', round(net_profit), '', 'AED ', 'final revenue'),
     ]
     kpis_js = [
         {'label': lbl, 'val': val, 'suf': suf, 'pre': pre, 'ic': IC[i],
@@ -219,9 +223,13 @@ def management_dashboard(request):
             'pipe': '0', 'ref': 0, 'conv': '0%', 'due': '0', 'paid': '0',
         })
 
-    # ---- finance summary ----
+    # ---- finance summary (all derived from the Monthly Disbursed Pipeline sheet) ----
+    vat_total = sum(c.vat for c in _cz)                 # per-row VAT (honours overrides)
+    invoice_total = sum(c.with_vat for c in _cz)        # Actual Revenue + VAT = invoice amount
     finance = {
-        'revenue': f'{revenue:,.0f}', 'vat': f'{revenue*0.05:,.0f}',
+        'revenue': f'{revenue:,.0f}',                   # net commission, excl. VAT
+        'vat': f'{vat_total:,.0f}',
+        'invoice': f'{invoice_total:,.0f}',             # incl. VAT
         'adv_comm': f'{revenue*0.159:,.0f}', 'ref_comm': f'{revenue*0.086:,.0f}',
         'net': f'{net_profit:,.0f}', 'projected': f'{revenue*1.1:,.0f}',
     }

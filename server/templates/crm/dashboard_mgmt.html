@@ -423,8 +423,9 @@ a{color:inherit;text-decoration:none}
         </div>
         <div class="card-body">
           <div class="fin-grid">
-            <div class="fin-tile"><label>Revenue</label><b>{{ dash.finance.revenue }}</b><span class="muted">commission est.</span></div>
-            <div class="fin-tile"><label>VAT (5%)</label><b>{{ dash.finance.vat }}</b><span class="muted">auto-accrued</span></div>
+            <div class="fin-tile"><label>Net Commission</label><b>{{ dash.finance.revenue }}</b><span class="muted">excl. VAT</span></div>
+            <div class="fin-tile"><label>VAT (5%)</label><b>{{ dash.finance.vat }}</b><span class="muted">for invoicing</span></div>
+            <div class="fin-tile"><label>Invoice Amount</label><b>{{ dash.finance.invoice }}</b><span class="muted">incl. VAT</span></div>
             <div class="fin-tile"><label>Advisor Commission</label><b>{{ dash.finance.adv_comm }}</b><span class="muted">15.9% of revenue</span></div>
             <div class="fin-tile"><label>Referral Commission</label><b>{{ dash.finance.ref_comm }}</b><span class="muted">8.6% of revenue</span></div>
             <div class="fin-tile hl"><label>Net Profit</label><b>{{ dash.finance.net }}</b><span>70.5% margin</span></div>
