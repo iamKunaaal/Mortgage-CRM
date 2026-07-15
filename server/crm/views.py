@@ -107,7 +107,7 @@ def _spark(current, n=12):
 def management_dashboard(request):
     from datetime import date
     leads = Lead.objects.all()
-    DISB = ['Disbursed', 'Property Transferred']
+    DISB = ['Disbursed', 'Property Transfer Scheduled', 'Property Transfer', 'Property Transferred']
     active = leads.exclude(stage__in=DISB + ['Declined'])
     submitted_stages = ['Logged In', 'Under Review', 'Pre-Approved', 'Valuation',
                         'Valuation Received', 'FOL Initiated', 'FOL Issued',
@@ -266,7 +266,7 @@ def advisor_dashboard(request):
     u = request.user
     my = Lead.objects.filter(advisor=u)
     submissions = my.exclude(stage__in=['Lead Received', 'Documents Pending', 'Documents Complete', 'Declined']).count()
-    disbursed_val = my.filter(stage__in=['Disbursed', 'Property Transferred']).aggregate(v=Sum('loan_amount'))['v'] or 0
+    disbursed_val = my.filter(stage__in=['Disbursed', 'Property Transfer Scheduled', 'Property Transfer', 'Property Transferred']).aggregate(v=Sum('loan_amount'))['v'] or 0
     partners_added = ReferralPartner.objects.count()  # demo: company-wide
     calls_done = 1486  # demo metric (would come from call logs)
 
@@ -329,7 +329,7 @@ def lead_list(request):
     q = request.GET.get('q', '').strip()
     stage = request.GET.get('stage', '')
     base = visible_leads(request.user)
-    disbursed_stages = ['Disbursed', 'Property Transferred']
+    disbursed_stages = ['Disbursed', 'Property Transfer Scheduled', 'Property Transfer', 'Property Transferred']
     kpis = {
         'total': base.count(),
         'active': base.exclude(stage__in=disbursed_stages + ['Declined']).count(),
@@ -641,14 +641,14 @@ def lead_export(request):
     return resp
 
 
-DISBURSED_STAGES = ['Disbursed', 'Property Transferred']
+DISBURSED_STAGES = ['Disbursed', 'Property Transfer Scheduled', 'Property Transfer', 'Property Transferred']
 
 
 @login_required
 @perm.module_required('Leads')
 def lead_pipeline(request):
     base = visible_leads(request.user)
-    disbursed_stages = ['Disbursed', 'Property Transferred']
+    disbursed_stages = ['Disbursed', 'Property Transfer Scheduled', 'Property Transfer', 'Property Transferred']
 
     def _act(l):
         return l.updated_at.strftime('%d %b %Y')
@@ -1276,7 +1276,7 @@ def bank_delete(request, pk):
 @login_required
 @perm.module_required('Advisors')
 def advisor_list(request):
-    DISB = ['Disbursed', 'Property Transferred']
+    DISB = ['Disbursed', 'Property Transfer Scheduled', 'Property Transfer', 'Property Transferred']
     APPROVED_STAGES = ['Pre-Approved', 'Disbursed', 'FOL Signed', 'Under Disbursement']
     advisors = User.objects.filter(role=Role.ADVISOR).annotate(
         lead_count=Count('leads'),
