@@ -377,7 +377,7 @@ def lead_list(request):
          'ic': '<circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/>'},
         {'l': 'Pipeline Value', 'v': 'AED ' + (f'{total_val/1e6:.0f}M' if total_val >= 1e6 else f'{total_val/1e3:.0f}K'),
          'ic': '<path d="M3 3v18h18"/><path d="m7 14 4-4 4 3 5-6"/>'},
-        {'l': 'This Month Revenue', 'v': 'AED ' + f'{_f(base.filter(stage__in=disbursed_stages).aggregate(v=Sum("loan_amount"))["v"])*0.011/1e6:.2f}M',
+        {'l': 'This Month Revenue', 'v': 'AED ' + f'{_f(base.filter(stage__in=disbursed_stages).aggregate(v=Sum("loan_amount"))["v"])*0.011:,.0f}',
          'ic': '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/>'},
     ]
     customized_ids = list(Customization.objects.values_list('lead_id', flat=True)) \
