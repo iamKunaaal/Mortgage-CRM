@@ -391,7 +391,7 @@ function calc(r){
   const brokerRev=r.loan*r.brokerPct/100;               // Broker Revenue = Loan Amount × Broker%
   const brokerPayout=brokerRev*(r.brokerSlab||0)/100;   // Broker Payout = Broker Revenue × Broker Slab%
   return {actual, vat, withVat:actual+vat,
-          brokerRev, brokerPayout, finalRev:brokerRev-brokerPayout};
+          brokerRev, brokerPayout, finalRev:actual-brokerPayout};
 }
 function toast(m){$('#toastMsg').textContent=m;const t=$('#toast');t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';clearTimeout(t._t);t._t=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(80px)';},1800);}
 

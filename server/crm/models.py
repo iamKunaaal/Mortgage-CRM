@@ -270,8 +270,8 @@ class Customization(models.Model):
         return self.broker_revenue * float(self.broker_slab or 0) / 100
 
     @property
-    def final_revenue(self):           # Final Revenue = Broker Revenue − Broker Payout
-        return self.broker_revenue - self.broker_payout
+    def final_revenue(self):           # Final Revenue = Actual Revenue − Broker Payout
+        return self.actual_revenue - self.broker_payout
 
     def __str__(self):
         return f'Customization · {self.lead.name}'
