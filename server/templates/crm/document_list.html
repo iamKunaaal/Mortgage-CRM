@@ -516,11 +516,11 @@ function filtered(){
     if(state.status&&d.status!==state.status)return false;
     if(state.advisor&&d.advisor!==state.advisor)return false;
     if(state.uploader&&d.uploader!==state.uploader)return false;
-    if(state.range){const diff=(new Date()-d.upDate)/864e5;if(state.range==='Today'&&diff>1)return false;if(state.range==='Last 7 Days'&&diff>7)return false;if(state.range==='Last 30 Days'&&diff>30)return false;}
+    if(state.range){if(!d.upDate)return false;const diff=(new Date()-d.upDate)/864e5;if(state.range==='Today'&&diff>1)return false;if(state.range==='Last 7 Days'&&diff>7)return false;if(state.range==='Last 30 Days'&&diff>30)return false;}
     return true;
   }).sort((a,b)=>{
     let va=a[state.sortK],vb=b[state.sortK];
-    if(state.sortK==='date'){va=a.upDate.getTime();vb=b.upDate.getTime();}
+    if(state.sortK==='date'){va=a.upDate?a.upDate.getTime():0;vb=b.upDate?b.upDate.getTime():0;}
     if(typeof va==='string'){va=va.toLowerCase();vb=vb.toLowerCase();}
     if(va<vb)return -1*state.sortDir;if(va>vb)return 1*state.sortDir;return 0;
   });

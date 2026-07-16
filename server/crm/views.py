@@ -401,6 +401,31 @@ def lead_list(request):
     })
 
 
+def _save_lead_documents(request, lead, uploader):
+    """Save dynamic document rows from the lead form.
+
+    Each row posts doc_file_<n> (file) plus doc_name_<n> / doc_type_<n>. The old
+    fixed-checklist fields (doc::<type>) are still accepted for compatibility.
+    """
+    n = 0
+    for key in list(request.FILES.keys()):
+        f = request.FILES[key]
+        if key.startswith('doc_file_'):
+            idx = key[len('doc_file_'):]
+            dtype = (request.POST.get('doc_type_' + idx) or '').strip() or 'Document'
+            dname = (request.POST.get('doc_name_' + idx) or '').strip()
+        elif key.startswith('doc::'):
+            dtype = key[5:]
+            dname = ''
+        else:
+            continue
+        Document.objects.create(lead=lead, name=dname, doc_type=dtype, file=f,
+                                status='Pending Review', uploaded_by=uploader)
+        _audit(lead, request.user, 'Document uploaded', dname or dtype)
+        n += 1
+    return n
+
+
 @login_required
 @perm.module_required('Leads', 'create')
 def lead_create(request):
@@ -414,11 +439,7 @@ def lead_create(request):
         lead.save()
         uploader = request.user.get_full_name() or request.user.username
         _audit(lead, request.user, 'Lead created', 'Lead', '', lead.name)
-        for key, f in request.FILES.items():
-            if key.startswith('doc::'):
-                Document.objects.create(lead=lead, doc_type=key[5:], file=f,
-                                        status='Pending Review', uploaded_by=uploader)
-                _audit(lead, request.user, 'Document uploaded', key[5:])
+        _save_lead_documents(request, lead, uploader)
         messages.success(request, f'Lead "{lead.name}" created.')
         return redirect('lead_detail', pk=lead.pk)
     data = {
@@ -473,8 +494,8 @@ def lead_detail(request, pk):
     for d in documents:
         s, txt = _doc_badge(d.status)
         documents_js.append({
-            't': d.doc_type,
-            'm': f'{d.uploaded_by} · {d.created_at.strftime("%d %b %Y")}',
+            't': d.name or d.doc_type,
+            'm': f'{d.doc_type} · {d.uploaded_by} · {d.created_at.strftime("%d %b %Y")}',
             's': s, 'txt': txt,
             'url': d.file.url if d.file else '',
         })
@@ -1030,11 +1051,7 @@ def lead_edit(request, pk):
         lead.refresh_from_db()
         _audit_diff(lead, request.user, before)
         uploader = request.user.get_full_name() or request.user.username
-        for key, f in request.FILES.items():
-            if key.startswith('doc::'):
-                Document.objects.create(lead=lead, doc_type=key[5:], file=f,
-                                        status='Pending Review', uploaded_by=uploader)
-                _audit(lead, request.user, 'Document uploaded', key[5:])
+        _save_lead_documents(request, lead, uploader)
         messages.success(request, 'Lead updated.')
         return redirect('lead_detail', pk=lead.pk)
     data = {
@@ -1474,7 +1491,7 @@ def document_list(request):
         pending_days = max(0, (now - d.created_at).days)
         rows.append({
             'id': d.pk,
-            'name': (d.doc_type or 'Document').replace(' ', '_') + '.pdf',
+            'name': d.name or (d.doc_type or 'Document'),
             'type': d.doc_type or '—',
             'leadName': d.lead.name,
             'leadId': d.lead.pk,

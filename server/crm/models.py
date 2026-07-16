@@ -159,6 +159,7 @@ class Document(models.Model):
     STATUS = [('Uploaded', 'Uploaded'), ('Pending Review', 'Pending Review'),
               ('Verified', 'Verified'), ('Rejected', 'Rejected'), ('Missing', 'Missing')]
     lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='documents')
+    name = models.CharField(max_length=160, blank=True)
     doc_type = models.CharField(max_length=60)
     status = models.CharField(max_length=20, choices=STATUS, default='Pending Review')
     uploaded_by = models.CharField(max_length=60, default='Customer')

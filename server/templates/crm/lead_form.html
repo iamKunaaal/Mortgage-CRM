@@ -213,6 +213,19 @@ a{color:inherit;text-decoration:none}
 .up-file button{color:var(--danger);font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px}
 .up-file button:hover{background:#FEF2F2}
 .up-zone input[type=file]{display:none}
+/* dynamic document rows */
+#docList{display:flex;flex-direction:column;gap:10px}
+.doc-row{display:grid;grid-template-columns:1.4fr 1fr auto auto;gap:10px;align-items:center}
+.doc-row .doc-in{padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#fff;font:inherit;font-size:13px;color:var(--text);transition:border-color .15s,box-shadow .15s;min-width:0}
+.doc-row .doc-in:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(5,68,139,.10)}
+.doc-file{display:inline-flex;align-items:center;gap:7px;padding:10px 13px;border-radius:10px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:12.5px;font-weight:600;color:var(--text-2);white-space:nowrap;max-width:220px;transition:all .15s}
+.doc-file:hover{border-color:var(--primary);color:var(--primary);background:var(--blue-50)}
+.doc-file svg{width:15px;height:15px;flex-shrink:0}
+.doc-file .doc-fname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doc-row.has-file .doc-file{border-color:var(--success);color:var(--success);background:#FAFFFB}
+.doc-del{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);color:var(--danger);font-size:18px;line-height:1;display:grid;place-items:center;flex-shrink:0}
+.doc-del:hover{background:#FEF2F2;border-color:#FCA5A5}
+@media (max-width:660px){.doc-row{grid-template-columns:1fr 1fr;gap:8px}.doc-file,.doc-del{grid-column:auto}}
 
 /* notes timeline */
 .note-composer{display:flex;gap:11px}
@@ -448,9 +461,10 @@ a{color:inherit;text-decoration:none}
         <section class="fcard" id="sec6">
           <div class="fcard-h">
             <span class="fcard-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15h6"/></svg></span>
-            <div><h2>Documents</h2><p>Upload customer documents — drag &amp; drop or click to browse.</p></div>
+            <div><h2>Documents</h2><p>Add any documents — enter a name, pick a type, and upload. Add as many as you need.</p></div>
           </div>
-          <div class="up-grid" id="upGrid"></div>
+          <div id="docList"></div>
+          <button type="button" class="btn btn-ghost" id="addDocBtn" style="margin-top:12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Add Document</button>
         </section>
 
         <!-- ACTION BAR -->
@@ -679,59 +693,36 @@ function renderTags(){
   });
 }
 
-/* ---------- uploads ---------- */
-const DOC_IC={
-  passport:'<rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M9 17h6"/>',
-  visa:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/>',
-  eid:'<rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8.5" cy="11" r="2.2"/><path d="M14 9h5M14 13h5M5.5 16.5c.6-1.5 1.7-2.2 3-2.2s2.4.7 3 2.2"/>',
-  doc:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>',
-  bank:'<path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/>'
-};
-const DOCS_SALARIED=[
-  {t:'Passport',ic:'passport'},{t:'Visa',ic:'visa'},{t:'Emirates ID',ic:'eid'},
-  {t:'Bank Statement',ic:'bank'},{t:'Payslip',ic:'doc'},{t:'Salary Certificate',ic:'doc'}
-];
-const DOCS_SELF=[
-  {t:'Passport Copy',ic:'passport'},{t:'Visa Copy',ic:'visa'},{t:'Emirates ID (Front & Back)',ic:'eid'},
-  {t:'Trade Licence',ic:'doc'},{t:'MOA (with amendments)',ic:'doc'},{t:'Company Bank Statements (12 mo)',ic:'bank'},
-  {t:'Personal Bank Statements (12 mo)',ic:'bank'},{t:'Company Profile',ic:'doc'},{t:'Office Tenancy Contract',ic:'doc'},
-  {t:'5 Sales & 5 Purchase Invoices',ic:'doc'},{t:'Employee List',ic:'doc'},{t:'VAT Return (1 Year)',ic:'doc'},{t:'AECB Report',ic:'doc'}
-];
+/* ---------- documents (dynamic: name + type + file; add as many as needed) ---------- */
 const fmtSize=b=>b>1048576?(b/1048576).toFixed(1)+' MB':(b/1024).toFixed(0)+' KB';
-let currentDocSet='salaried';
-function renderDocs(set){
-  currentDocSet=set;
-  const list=set==='self'?DOCS_SELF:DOCS_SALARIED;
-  $('#upGrid').innerHTML=list.map((d,i)=>`
-    <div class="up-zone" data-k="d${i}">
-      <span class="up-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${DOC_IC[d.ic]}</svg></span>
-      <b>${d.t}</b>
-      <p>Drag &amp; drop or click to browse · PDF, JPG, PNG</p>
-      <div class="up-file" style="display:none"><span></span><em></em><button type="button">Remove</button></div>
-      <input type="file" name="doc::${d.t}" accept=".pdf,.jpg,.jpeg,.png">
-    </div>`).join('');
-  $$('#upGrid .up-zone').forEach(z=>{
-    const inp=z.querySelector('input[type=file]'),fileRow=z.querySelector('.up-file'),p=z.querySelector('p');
-    function setFile(f){
-      if(!f)return;
-      z.classList.add('has-file');p.style.display='none';
-      fileRow.style.display='flex';
-      fileRow.querySelector('span').textContent=f.name;
-      fileRow.querySelector('em').textContent=fmtSize(f.size);
-      toast(`${f.name} attached`);
-    }
-    z.addEventListener('click',e=>{if(!z.classList.contains('has-file')&&e.target.tagName!=='BUTTON')inp.click();});
-    inp.addEventListener('change',()=>setFile(inp.files[0]));
-    z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('drag');});
-    z.addEventListener('dragleave',()=>z.classList.remove('drag'));
-    z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('drag');inp.files=e.dataTransfer.files;setFile(e.dataTransfer.files[0]);});
-    fileRow.querySelector('button').addEventListener('click',e=>{
-      e.stopPropagation();inp.value='';
-      z.classList.remove('has-file');p.style.display='';fileRow.style.display='none';
-    });
+const DOC_TYPES=['PDF','DOC','DOCX','JPG','PNG','XLS','XLSX','Other'];
+const EXT_MAP={pdf:'PDF',doc:'DOC',docx:'DOCX',jpg:'JPG',jpeg:'JPG',png:'PNG',xls:'XLS',xlsx:'XLSX'};
+let docIdx=0;
+function addDocRow(){
+  const i=docIdx++;
+  const row=document.createElement('div');
+  row.className='doc-row';row.dataset.i=i;
+  row.innerHTML=`
+    <input type="text" name="doc_name_${i}" class="doc-in doc-name" placeholder="Document name (e.g. Passport)">
+    <select name="doc_type_${i}" class="doc-in doc-type" title="File type">${DOC_TYPES.map(t=>`<option value="${t}">${t}</option>`).join('')}</select>
+    <label class="doc-file"><input type="file" name="doc_file_${i}" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg><span class="doc-fname">Choose file</span></label>
+    <button type="button" class="doc-del" title="Remove" aria-label="Remove document">×</button>`;
+  $('#docList').appendChild(row);
+  const finp=row.querySelector('input[type=file]'),fname=row.querySelector('.doc-fname'),
+        nameInp=row.querySelector('.doc-name'),typeSel=row.querySelector('.doc-type');
+  finp.addEventListener('change',()=>{
+    const f=finp.files[0];
+    if(f){fname.textContent=f.name+' · '+fmtSize(f.size);row.classList.add('has-file');
+      if(!nameInp.value.trim())nameInp.value=f.name.replace(/\.[^.]+$/,'');
+      const ext=(f.name.split('.').pop()||'').toLowerCase();   // auto-select the file type
+      typeSel.value=EXT_MAP[ext]||'Other';
+      toast(`${f.name} attached`);}
+    else{fname.textContent='Choose file';row.classList.remove('has-file');}
   });
+  row.querySelector('.doc-del').addEventListener('click',()=>row.remove());
 }
-renderDocs('salaried');
+$('#addDocBtn').addEventListener('click',addDocRow);
+addDocRow();   // start with one empty row
 
 /* ---------- live summary + progress ---------- */
 const PR_COLORS={High:['#FEE2E2','#DC2626'],Medium:['#FEF3E2','#B45309'],Low:['#EDFAF1','#16A34A']};
@@ -783,11 +774,9 @@ function update(){
     else pRow.style.display='none';
   }
 
-  /* self-employed: extra fields + different document checklist */
+  /* self-employed: show extra employment fields */
   const isSelf=comboState['cEmpType']==='Self-Employed';
   $$('.se-only').forEach(el=>el.style.display=isSelf?'':'none');
-  const wantSet=isSelf?'self':'salaried';
-  if(wantSet!==currentDocSet)renderDocs(wantSet);
 
   const pr=$('#prPills .on')?.textContent||'Medium';
   const [bg,fg]=PR_COLORS[pr];
