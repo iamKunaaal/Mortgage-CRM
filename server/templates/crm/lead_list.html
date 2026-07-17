@@ -501,7 +501,8 @@ const VIEWS={
   'Documents Pending':l=>l.stage==='Documents Pending',
   'Pre-Approved':l=>l.stage==='Pre-Approved',
   'Under Disbursement':l=>l.stage==='Under Disbursement',
-  'High Priority':l=>l.priority==='High'
+  'High Priority':l=>l.priority==='High',
+  'Drafts':l=>l.draft
 };
 const FILTER_DEFS={
   stage:{label:'Status',opts:STAGE_ORDER},
@@ -683,7 +684,7 @@ function render(){
     return `<tr data-id="${l.id}" class="${state.selected.has(l.id)?'sel-row':''}">
       <td><input type="checkbox" class="cbx row-cbx" data-id="${l.id}" ${state.selected.has(l.id)?'checked':''}></td>
       <td><span class="lead-id">${l.id}</span></td>
-      <td><div class="lead-cell"><span class="p-avatar">${ini(l.name)}</span><div><a class="name-link" href="/leads/${l.id}/">${l.name}</a><span class="${l.priority==='High'?'pr-high':l.priority==='Medium'?'pr-med':''}">${l.priority} priority</span></div></div></td>
+      <td><div class="lead-cell"><span class="p-avatar">${ini(l.name)}</span><div><a class="name-link" href="/leads/${l.id}/">${l.name}</a>${l.draft?'<span style="display:inline-block;margin-left:6px;font-size:10px;font-weight:700;color:#B45309;background:#FEF3E2;padding:1px 7px;border-radius:99px;vertical-align:middle">DRAFT</span>':''}<span class="${l.priority==='High'?'pr-high':l.priority==='Medium'?'pr-med':''}">${l.priority} priority</span></div></div></td>
       <td class="num" style="font-weight:500">${l.mobile}</td>
       <td class="num">${fmtAED(l.loan)}</td>
       <td class="mut" style="color:var(--text-2)">${l.source}</td>

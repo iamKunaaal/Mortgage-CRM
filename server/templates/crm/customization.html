@@ -348,7 +348,7 @@ a{color:inherit;text-decoration:none}
       </div>
       <div class="f-dd" data-filter="status"></div>
       <div class="f-dd" data-filter="bank"></div>
-      <div class="f-dd" data-filter="month"></div>
+      <div class="f-dd" data-filter="disbursedMonth"></div>
       <div class="f-dd" data-filter="range"></div>
       <button class="clear-btn" id="czClear" type="button">✕&nbsp; Clear</button>
     </div>
@@ -357,7 +357,7 @@ a{color:inherit;text-decoration:none}
       <div class="tbl-wrap">
         <table class="tbl" id="czTable" style="min-width:1600px">
           <thead><tr>
-            <th>#</th><th>Month</th><th>Client Name</th>
+            <th>#</th><th>Disbursed Month</th><th>Client Name</th>
             <th class="r">Loan Amount</th><th>Bank</th><th>RM Name</th>
             <th class="r">Slab %</th><th class="r">Actual Rev</th><th class="r">VAT</th>
             <th class="r">With VAT</th><th class="r">Broker %</th><th class="r">Broker Rev</th>
@@ -421,6 +421,7 @@ function filtered(){
     if(state.status&&r.status!==state.status)return false;
     if(state.bank&&r.bank!==state.bank)return false;
     if(state.month&&r.month!==state.month)return false;
+    if(state.disbursedMonth&&r.disbursedMonth!==state.disbursedMonth)return false;
     if(state.range&&r.dateIso&&!inRange(new Date(r.dateIso)))return false;
     if(state.search){
       const hay=`${r.client} ${r.bank} ${r.rm} ${r.cp||''}`.toLowerCase();
@@ -433,7 +434,8 @@ const uniq=a=>[...new Set(a.filter(x=>x&&x!=='—'))].sort();
 const FDEFS={
   status:{label:'Status',opts:()=>uniq(ROWS.map(r=>r.status))},
   bank:{label:'Bank',opts:()=>uniq(ROWS.map(r=>r.bank))},
-  month:{label:'Month',opts:()=>uniq(ROWS.map(r=>r.month))},
+  month:{label:'Created Month',opts:()=>uniq(ROWS.map(r=>r.month))},
+  disbursedMonth:{label:'Disbursed Month',opts:()=>uniq(ROWS.map(r=>r.disbursedMonth))},
   range:{label:'Date Range',opts:()=>['Today','Last 7 Days','Last 30 Days','This Quarter','This Year','Custom']},
 };
 function buildFilters(){
@@ -496,7 +498,7 @@ document.addEventListener('click',()=>$$('.f-dd.open').forEach(o=>o.classList.re
 function editRow(r,i){
   const c=calc(r),sc=STATUS_C[r.status]||'#64748B';
   return `<tr data-id="${r.id}">
-    <td>${i+1}</td><td>${r.month}</td><td style="font-weight:600">${r.client}</td>
+    <td>${i+1}</td><td>${r.disbursedMonth}</td><td style="font-weight:600">${r.client}</td>
     <td class="r cz-calc">${fmt(r.loan)}</td><td>${r.bank}</td><td>${r.rm}</td>
     <td class="r"><input class="cz-in num cz-slab" data-f="slab" type="number" step="0.01" min="0" value="${(r.slab*100).toFixed(2)}"> %</td>
     <td class="r cz-calc" data-c="actual">${fmt2(c.actual)}</td>
@@ -516,7 +518,7 @@ function previewRow(r,i){
   const c=calc(r),sc=STATUS_C[r.status]||'#64748B';
   return `<tr>
     <td class="cz-idx">${i+1}</td>
-    <td>${r.month}</td>
+    <td>${r.disbursedMonth}</td>
     <td class="cz-client">${r.client}</td>
     <td class="r cz-view cz-strong">${fmt(r.loan)}</td>
     <td>${r.bank}</td>

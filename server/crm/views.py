@@ -50,6 +50,16 @@ def _snapshot(lead):
     return {f: val(f) for f in _AUDIT_FIELDS}
 
 
+def _coerce_lead_numbers(lead):
+    """Fill NOT-NULL numeric fields that a draft may leave blank."""
+    if lead.loan_amount is None:
+        lead.loan_amount = 0
+    if lead.property_value is None:
+        lead.property_value = 0
+    if lead.ltv is None:
+        lead.ltv = 80
+
+
 def _apply_disbursed(lead, user=None):
     """Auto-set disbursed_at the first time a lead enters a disbursed stage."""
     if lead.stage in DISBURSED_STAGES and not lead.disbursed_at:
@@ -360,6 +370,7 @@ def lead_list(request):
         'advisor': (l.advisor.get_full_name() or l.advisor.username) if l.advisor else 'Unassigned',
         'bank': l.bank.name if l.bank else '—', 'source': l.source, 'stage': l.stage,
         'priority': l.priority, 'act': _act(l), 'created': l.created_at.strftime('%Y-%m-%d'),
+        'draft': l.is_draft,
     } for l in leads]
     # own-scope users (advisors) must not see other advisors' names
     own_scope = perm.is_own_scope(request.user, 'Leads')
@@ -429,19 +440,31 @@ def _save_lead_documents(request, lead, uploader):
 @login_required
 @perm.module_required('Leads', 'create')
 def lead_create(request):
+    is_draft = bool(request.POST.get('draft'))
     form = LeadForm(request.POST or None)
+    if is_draft:
+        # a draft may be saved with only partial info — relax all field requirements
+        for f in form.fields.values():
+            f.required = False
     if request.user.role == Role.ADVISOR:
         form.fields['advisor'].initial = request.user
     if request.method == 'POST' and form.is_valid():
-        lead = form.save(commit=False)
-        if request.user.role == Role.ADVISOR:
-            lead.advisor = request.user
-        lead.save()
-        uploader = request.user.get_full_name() or request.user.username
-        _audit(lead, request.user, 'Lead created', 'Lead', '', lead.name)
-        _save_lead_documents(request, lead, uploader)
-        messages.success(request, f'Lead "{lead.name}" created.')
-        return redirect('lead_detail', pk=lead.pk)
+        if is_draft and not (form.cleaned_data.get('name') or '').strip():
+            messages.error(request, 'Enter at least a name to save a draft.')
+        else:
+            lead = form.save(commit=False)
+            if request.user.role == Role.ADVISOR:
+                lead.advisor = request.user
+            lead.is_draft = is_draft
+            _coerce_lead_numbers(lead)
+            lead.save()
+            uploader = request.user.get_full_name() or request.user.username
+            _audit(lead, request.user, 'Draft saved' if is_draft else 'Lead created',
+                   'Lead', '', lead.name)
+            _save_lead_documents(request, lead, uploader)
+            messages.success(request, f'Draft "{lead.name}" saved.' if is_draft
+                             else f'Lead "{lead.name}" created.')
+            return redirect('lead_detail', pk=lead.pk)
     data = {
         'advisors': [{'pk': a.pk, 'name': a.get_full_name() or a.username}
                      for a in form.fields['advisor'].queryset],
@@ -1043,16 +1066,23 @@ def lead_edit(request, pk):
     lead = get_object_or_404(visible_leads(request.user), pk=pk)
     # snapshot BEFORE the form binds/validates (is_valid() mutates the instance)
     before = _snapshot(lead)
+    is_draft = bool(request.POST.get('draft'))
     form = LeadForm(request.POST or None, request.FILES or None, instance=lead)
+    if is_draft:
+        for f in form.fields.values():
+            f.required = False
     if request.method == 'POST' and form.is_valid():
-        form.save()
+        lead = form.save(commit=False)
+        lead.is_draft = is_draft   # normal save finalizes; Save Draft keeps it a draft
+        _coerce_lead_numbers(lead)
+        lead.save()
         if _apply_disbursed(lead, request.user):
             lead.save(update_fields=['disbursed_at'])
         lead.refresh_from_db()
         _audit_diff(lead, request.user, before)
         uploader = request.user.get_full_name() or request.user.username
         _save_lead_documents(request, lead, uploader)
-        messages.success(request, 'Lead updated.')
+        messages.success(request, 'Draft saved.' if is_draft else 'Lead updated.')
         return redirect('lead_detail', pk=lead.pk)
     data = {
         'advisors': [{'pk': a.pk, 'name': a.get_full_name() or a.username}
@@ -1504,6 +1534,7 @@ def document_list(request):
             'reason': '',
             'pendingDays': pending_days,
             'priority': d.lead.priority,
+            'url': d.file.url if d.file else '',
         })
 
     DOC_SVG = '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>'
@@ -1851,12 +1882,16 @@ def lead_document_upload(request, pk):
     lead = get_object_or_404(visible_leads(request.user), pk=pk)
     uploader = request.user.get_full_name() or request.user.username
     doc_type = request.POST.get('doc_type', '').strip() or 'Document'
+    doc_name = request.POST.get('doc_name', '').strip()
     n = 0
+    # simple single-field upload (e.g. Title Deed): field name 'file'
     for f in request.FILES.getlist('file'):
-        Document.objects.create(lead=lead, doc_type=doc_type, file=f,
+        Document.objects.create(lead=lead, name=doc_name, doc_type=doc_type, file=f,
                                 status='Pending Review', uploaded_by=uploader)
-        _audit(lead, request.user, 'Document uploaded', doc_type)
+        _audit(lead, request.user, 'Document uploaded', doc_name or doc_type)
         n += 1
+    # dynamic rows: doc_name_<n> / doc_type_<n> / doc_file_<n>
+    n += _save_lead_documents(request, lead, uploader)
     if n:
         messages.success(request, f'{n} document(s) uploaded.')
         new_stage = request.POST.get('stage', '')
@@ -1960,6 +1995,8 @@ def _cz_row(c):
     return {
         'id': c.pk, 'leadId': l.pk,
         'month': l.created_at.strftime('%b %Y'),
+        'disbursedMonth': l.disbursed_at.strftime('%b %Y') if l.disbursed_at else '—',
+        'disbursedMonthKey': l.disbursed_at.strftime('%Y-%m') if l.disbursed_at else '',
         'dateIso': (l.disbursed_at or l.created_at.date()).strftime('%Y-%m-%d'),
         'client': l.name,
         'loan': float(l.loan_amount or 0),
@@ -1990,8 +2027,12 @@ def customization_list(request):
         'final': sum(r['finalRevenue'] for r in rows),
         'payout': sum(r['brokerPayout'] for r in rows),
     }
+    # distinct disbursed months for the filter, newest first
+    months = sorted({(r['disbursedMonthKey'], r['disbursedMonth'])
+                     for r in rows if r['disbursedMonthKey']}, reverse=True)
+    disbursed_months = [{'key': k, 'label': lbl} for k, lbl in months]
     return render(request, 'crm/customization.html', {
-        'data': {'rows': rows, 'totals': totals},
+        'data': {'rows': rows, 'totals': totals, 'months': disbursed_months},
         'active_nav': 'Leads', 'active_sub': 'customization',
     })
 

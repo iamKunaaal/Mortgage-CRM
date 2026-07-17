@@ -432,16 +432,19 @@ a{color:inherit;text-decoration:none}
         <!-- DOCUMENTS -->
         <div class="pane" id="pDocs">
           <div class="card">
-            <div class="card-h"><div><h3>Document Center</h3><div class="sub">Verification status of customer documents</div></div>
-              <form id="docUploadForm" method="post" action="{% url 'lead_document_upload' lead.pk %}" enctype="multipart/form-data" style="display:flex;align-items:center;gap:8px">
-                {% csrf_token %}
-                <select name="doc_type" style="padding:8px 10px;border:1px solid var(--border);border-radius:9px;font:inherit;font-size:12.5px;color:var(--text-2);background:#fff">
-                  <option>Document</option><option>Passport</option><option>Emirates ID</option><option>Visa</option><option>Salary Certificate</option><option>Bank Statement</option><option>Trade License</option><option>Title Deed</option><option>MOU</option>
-                </select>
-                <input type="file" name="file" id="docUploadInput" multiple style="display:none" onchange="if(this.files.length)document.getElementById('docUploadForm').submit()">
-                <button type="button" class="btn btn-ghost" onclick="document.getElementById('docUploadInput').click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>Upload</button>
-              </form>
+            <div class="card-h"><div><h3>Document Center</h3><div class="sub">Add any documents — enter a name, pick a type, and upload. Add as many as you need.</div></div>
+              {% if can_edit %}<button type="button" class="btn btn-ghost" id="docAddToggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Add Documents</button>{% endif %}
             </div>
+            {% if can_edit %}
+            <form id="docUploadForm" method="post" action="{% url 'lead_document_upload' lead.pk %}" enctype="multipart/form-data" style="display:none;padding:0 18px 16px">
+              {% csrf_token %}
+              <div id="ddList" style="display:flex;flex-direction:column;gap:9px"></div>
+              <div style="display:flex;gap:8px;margin-top:12px">
+                <button type="button" class="btn btn-ghost" id="ddAdd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Add another</button>
+                <span style="flex:1"></span>
+                <button type="submit" class="btn btn-primary" id="ddUpload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>Upload</button>
+              </div>
+            </form>{% endif %}
             <div class="card-body">
               <div class="doc-widget">
                 <div class="dw-top"><b id="dwCount"></b><span id="dwPct"></span></div>
@@ -1030,7 +1033,7 @@ function closeTitleDeed(){$('#tdScrim').classList.remove('show');}
     fd.append('csrfmiddlewaretoken',csrf);
     fd.append('file',tdFile);
     fd.append('doc_type','Title Deed');
-    fd.append('stage','Property Transfer');
+    fd.append('stage','Property Transferred');
     $('#tdSubmit').disabled=true;$('#tdSubmit').textContent='Submitting…';
     fetch("{% url 'lead_document_upload' lead.pk %}",{method:'POST',body:fd})
       .then(r=>{
@@ -1052,6 +1055,41 @@ function toast(msg){
   $('#toast').classList.add('show');
   clearTimeout(tTimer);tTimer=setTimeout(()=>$('#toast').classList.remove('show'),2400);
 }
+
+/* ---------- dynamic document uploader ---------- */
+(function(){
+  const form=$('#docUploadForm');if(!form)return;
+  const DTYPES=['PDF','DOC','DOCX','JPG','PNG','XLS','XLSX','Passport','Emirates ID','Visa','Salary Certificate','Bank Statement','Trade License','Title Deed','MOU','Other'];
+  const EXT={pdf:'PDF',doc:'DOC',docx:'DOCX',jpg:'JPG',jpeg:'JPG',png:'PNG',xls:'XLS',xlsx:'XLSX'};
+  const list=$('#ddList');let di=0;
+  const fmtSz=b=>b>1048576?(b/1048576).toFixed(1)+' MB':(b/1024).toFixed(0)+' KB';
+  function addRow(){
+    const i=di++,row=document.createElement('div');
+    row.style.cssText='display:flex;gap:8px;align-items:center;flex-wrap:wrap';
+    row.innerHTML=`
+      <input type="text" name="doc_name_${i}" placeholder="Document name (e.g. Passport)" style="flex:1;min-width:180px;padding:8px 11px;border:1px solid var(--border);border-radius:9px;font:inherit;font-size:12.5px">
+      <select name="doc_type_${i}" style="padding:8px 10px;border:1px solid var(--border);border-radius:9px;font:inherit;font-size:12.5px;background:#fff">${DTYPES.map(t=>`<option>${t}</option>`).join('')}</select>
+      <label style="display:inline-flex;align-items:center;gap:6px;padding:8px 11px;border:1px solid var(--border);border-radius:9px;font-size:12.5px;color:var(--text-2);cursor:pointer;white-space:nowrap"><input type="file" name="doc_file_${i}" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg><span class="ddfn">Choose file</span></label>
+      <button type="button" class="ddx" title="Remove" style="width:30px;height:30px;border:1px solid var(--border);border-radius:8px;color:var(--danger);background:none;cursor:pointer">×</button>`;
+    list.appendChild(row);
+    const finp=row.querySelector('input[type=file]'),fn=row.querySelector('.ddfn'),
+          nm=row.querySelector('input[type=text]'),ts=row.querySelector('select');
+    finp.addEventListener('change',()=>{const f=finp.files[0];if(f){fn.textContent=f.name+' · '+fmtSz(f.size);
+      if(!nm.value.trim())nm.value=f.name.replace(/\.[^.]+$/,'');
+      ts.value=EXT[(f.name.split('.').pop()||'').toLowerCase()]||'Other';}else fn.textContent='Choose file';});
+    row.querySelector('.ddx').addEventListener('click',()=>{row.remove();if(!list.children.length)addRow();});
+  }
+  $('#docAddToggle').addEventListener('click',()=>{
+    const show=form.style.display==='none';
+    form.style.display=show?'block':'none';
+    if(show&&!list.children.length)addRow();
+  });
+  $('#ddAdd').addEventListener('click',addRow);
+  form.addEventListener('submit',e=>{
+    const hasFile=[...form.querySelectorAll('input[type=file]')].some(f=>f.files.length);
+    if(!hasFile){e.preventDefault();toast('Choose at least one file to upload');}
+  });
+})();
 </script>
 </body>
 </html>

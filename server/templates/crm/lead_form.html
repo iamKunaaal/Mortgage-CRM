@@ -472,6 +472,7 @@ a{color:inherit;text-decoration:none}
           <a class="btn btn-ghost" href="{% url 'lead_list' %}">Cancel</a>
           <span class="draft-note hide-sm" id="draftNote"></span>
           <span class="spacer"></span>
+          <button type="submit" name="draft" value="1" class="btn btn-ghost" id="saveDraft"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>Save Draft</button>
           <button type="submit" class="btn btn-primary" id="createLead"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>{{ submit_label|default:title }}</button>
         </div>
       </form>
@@ -863,9 +864,17 @@ $$('[data-req]').forEach(el=>el.addEventListener('blur',()=>{
 }));
 
 /* ---------- actions: real Django submit ---------- */
+let draftMode=false;
+$('#saveDraft').addEventListener('click',()=>{draftMode=true;});
+$('#createLead').addEventListener('click',()=>{draftMode=false;});
 $('#leadForm').addEventListener('submit',e=>{
   update();
-  if(!validate()){e.preventDefault();toast('Please complete the required fields');return;}
+  if(draftMode){
+    /* draft: only a name is needed; skip full validation */
+    if(!$('#fName').value.trim()){e.preventDefault();toast('Enter at least a name to save a draft');$('#fName').focus();draftMode=false;return;}
+  }else if(!validate()){
+    e.preventDefault();toast('Please complete the required fields');return;
+  }
   /* strip thousands separators so DecimalField accepts the numbers */
   ['#fPropVal','#fLoan','#fIncome','#fTurnover'].forEach(sel=>{const el=$(sel);if(el)el.value=el.value.replace(/[^\d.]/g,'');});
 });

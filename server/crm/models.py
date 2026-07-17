@@ -117,6 +117,7 @@ class Lead(models.Model):
     lost_reason = models.CharField(max_length=80, blank=True)
     pipeline_month = models.CharField(max_length=20, blank=True)
     disbursed_at = models.DateField(null=True, blank=True)
+    is_draft = models.BooleanField(default=False)
     referral_partner = models.ForeignKey(ReferralPartner, on_delete=models.SET_NULL,
                                          null=True, blank=True, related_name='leads')
     created_at = models.DateTimeField(auto_now_add=True)

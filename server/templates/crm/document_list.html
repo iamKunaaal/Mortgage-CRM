@@ -404,7 +404,7 @@ a{color:inherit;text-decoration:none}
       <button class="x" id="vClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="modal-body">
-      <div class="doc-preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg><b id="vPrevName">Preview</b><span>Document preview not available in demo</span></div>
+      <div class="doc-preview" id="docPreview"></div>
       <div class="vm-rows" id="vRows"></div>
     </div>
     <div class="modal-foot">
@@ -615,7 +615,7 @@ function buildFeed(){
 function openView(d){
   $('#vName').textContent=d.name;
   $('#vSub').textContent=`${d.leadName} · ${d.leadId}`;
-  $('#vPrevName').textContent=d.name;
+  renderPreview(d);
   $('#vRows').innerHTML=`
     <div class="vm-row"><label>Document Type</label><b>${d.type}</b></div>
     <div class="vm-row"><label>Lead</label><b>${d.leadName} (${d.leadId})</b></div>
@@ -626,6 +626,21 @@ function openView(d){
     ${d.reason?`<div class="vm-row"><label>Rejection Reason</label><b style="color:var(--danger)">${d.reason}</b></div>`:''}`;
   $('#viewModal').dataset.id=d.id;
   $('#viewModal').classList.add('show');
+}
+function renderPreview(d){
+  const box=$('#docPreview'),url=d.url;
+  const ph=(txt)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg><b>${d.name}</b><span>${txt}</span>`;
+  if(!url){box.style.height='200px';box.innerHTML=ph('No file attached to this document');return;}
+  if(/\.(png|jpe?g|gif|webp|bmp)(\?|$)/i.test(url)){
+    box.style.height='auto';box.style.padding='0';box.style.border='none';
+    box.innerHTML=`<img src="${url}" alt="${d.name}" style="max-width:100%;max-height:460px;border-radius:10px;object-fit:contain">`;
+  }else if(/\.pdf(\?|$)/i.test(url)){
+    box.style.height='auto';box.style.padding='0';box.style.border='none';
+    box.innerHTML=`<iframe src="${url}" title="${d.name}" style="width:100%;height:460px;border:1px solid var(--border);border-radius:10px"></iframe>`;
+  }else{
+    box.style.height='200px';
+    box.innerHTML=ph(`<a href="${url}" target="_blank" rel="noopener" style="color:var(--primary);font-weight:600">Open document in new tab ↗</a>`);
+  }
 }
 $('#vClose').addEventListener('click',()=>$('#viewModal').classList.remove('show'));
 $('#viewModal').addEventListener('click',e=>{if(e.target===$('#viewModal'))$('#viewModal').classList.remove('show');});
