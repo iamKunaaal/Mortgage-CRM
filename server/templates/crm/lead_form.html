@@ -437,7 +437,7 @@ a{color:inherit;text-decoration:none}
             <div><h2>Lead Assignment</h2><p>Route the lead to the right advisor and tag for reporting.</p></div>
           </div>
           <div class="fgrid">
-            <div class="combo" id="cAdvisor" data-label="Assign Advisor" data-avatars data-sum="advisor"></div>
+            {% if not own_scope %}<div class="combo" id="cAdvisor" data-label="Assign Advisor" data-avatars data-sum="advisor"></div>{% endif %}
             <div class="combo" id="cSource" data-label="Lead Source" data-sum="source"></div>
             <div class="full" id="partnerField" style="display:none">
               <div class="combo multi" id="cPartners" data-label="Referral Partner(s)"></div>
@@ -560,7 +560,8 @@ const ini=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
 
 const comboState={};
 function buildCombo(id,opts){
-  const c=document.getElementById(id),label=c.dataset.label,av=c.hasAttribute('data-avatars');
+  const c=document.getElementById(id);if(!c)return;
+  const label=c.dataset.label,av=c.hasAttribute('data-avatars');
   c.innerHTML=`<button type="button" class="combo-btn"><span class="val ph">·</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></button>
     <label>${label}</label>
     <div class="combo-pop"><input type="text" placeholder="Search…"><div class="combo-list"></div></div>`;
@@ -820,7 +821,7 @@ function update(){
     !!name, !!$('#fMobile').value.trim(), !!$('#fEmail').value.trim(), !!comboState['cNat'],
     !!$('#fEmployer').value.trim(), !!comboState['cEmpType'], !!moneyVal('#fIncome'),
     !!prop, !!moneyVal('#fLoan'), !!comboState['cPropType'], !!comboState['cArea'],
-    !!multiState.cBank.length, !!comboState['cAdvisor'], !!comboState['cSource']
+    !!multiState.cBank.length, (!document.getElementById('cAdvisor')||!!comboState['cAdvisor']), !!comboState['cSource']
   ];
   const pct=Math.round(checks.filter(Boolean).length/checks.length*100);
   $('#progPct').textContent=pct+'%';

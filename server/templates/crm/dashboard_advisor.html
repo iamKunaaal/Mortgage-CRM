@@ -273,6 +273,33 @@ a{color:inherit;text-decoration:none}
 
 <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span id="toastMsg"></span></div>
 
+<!-- LOG CALL MODAL -->
+<form id="csrfForm" style="display:none">{% csrf_token %}</form>
+<div id="callModal" style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:9999">
+  <form method="post" action="{% url 'log_call' %}" style="background:var(--card,#fff);border-radius:14px;padding:24px;width:360px;box-shadow:0 20px 50px rgba(0,0,0,.25)" onclick="event.stopPropagation()">
+    {% csrf_token %}
+    <h3 style="margin:0 0 4px;font-size:17px;font-weight:700;color:var(--text,#0F172A)">Log a Call</h3>
+    <p style="margin:0 0 16px;font-size:12.5px;color:var(--text-2,#64748B)">Record a prospecting call to a new lead. Counts toward your monthly calling target.</p>
+    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:4px">Prospect Name <span style="color:var(--text-3);font-weight:400">(optional)</span></label>
+    <input type="text" name="name" id="callName" placeholder="e.g. Ahmed" style="width:100%;padding:9px 11px;border:1px solid var(--border,#E2E8F0);border-radius:8px;font:inherit;font-size:13px;margin-bottom:12px;box-sizing:border-box">
+    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:4px">Phone <span style="color:var(--text-3);font-weight:400">(optional)</span></label>
+    <input type="tel" name="phone" placeholder="+971 50 123 4567" style="width:100%;padding:9px 11px;border:1px solid var(--border,#E2E8F0);border-radius:8px;font:inherit;font-size:13px;margin-bottom:12px;box-sizing:border-box">
+    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:4px">Outcome</label>
+    <select name="outcome" id="callOutcome" style="width:100%;padding:9px 11px;border:1px solid var(--border,#E2E8F0);border-radius:8px;font:inherit;font-size:13px;margin-bottom:12px;box-sizing:border-box;background:#fff">
+      <option>No Answer</option><option>Interested</option><option>Not Interested</option><option>Callback</option><option>Busy</option>
+    </select>
+    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:4px">Note <span style="color:var(--text-3);font-weight:400">(optional)</span></label>
+    <textarea name="note" rows="2" style="width:100%;padding:9px 11px;border:1px solid var(--border,#E2E8F0);border-radius:8px;font:inherit;font-size:13px;margin-bottom:12px;box-sizing:border-box;resize:vertical"></textarea>
+    <label id="callCreateWrap" style="display:none;align-items:center;gap:8px;font-size:12.5px;color:var(--text-2);margin-bottom:16px;cursor:pointer">
+      <input type="checkbox" name="create_lead" value="1" id="callCreate" style="width:16px;height:16px"> Create a lead from this call
+    </label>
+    <div style="display:flex;gap:10px">
+      <button type="button" id="callCancel" style="flex:1;padding:10px;border:1px solid var(--border,#E2E8F0);border-radius:8px;background:none;color:var(--text-2);font:inherit;font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
+      <button type="submit" style="flex:1.5;padding:10px;border:none;border-radius:8px;background:var(--primary,#05448B);color:#fff;font:inherit;font-size:13px;font-weight:600;cursor:pointer">Log Call</button>
+    </div>
+  </form>
+</div>
+
 {{ data|json_script:"page-data" }}
 <script>
 const D=JSON.parse(document.getElementById('page-data').textContent);
@@ -329,8 +356,14 @@ function buildTargets(){
         <div class="tgt-stat"><label>Remaining</label><b>${fmt(t,rem)}</b></div>
       </div>
       <div class="tgt-foot ${pace[0]}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${pace[2]}</svg>${pace[1]}</div>
+      ${t.title.includes('Calling')?`<div style="display:flex;gap:8px;margin-top:12px">
+        <button type="button" class="log-call-btn" style="flex:1.4;padding:9px;border:1px solid ${col};border-radius:9px;background:${col}0D;color:${col};font:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Log Call</button>
+        <button type="button" class="view-calls-btn" style="flex:1;padding:9px;border:1px solid var(--border);border-radius:9px;background:#fff;color:var(--text-2);font:inherit;font-size:13px;font-weight:600;cursor:pointer">View Calls</button>
+      </div>`:''}
     </div>`;
   }).join('');
+  $$('#tgtGrid .log-call-btn').forEach(b=>b.addEventListener('click',()=>{$('#callModal').style.display='flex';$('#callName').focus();}));
+  $$('#tgtGrid .view-calls-btn').forEach(b=>b.addEventListener('click',openCallList));
   requestAnimationFrame(()=>$$('#tgtGrid .tgt-bar i').forEach(i=>i.style.width=i.dataset.w+'%'));
 }
 
@@ -384,6 +417,51 @@ function buildFeed(){
 /* toast */
 let tTimer;
 function toast(msg){$('#toastMsg').textContent=msg;$('#toast').classList.add('show');clearTimeout(tTimer);tTimer=setTimeout(()=>$('#toast').classList.remove('show'),2400);}
+
+/* my-calls list modal (this advisor's own calls only) */
+const OUT_C={'Interested':'#16A34A','Not Interested':'#DC2626','Callback':'#B45309','Busy':'#B45309','No Answer':'#64748B'};
+function openCallList(){
+  let m=document.getElementById('callListModal');
+  if(!m){
+    m=document.createElement('div');m.id='callListModal';
+    m.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px';
+    m.addEventListener('click',e=>{if(e.target===m)m.style.display='none';});
+    document.body.appendChild(m);
+  }
+  const calls=(D.callLog||[]);
+  const rows=calls.length?calls.map(c=>{
+    const col=OUT_C[c.outcome]||'#64748B';
+    return `<tr>
+      <td style="padding:9px 12px;border-bottom:1px solid var(--border-soft);font-size:12.5px">${c.when}</td>
+      <td style="padding:9px 12px;border-bottom:1px solid var(--border-soft);font-size:12.5px;font-weight:600">${c.name}</td>
+      <td style="padding:9px 12px;border-bottom:1px solid var(--border-soft);font-size:12.5px">${c.phone}</td>
+      <td style="padding:9px 12px;border-bottom:1px solid var(--border-soft)"><span style="font-size:11.5px;font-weight:600;color:${col};background:${col}1A;padding:2px 9px;border-radius:99px">${c.outcome}</span></td>
+      <td style="padding:9px 12px;border-bottom:1px solid var(--border-soft);font-size:12px;color:var(--text-2)">${c.note||'—'}</td>
+    </tr>`;}).join(''):'<tr><td colspan="5" style="padding:28px;text-align:center;color:var(--text-3);font-size:13px">No calls logged yet.</td></tr>';
+  m.innerHTML=`<div style="background:var(--card,#fff);border-radius:14px;width:640px;max-width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.25)" onclick="event.stopPropagation()">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border)">
+        <div><h3 style="margin:0;font-size:16px;font-weight:700">My Calls</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-2)">${calls.length} call(s) logged</p></div>
+        <button type="button" onclick="document.getElementById('callListModal').style.display='none'" style="width:32px;height:32px;border:1px solid var(--border);border-radius:8px;background:none;cursor:pointer;font-size:16px;color:var(--text-2)">×</button>
+      </div>
+      <div style="overflow:auto"><table style="width:100%;border-collapse:collapse">
+        <thead><tr>${['Date','Name','Phone','Outcome','Note'].map(h=>`<th style="text-align:left;padding:9px 12px;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);background:var(--bg);position:sticky;top:0">${h}</th>`).join('')}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+    </div>`;
+  m.style.display='flex';
+}
+
+/* log-call modal: show "create lead" only when Interested; close on cancel/backdrop */
+(function(){
+  const m=$('#callModal');if(!m)return;
+  const close=()=>{m.style.display='none';};
+  m.addEventListener('click',e=>{if(e.target===m)close();});
+  $('#callCancel').addEventListener('click',close);
+  $('#callOutcome').addEventListener('change',e=>{
+    $('#callCreateWrap').style.display=e.target.value==='Interested'?'flex':'none';
+    if(e.target.value!=='Interested')$('#callCreate').checked=false;
+  });
+})();
 
 /* init */
 buildTargets();buildRing();buildCalls();buildTasks();buildFeed();

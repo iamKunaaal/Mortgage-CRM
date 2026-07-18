@@ -11,7 +11,8 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from .models import (User, Lead, Bank, Task, ReferralPartner, Document, Role, STAGES, SOURCES,
-                     Note, LeadSourceState, RolePermission, AppSetting, Customization, LeadAudit)
+                     Note, LeadSourceState, RolePermission, AppSetting, Customization, LeadAudit,
+                     CallLog)
 from .forms import LoginForm, LeadForm, UserForm, PartnerForm, BankForm
 from . import permissions as perm
 
@@ -280,13 +281,19 @@ def management_dashboard(request):
     })
 
 
-def advisor_dashboard(request):
-    u = request.user
+def _advisor_metrics(u):
+    """Scorecard data for one advisor — used by the advisor's own dashboard and the CEO drill-down."""
     my = Lead.objects.filter(advisor=u)
-    submissions = my.exclude(stage__in=['Lead Received', 'Documents Pending', 'Documents Complete', 'Declined']).count()
-    disbursed_val = my.filter(stage__in=['Disbursed', 'Property Transfer Scheduled', 'Property Transfer', 'Property Transferred']).aggregate(v=Sum('loan_amount'))['v'] or 0
-    partners_added = ReferralPartner.objects.count()  # demo: company-wide
-    calls_done = 1486  # demo metric (would come from call logs)
+    # a submission counts once a lead reaches "Documents Complete" (or any later stage)
+    submissions = my.exclude(stage__in=['Lead Received', 'Documents Pending', 'Declined']).count()
+    _tm0 = timezone.localdate()
+    disbursed_val = my.filter(disbursed_at__year=_tm0.year, disbursed_at__month=_tm0.month) \
+        .aggregate(v=Sum('loan_amount'))['v'] or 0
+    _tm = timezone.localdate()
+    partners_added = ReferralPartner.objects.filter(created_by=u, created_at__year=_tm.year,
+                                                    created_at__month=_tm.month).count()
+    calls_done = CallLog.objects.filter(advisor=u, created_at__year=_tm.year,
+                                        created_at__month=_tm.month).count()
 
     def card(title, sub, achieved, target, unit=''):
         target = float(target or 0)
@@ -296,10 +303,10 @@ def advisor_dashboard(request):
                 'remaining': max(target - achieved, 0), 'pct': pct, 'unit': unit}
 
     targets = [
-        card('Monthly Calling Target', '100 calls/day · 2,200/month', calls_done, u.target_calls or 2200),
-        card('Submission Target', 'Mortgage files submitted this month', submissions, u.target_submissions or 24),
-        card('Channel Partner Target', 'New partners onboarded', partners_added, u.target_partners or 10),
-        card('Disbursement Target', 'Loan value disbursed', disbursed_val, u.target_disbursement or 2500000, 'AED'),
+        card('Monthly Calling Target', 'Calls logged this month', calls_done, u.target_calls),
+        card('Submission Target', 'Mortgage files submitted this month', submissions, u.target_submissions),
+        card('Channel Partner Target', 'New partners onboarded', partners_added, u.target_partners),
+        card('Disbursement Target', 'Loan value disbursed', disbursed_val, u.target_disbursement, 'AED'),
     ]
     overall = round(sum(t['pct'] for t in targets) / len(targets))
     tasks = Task.objects.filter(assignee=u).exclude(status__in=['Completed', 'Cancelled']).select_related('lead')[:6]
@@ -325,19 +332,104 @@ def advisor_dashboard(request):
             'ic': '',
         })
 
-    data = {
+    # this advisor's own call log (scoped — advisors never see others' calls)
+    call_log = [{
+        'name': cl.name or '—', 'phone': cl.phone or '—', 'outcome': cl.outcome,
+        'note': cl.note or '', 'lead': cl.lead_id,
+        'when': timezone.localtime(cl.created_at).strftime('%d %b %Y · %I:%M %p'),
+    } for cl in CallLog.objects.filter(advisor=u)[:200]]
+
+    # calls per day this week (Mon..Sat) for the activity chart
+    import datetime as _dtmod
+    monday = today - _dtmod.timedelta(days=today.weekday())
+    calls_week = [CallLog.objects.filter(advisor=u, created_at__date=monday + _dtmod.timedelta(days=i)).count()
+                  for i in range(6)]
+
+    # recent activity that counts toward targets (this advisor only)
+    PHONE_IC = '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>'
+    PARTNER_IC = '<path d="M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>'
+    MONEY_IC = '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/>'
+    _acts = []
+    for cl in CallLog.objects.filter(advisor=u)[:8]:
+        _acts.append((cl.created_at, {'ic': PHONE_IC, 'ok': cl.outcome == 'Interested',
+                     'h': f'Logged a call — {cl.outcome}' + (f' · {cl.name}' if cl.name else ''),
+                     't': timezone.localtime(cl.created_at).strftime('%d %b · %I:%M %p')}))
+    for p in ReferralPartner.objects.filter(created_by=u)[:8]:
+        _acts.append((p.created_at, {'ic': PARTNER_IC, 'ok': True,
+                     'h': f'Added referral partner {p.name}',
+                     't': timezone.localtime(p.created_at).strftime('%d %b · %I:%M %p')}))
+    for l in my.filter(disbursed_at__isnull=False).order_by('-disbursed_at')[:8]:
+        _dt = timezone.make_aware(_dtmod.datetime.combine(l.disbursed_at, _dtmod.time()))
+        _acts.append((_dt, {'ic': MONEY_IC, 'ok': True,
+                     'h': f'Lead {l.name} disbursed — AED {float(l.loan_amount or 0):,.0f}',
+                     't': l.disbursed_at.strftime('%d %b %Y')}))
+    _acts.sort(key=lambda x: x[0], reverse=True)
+    feed = [a[1] for a in _acts[:8]]
+
+    return {
         'greet': u.first_name or u.username,
         'targets': [dict(t) for t in targets],
         'overall': overall,
         'tasks': tasks_js,
-        'calls': [0, 0, 0, 0, 0, 0],
-        'feed': [],
+        'calls': calls_week,
+        'feed': feed,
+        'callLog': call_log,
+        'leadStats': {
+            'assigned': my.count(),
+            'approved': my.exclude(stage__in=['Lead Received', 'Documents Pending',
+                                              'Documents Complete', 'Logged In',
+                                              'Under Review', 'Declined']).count(),
+            'disbursed': my.filter(stage__in=DISBURSED_STAGES).count(),
+        },
     }
+
+
+def advisor_dashboard(request):
+    u = request.user
+    data = _advisor_metrics(u)
     return render(request, 'crm/dashboard_advisor.html', {
-        'targets': targets, 'overall': overall, 'tasks': tasks,
         'data': data, 'greet_name': u.first_name or u.username,
         'active_nav': 'Dashboard',
     })
+
+
+@login_required
+@perm.module_required('Advisors')
+def advisor_detail(request, pk):
+    adv = get_object_or_404(User, pk=pk, role=Role.ADVISOR)
+    data = _advisor_metrics(adv)
+    data['advisorName'] = adv.get_full_name() or adv.username
+    data['advisorEmail'] = adv.email or '—'
+    data['advisorPhone'] = adv.phone or '—'
+    data['advisorInitials'] = adv.initials
+    return render(request, 'crm/advisor_detail.html', {
+        'data': data, 'advisor': adv, 'active_nav': 'Advisors',
+    })
+
+
+@login_required
+@require_POST
+def log_call(request):
+    """Advisor logs a prospecting call to a new lead; counts toward the monthly calling target."""
+    name = request.POST.get('name', '').strip()
+    phone = request.POST.get('phone', '').strip()
+    outcome = request.POST.get('outcome', 'No Answer').strip()
+    note = request.POST.get('note', '').strip()
+    if outcome not in dict(CallLog.OUTCOME):
+        outcome = 'No Answer'
+    call = CallLog.objects.create(advisor=request.user, name=name, phone=phone,
+                                  outcome=outcome, note=note)
+    # if the prospect is interested, optionally spin up a real lead from the same call
+    if request.POST.get('create_lead') and name and perm.can_create(request.user, 'Leads'):
+        lead = Lead.objects.create(name=name, mobile=phone, advisor=request.user,
+                                   source='Cold Calling', stage='Lead Received')
+        call.lead = lead
+        call.save(update_fields=['lead'])
+        _audit(lead, request.user, 'Lead created', 'Lead', '', name)
+        messages.success(request, f'Call logged and lead "{name}" created.')
+    else:
+        messages.success(request, 'Call logged.')
+    return redirect('dashboard')
 
 
 # ---------- leads ----------
@@ -476,7 +568,8 @@ def lead_create(request):
     }
     return render(request, 'crm/lead_form.html', {
         'form': form, 'title': 'Create Lead', 'submit_label': 'Create Lead',
-        'data': data, 'active_nav': 'Leads'})
+        'data': data, 'active_nav': 'Leads',
+        'own_scope': perm.is_own_scope(request.user, 'Leads')})
 
 
 @login_required
@@ -557,7 +650,9 @@ def lead_detail(request, pk):
         'lead': lead, 'documents': documents, 'tasks': tasks, 'data': data,
         'advisors': advisors,
         'can_edit': perm.can_edit(request.user, 'Leads'),
-        'can_delete': perm.can_delete(request.user, 'Leads'), 'active_nav': 'Leads',
+        'can_delete': perm.can_delete(request.user, 'Leads'),
+        'can_assign': perm.can_edit(request.user, 'Leads') and not perm.is_own_scope(request.user, 'Leads'),
+        'active_nav': 'Leads',
     })
 
 
@@ -1104,7 +1199,8 @@ def lead_edit(request, pk):
     }
     return render(request, 'crm/lead_form.html', {
         'form': form, 'title': 'Edit Lead', 'submit_label': 'Save Changes',
-        'data': data, 'active_nav': 'Leads'})
+        'data': data, 'active_nav': 'Leads',
+        'own_scope': perm.is_own_scope(request.user, 'Leads')})
 
 
 # ---------- tasks ----------
@@ -1358,6 +1454,7 @@ def advisor_list(request):
 
     STATUS_MAP = {'Active': 'Active', 'On Leave': 'On Leave', 'Inactive': 'Inactive'}
     data_rows = [{
+        'pk': r['obj'].pk,
         'name': r['obj'].get_full_name() or r['obj'].username,
         'role': r['obj'].role_label,
         'assigned': r['leads'],
@@ -1435,6 +1532,18 @@ def partner_list(request):
         'status': p.status if p.status in STC_STATUS else 'Active',
         'i': _ini(p.name),
         'created': p.created_at.strftime('%Y-%m-%d'),
+        'organization': p.organization or '—',
+        'emiratesId': p.emirates_id or '—',
+        'passportNo': p.passport_no or '—',
+        'bankName': p.bank_name or '—',
+        'accountNo': p.account_no or '—',
+        'iban': p.iban or '—',
+        'agreementUrl': p.agreement.url if p.agreement else '',
+        'kycUrl': p.kyc_doc.url if p.kyc_doc else '',
+        'addedBy': (p.created_by.get_full_name() or p.created_by.username) if p.created_by else '—',
+        'recentLeads': [{'name': l.name, 'stage': l.stage,
+                         'date': l.created_at.strftime('%d %b %Y')}
+                        for l in p.leads.order_by('-created_at')[:6]],
     } for p in partners]
 
     domain_types = ['Real Estate Agency', 'Property Consultant', 'Developer',
@@ -1477,6 +1586,22 @@ def partner_create(request):
         messages.success(request, 'Referral partner created with documents.')
         return redirect('partner_list')
     return render(request, 'crm/partner_form.html', {'form': form, 'active_nav': 'Referral Partners'})
+
+
+@login_required
+@perm.module_required('Referral Partners', 'access')
+def partner_edit(request, pk):
+    partners = ReferralPartner.objects.all()
+    if request.user.role != Role.CEO:   # non-CEO can only edit partners they added
+        partners = partners.filter(created_by=request.user)
+    partner = get_object_or_404(partners, pk=pk)
+    form = PartnerForm(request.POST or None, request.FILES or None, instance=partner)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, f'Referral partner "{partner.name}" updated.')
+        return redirect('partner_list')
+    return render(request, 'crm/partner_form.html', {
+        'form': form, 'active_nav': 'Referral Partners', 'editing': True, 'partner': partner})
 
 
 @login_required

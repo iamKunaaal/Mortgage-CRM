@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
-{% block page_title %}Add Partner{% endblock %}
+{% block page_title %}{% if editing %}Edit Partner{% else %}Add Partner{% endif %}{% endblock %}
 {% block content %}
-<div class="page-head"><div><h1>Add Referral Partner</h1><p>All mandatory details plus Agreement &amp; KYC documents are required.</p></div></div>
+<div class="page-head"><div><h1>{% if editing %}Edit Referral Partner{% else %}Add Referral Partner{% endif %}</h1><p>All mandatory details plus Agreement &amp; KYC documents are required.</p></div></div>
 <div class="form-card">
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
@@ -32,7 +32,7 @@
     </div>
     <div class="form-foot">
       <a class="btn btn-ghost" href="{% url 'partner_list' %}">Cancel</a>
-      <button class="btn btn-primary" type="submit">Create Partner</button>
+      <button class="btn btn-primary" type="submit">{% if editing %}Save Changes{% else %}Create Partner{% endif %}</button>
     </div>
   </form>
 </div>

@@ -6,6 +6,7 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('', views.dashboard, name='dashboard'),
     path('search/', views.global_search, name='global_search'),
+    path('calls/log/', views.log_call, name='log_call'),
 
     path('leads/', views.lead_list, name='lead_list'),
     path('leads/new/', views.lead_create, name='lead_create'),
@@ -48,10 +49,12 @@ urlpatterns = [
 
     path('advisors/', views.advisor_list, name='advisor_list'),
     path('advisors/export/', views.advisor_export, name='advisor_export'),
+    path('advisors/<int:pk>/', views.advisor_detail, name='advisor_detail'),
 
     path('partners/', views.partner_list, name='partner_list'),
     path('partners/new/', views.partner_create, name='partner_create'),
     path('partners/export/', views.partner_export, name='partner_export'),
+    path('partners/<int:pk>/edit/', views.partner_edit, name='partner_edit'),
     path('partners/<int:pk>/delete/', views.partner_delete, name='partner_delete'),
 
     path('documents/', views.document_list, name='document_list'),

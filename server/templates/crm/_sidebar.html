@@ -63,3 +63,21 @@
 </aside>
 <div class="scrim" id="scrim"></div>
 {% include 'crm/_globalsearch.html' %}
+
+{% if messages %}
+<div id="djMessages" style="position:fixed;bottom:22px;right:22px;display:flex;flex-direction:column;gap:8px;z-index:99999;max-width:360px">
+  {% for m in messages %}
+  <div class="dj-msg" style="display:flex;align-items:center;gap:9px;padding:11px 14px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 12px 32px -8px rgba(15,23,42,.28);background:{% if 'error' in m.tags %}#FEECEC{% else %}#EAF7EF{% endif %};color:{% if 'error' in m.tags %}#B42318{% else %}#15803D{% endif %};border:1px solid {% if 'error' in m.tags %}#F5C4C0{% else %}#BBE7CC{% endif %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px;flex-shrink:0">{% if 'error' in m.tags %}<circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/>{% else %}<path d="M20 6 9 17l-5-5"/>{% endif %}</svg>
+    <span>{{ m }}</span>
+  </div>
+  {% endfor %}
+</div>
+<script>
+  setTimeout(function(){
+    var box=document.getElementById('djMessages');if(!box)return;
+    box.querySelectorAll('.dj-msg').forEach(function(el){el.style.transition='opacity .4s,transform .4s';el.style.opacity='0';el.style.transform='translateX(20px)';});
+    setTimeout(function(){box.remove();},450);
+  },3500);
+</script>
+{% endif %}

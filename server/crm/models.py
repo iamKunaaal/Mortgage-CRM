@@ -213,6 +213,26 @@ class AppSetting(models.Model):
         return self.key
 
 
+class CallLog(models.Model):
+    """A prospecting call an advisor makes to a NEW lead (not a pipeline lead)."""
+    OUTCOME = [('Interested', 'Interested'), ('Not Interested', 'Not Interested'),
+               ('No Answer', 'No Answer'), ('Callback', 'Callback'), ('Busy', 'Busy')]
+    advisor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='call_logs')
+    name = models.CharField(max_length=120, blank=True)
+    phone = models.CharField(max_length=30, blank=True)
+    outcome = models.CharField(max_length=20, choices=OUTCOME, default='No Answer')
+    note = models.TextField(blank=True)
+    lead = models.ForeignKey(Lead, on_delete=models.SET_NULL, null=True, blank=True,
+                             related_name='call_logs')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'Call by {self.advisor} · {self.outcome}'
+
+
 class LeadAudit(models.Model):
     """Immutable record of who changed what on a lead, when."""
     lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='audits')

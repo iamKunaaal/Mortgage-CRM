@@ -71,7 +71,9 @@ def can_access(user, module):
 
 def can_edit(user, module):
     lv = level(user, module)
-    return lv in ('Full', 'View & Edit', 'View & Assign', 'Upload/Edit Own', 'Limited', 'Yes')
+    # own-scope roles (e.g. advisor: "Own Leads Only", "Own Tasks") may edit their own records
+    return 'Own' in lv or lv in ('Full', 'View & Edit', 'View & Assign',
+                                 'Upload/Edit Own', 'Limited', 'Yes')
 
 
 def can_create(user, module):

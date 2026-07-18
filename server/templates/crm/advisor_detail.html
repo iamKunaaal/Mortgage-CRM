@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mortgage CRM — Advisor Scorecard</title>
+<style>
+:root{
+  --primary:#05448B;--primary-h:#0B5AB3;--blue-2:#2D6CB0;--blue-3:#7FA6CF;
+  --blue-50:#F0F5FB;--blue-100:#DEEAF6;
+  --bg:#F7F9FC;--card:#FFFFFF;
+  --text:#0F172A;--text-2:#64748B;--text-3:#94A3B8;
+  --border:#E2E8F0;--border-soft:#EEF2F7;
+  --success:#16A34A;--warning:#B45309;--danger:#DC2626;
+  --r:14px;--sb:256px;
+  --sh-xs:0 1px 2px rgba(15,23,42,.05);
+  --sh-sm:0 1px 3px rgba(15,23,42,.06),0 1px 2px rgba(15,23,42,.04);
+  --sh-md:0 4px 12px -2px rgba(15,23,42,.08);
+  --sh-lg:0 12px 32px -8px rgba(15,23,42,.18);
+  --font:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+a{color:inherit;text-decoration:none}
+.app{display:flex;min-height:100vh}
+.main{flex:1;min-width:0;margin-left:var(--sb)}
+/* sidebar (shared) */
+.sidebar{position:fixed;inset:0 auto 0 0;width:var(--sb);background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:60}
+.brand{display:flex;align-items:center;gap:11px;padding:20px 20px 16px}
+.brand-mark{width:36px;height:36px;border-radius:10px;background:var(--primary);display:grid;place-items:center;flex-shrink:0}
+.brand-name{font-weight:700;font-size:15px;letter-spacing:-.015em}
+.brand-sub{font-size:11px;color:var(--text-3);font-weight:500}
+.nav{flex:1;overflow-y:auto;padding:6px 12px 16px}
+.nav-label{font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--text-3);padding:18px 12px 7px}
+.nav-label:first-child{padding-top:8px}
+.nav-item{display:flex;align-items:center;gap:11px;width:100%;padding:8.5px 11px;border-radius:9px;color:#3F4C61;font-size:13.5px;font-weight:500;text-align:left}
+.nav-item svg{width:17px;height:17px;flex-shrink:0;color:var(--text-2)}
+.nav-item:hover{background:#F3F6FA;color:var(--text)}
+.nav-item.active{background:var(--blue-50);color:var(--primary);font-weight:600}
+.nav-item.active svg{color:var(--primary)}
+.nav-group{margin-bottom:1px}
+.nav-item .chev{margin-left:auto;width:13px;height:13px;color:var(--text-3)}
+.nav-sub{overflow:hidden;max-height:0;transition:max-height .3s;padding-left:4px;margin-left:18px;border-left:1px solid var(--border-soft)}
+.nav-group.open .nav-sub{max-height:320px}
+.nav-group.open .chev{transform:rotate(90deg)}
+.nav-sub .nav-item{padding:6.5px 11px 6.5px 22px;font-size:12.75px;color:var(--text-2)}
+.nav-count{margin-left:auto;font-size:11px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--blue-50);color:var(--primary)}
+.sidebar-foot{padding:12px;border-top:1px solid var(--border-soft)}
+.user-card{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;width:100%}
+.user-card:hover{background:#F3F6FA}
+.user-card b{display:block;font-size:13px;font-weight:600}
+.user-card span{font-size:11.5px;color:var(--text-3)}
+.avatar{width:32px;height:32px;border-radius:9px;background:var(--primary);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
+.scrim{display:none}
+/* content */
+.content{padding:24px 28px 48px;display:flex;flex-direction:column;gap:20px;max-width:1280px;margin:0 auto}
+.back{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text-2);font-weight:600;margin-bottom:2px}
+.back:hover{color:var(--primary)}
+.back svg{width:15px;height:15px}
+.hero{display:flex;align-items:center;gap:16px;background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;box-shadow:var(--sh-xs)}
+.hero .av{width:56px;height:56px;border-radius:14px;background:var(--primary);color:#fff;font-size:20px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
+.hero h1{font-size:20px;font-weight:700;letter-spacing:-.01em}
+.hero .meta{display:flex;gap:16px;flex-wrap:wrap;margin-top:4px;font-size:13px;color:var(--text-2)}
+.hero .ring{margin-left:auto;text-align:center}
+.hero .ring b{font-size:20px;font-weight:800;color:var(--success)}
+.hero .ring span{display:block;font-size:11px;color:var(--text-3)}
+.sec-h{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:-6px}
+/* stat tiles */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:720px){.tiles{grid-template-columns:1fr}}
+.tile{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh-xs)}
+.tile label{font-size:11.5px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em}
+.tile b{display:block;font-size:24px;font-weight:800;margin-top:5px;font-variant-numeric:tabular-nums}
+/* target cards */
+.tgts{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:720px){.tgts{grid-template-columns:1fr}}
+.tgt{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--sh-xs)}
+.tgt-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.tgt-top h3{font-size:14px;font-weight:700}
+.tgt-top p{font-size:11.5px;color:var(--text-3)}
+.tgt-pct{text-align:right}.tgt-pct b{font-size:16px;font-weight:800}.tgt-pct span{display:block;font-size:9.5px;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em}
+.tgt-big{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}.tgt-big small{font-size:12px;font-weight:500;color:var(--text-3)}
+.tgt-bar{height:7px;border-radius:99px;background:var(--border-soft);margin:10px 0;overflow:hidden}
+.tgt-bar i{display:block;height:100%;border-radius:99px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.tgt-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+.tgt-stat{background:var(--bg);border-radius:9px;padding:7px 10px}
+.tgt-stat label{font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em}
+.tgt-stat b{display:block;font-size:13px;font-weight:700;margin-top:1px;font-variant-numeric:tabular-nums}
+/* card + table */
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-xs)}
+.card-h{padding:16px 20px;border-bottom:1px solid var(--border-soft)}
+.card-h h3{font-size:15px;font-weight:700}
+.card-h .sub{font-size:12px;color:var(--text-2);margin-top:2px}
+.twrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);background:#FAFCFE;padding:10px 16px;border-bottom:1px solid var(--border)}
+td{padding:11px 16px;border-bottom:1px solid var(--border-soft);font-size:12.5px}
+tbody tr:last-child td{border-bottom:none}
+.pill{font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:99px}
+.feed-item{display:flex;gap:11px;padding:11px 20px;border-bottom:1px solid var(--border-soft)}
+.feed-item:last-child{border-bottom:none}
+.feed-ic{width:30px;height:30px;border-radius:9px;background:var(--blue-50);color:var(--primary);display:grid;place-items:center;flex-shrink:0}
+.feed-ic.ok{background:#EDFAF1;color:var(--success)}
+.feed-ic svg{width:14px;height:14px}
+.feed-item p{font-size:12.5px}.feed-item time{font-size:11px;color:var(--text-3)}
+.empty{text-align:center;padding:26px;color:var(--text-3);font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="app">
+{% include 'crm/_sidebar.html' %}
+<div class="main">
+  <main class="content">
+    <a class="back" href="{% url 'advisor_list' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back to Advisors</a>
+
+    <div class="hero">
+      <span class="av" id="hAv"></span>
+      <div>
+        <h1 id="hName"></h1>
+        <div class="meta"><span id="hEmail"></span><span id="hPhone"></span><span>Mortgage Advisor</span></div>
+      </div>
+      <div class="ring"><b id="hOverall"></b><span>of monthly goals</span></div>
+    </div>
+
+    <div class="sec-h">Pipeline</div>
+    <div class="tiles" id="statTiles"></div>
+
+    <div class="sec-h">Monthly Targets</div>
+    <div class="tgts" id="tgtGrid"></div>
+
+    <div class="sec-h">Calls</div>
+    <div class="card">
+      <div class="card-h"><h3>Call Log</h3><div class="sub" id="callSub"></div></div>
+      <div class="twrap"><table>
+        <thead><tr><th>Date</th><th>Name</th><th>Phone</th><th>Outcome</th><th>Note</th></tr></thead>
+        <tbody id="callBody"></tbody>
+      </table></div>
+    </div>
+
+    <div class="sec-h">Recent Activity</div>
+    <div class="card"><div id="feed"></div></div>
+  </main>
+</div>
+</div>
+
+{{ data|json_script:"page-data" }}
+<script>
+const $=s=>document.querySelector(s);
+const D=JSON.parse(document.getElementById('page-data').textContent);
+const fmtN=v=>Number(v||0).toLocaleString('en-US');
+const fmtAED=v=>'AED '+Number(v||0).toLocaleString('en-US',{maximumFractionDigits:0});
+const COLORS=['#05448B','#2D6CB0','#6D28D9','#16A34A'];
+
+$('#hAv').textContent=D.advisorInitials;
+$('#hName').textContent=D.advisorName;
+$('#hEmail').textContent=D.advisorEmail;
+$('#hPhone').textContent=D.advisorPhone;
+$('#hOverall').textContent=D.overall+'%';
+
+/* pipeline tiles */
+const ls=D.leadStats||{};
+$('#statTiles').innerHTML=`
+  <div class="tile"><label>Assigned Leads</label><b>${fmtN(ls.assigned)}</b></div>
+  <div class="tile"><label>Approved</label><b style="color:var(--primary)">${fmtN(ls.approved)}</b></div>
+  <div class="tile"><label>Disbursed</label><b style="color:var(--success)">${fmtN(ls.disbursed)}</b></div>`;
+
+/* target cards */
+$('#tgtGrid').innerHTML=D.targets.map((t,i)=>{
+  const col=COLORS[i%4],p=t.pct,rem=Math.max(t.target-t.achieved,0);
+  const f=v=>t.unit==='AED'?fmtAED(v):fmtN(v);
+  return `<div class="tgt">
+    <div class="tgt-top"><div><h3>${t.title}</h3><p>${t.sub}</p></div><div class="tgt-pct"><b style="color:${col}">${p}%</b><span>Progress</span></div></div>
+    <div class="tgt-big">${f(t.achieved)} <small>of ${f(t.target)}</small></div>
+    <div class="tgt-bar"><i style="background:${col};width:0" data-w="${p}"></i></div>
+    <div class="tgt-stats">
+      <div class="tgt-stat"><label>Target</label><b>${f(t.target)}</b></div>
+      <div class="tgt-stat"><label>Achieved</label><b style="color:${col}">${f(t.achieved)}</b></div>
+      <div class="tgt-stat"><label>Remaining</label><b>${f(rem)}</b></div>
+    </div></div>`;
+}).join('');
+requestAnimationFrame(()=>document.querySelectorAll('#tgtGrid .tgt-bar i').forEach(i=>i.style.width=i.dataset.w+'%'));
+
+/* call log */
+const OUT_C={'Interested':'#16A34A','Not Interested':'#DC2626','Callback':'#B45309','Busy':'#B45309','No Answer':'#64748B'};
+const calls=D.callLog||[];
+$('#callSub').textContent=`${calls.length} call(s) logged`;
+$('#callBody').innerHTML=calls.length?calls.map(c=>{
+  const col=OUT_C[c.outcome]||'#64748B';
+  return `<tr><td>${c.when}</td><td style="font-weight:600">${c.name}</td><td>${c.phone}</td>
+    <td><span class="pill" style="color:${col};background:${col}1A">${c.outcome}</span></td>
+    <td style="color:var(--text-2)">${c.note||'—'}</td></tr>`;
+}).join(''):'<tr><td colspan="5" class="empty">No calls logged yet.</td></tr>';
+
+/* recent activity */
+const feed=D.feed||[];
+$('#feed').innerHTML=feed.length?feed.map(f=>`<div class="feed-item">
+  <span class="feed-ic ${f.ok?'ok':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${f.ic}</svg></span>
+  <div><p>${f.h}</p><time>${f.t}</time></div></div>`).join(''):'<div class="empty">No recent activity.</div>';
+
+/* sidebar groups toggle */
+document.querySelectorAll('.nav-group>[data-toggle]').forEach(b=>b.addEventListener('click',()=>b.parentElement.classList.toggle('open')));
+</script>
+</body>
+</html>
