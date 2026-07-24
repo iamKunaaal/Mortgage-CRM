@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mortgage CRM — Compliance</title>
+<style>
+:root{--primary:#05448B;--blue-50:#F0F5FB;--bg:#F7F9FC;--text:#0F172A;--text-2:#64748B;--text-3:#94A3B8;
+--border:#E2E8F0;--border-soft:#EEF2F7;--danger:#DC2626;--warning:#B45309;--success:#16A34A;
+--r:14px;--sb:256px;--sh-xs:0 1px 2px rgba(15,23,42,.05);--font:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px}
+a{color:inherit;text-decoration:none}button{font-family:inherit;cursor:pointer;border:none;background:none}
+.app{display:flex;min-height:100vh}.main{flex:1;min-width:0;margin-left:var(--sb)}
+.sidebar{position:fixed;inset:0 auto 0 0;width:var(--sb);background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:60}
+.brand{display:flex;align-items:center;gap:11px;padding:20px 20px 16px}
+.brand-mark{width:36px;height:36px;border-radius:10px;background:var(--primary);display:grid;place-items:center;flex-shrink:0}
+.brand-name{font-weight:700;font-size:15px}.brand-sub{font-size:11px;color:var(--text-3)}
+.nav{flex:1;overflow-y:auto;padding:6px 12px 16px}
+.nav-label{font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--text-3);padding:18px 12px 7px}
+.nav-label:first-child{padding-top:8px}
+.nav-item{display:flex;align-items:center;gap:11px;padding:8.5px 11px;border-radius:9px;color:#3F4C61;font-size:13.5px;font-weight:500}
+.nav-item svg{width:17px;height:17px;color:var(--text-2)}.nav-item:hover{background:#F3F6FA;color:var(--text)}
+.nav-item.active{background:var(--blue-50);color:var(--primary);font-weight:600}.nav-item.active svg{color:var(--primary)}
+.nav-group{margin-bottom:1px}.nav-item .chev{margin-left:auto;width:13px;height:13px;color:var(--text-3)}
+.nav-sub{overflow:hidden;max-height:0;transition:max-height .3s;padding-left:4px;margin-left:18px;border-left:1px solid var(--border-soft)}
+.nav-group.open .nav-sub{max-height:320px}.nav-group.open .chev{transform:rotate(90deg)}
+.nav-sub .nav-item{padding:6.5px 11px 6.5px 22px;font-size:12.75px;color:var(--text-2)}
+.nav-count{margin-left:auto;font-size:11px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--blue-50);color:var(--primary)}
+.scrim{display:none}
+.content{padding:24px 28px 48px;max-width:1080px;margin:0 auto}
+h1{font-size:21px;font-weight:700}p.sub{color:var(--text-2);font-size:13.5px;margin-top:3px;margin-bottom:18px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:15px 16px;box-shadow:var(--sh-xs)}
+.kpi .lbl{font-size:11.5px;color:var(--text-2)}.kpi b{font-size:23px;font-weight:700;display:block;margin-top:3px}
+.panel{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-xs);margin-bottom:18px;overflow:hidden}
+.panel-h{padding:13px 18px;border-bottom:1px solid var(--border-soft);font-size:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);padding:9px 18px;background:#FAFCFE;border-bottom:1px solid var(--border)}
+td{padding:10px 18px;border-bottom:1px solid var(--border-soft);font-size:12.75px;vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+.empty{padding:22px;text-align:center;color:var(--text-3)}
+.badge{font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:99px}
+.b-high{background:#FEE2E2;color:var(--danger)}.b-open{background:#FEF3E2;color:var(--warning)}
+.lnk{color:var(--primary);font-weight:600}
+select,input,textarea{padding:7px;border:1px solid var(--border);border-radius:8px;font:inherit;font-size:12.5px}
+.btn{padding:7px 13px;border-radius:8px;font-size:12.5px;font-weight:600;background:var(--primary);color:#fff}
+.btn.ghost{background:#fff;border:1px solid var(--border);color:var(--text-2)}
+@media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}}
+
+/* --- sidebar footer (canonical) --- */
+.sidebar-foot{padding:12px;border-top:1px solid var(--border-soft,#EEF2F7);margin-top:auto}
+.user-card{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px}
+.user-card:hover{background:#F3F6FA}
+.user-card>span:last-child{display:flex;flex-direction:column;min-width:0}
+.user-card b{display:block;font-size:13px;font-weight:600;color:var(--text,#0F172A);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-card>span:last-child span{font-size:11.5px;color:var(--text-3,#94A3B8)}
+.avatar{width:32px;height:32px;border-radius:9px;background:var(--primary,#05448B);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="app">
+{% include 'crm/_sidebar.html' %}
+<div class="main">
+  <main class="content">
+    <h1>Compliance Workspace</h1>
+    <p class="sub">KYC gate, sanctions/PEP screening, risk &amp; EDD, confidential suspicion flags and data-subject requests.</p>
+    {% if messages %}{% for m in messages %}<div style="margin-bottom:12px;padding:11px 14px;border-radius:9px;font-size:13px;font-weight:600;background:{% if 'error' in m.tags %}#FEECEC;color:#B42318{% else %}#EAF7EF;color:#15803D{% endif %}">{{ m }}</div>{% endfor %}{% endif %}
+    <div class="kpis">
+      <div class="kpi"><div class="lbl">KYC Pending</div><b>{{ kyc_queue|length }}</b></div>
+      <div class="kpi"><div class="lbl">Screening Pending</div><b>{{ screening_pending|length }}</b></div>
+      <div class="kpi"><div class="lbl">High Risk</div><b style="color:var(--danger)">{{ high_risk|length }}</b></div>
+      <div class="kpi"><div class="lbl">Open Flags</div><b style="color:var(--warning)">{{ flags|length }}</b></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h">KYC / Screening Queue</div>
+      <table><thead><tr><th>Case</th><th>Client</th><th>KYC</th><th>Sanctions</th><th>PEP</th><th>Risk</th><th></th></tr></thead>
+      <tbody>
+        {% for l in kyc_queue %}
+        <tr>
+          <td style="font-weight:600">{{ l.case_number|default:l.pk }}</td>
+          <td>{{ l.name }}</td>
+          <td>{{ l.kyc_status }}</td>
+          <td>{{ l.sanctions_status }}</td>
+          <td>{{ l.pep_status }}</td>
+          <td>{% if l.risk_rating == 'High' %}<span class="badge b-high">High</span>{% else %}{{ l.risk_rating|default:'—' }}{% endif %}</td>
+          <td style="text-align:right"><a class="lnk" href="{% url 'lead_detail' l.pk %}">Open →</a></td>
+        </tr>
+        {% empty %}<tr><td colspan="7" class="empty">No cases awaiting KYC. 🎉</td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h">High-Risk Cases (EDD)</div>
+      <table><thead><tr><th>Case</th><th>Client</th><th>Risk Note</th><th>EDD</th><th></th></tr></thead>
+      <tbody>
+        {% for l in high_risk %}
+        <tr>
+          <td style="font-weight:600">{{ l.case_number|default:l.pk }}</td><td>{{ l.name }}</td>
+          <td>{{ l.risk_note }}</td>
+          <td>{% if l.edd_complete %}<span class="badge" style="background:#EAF7EF;color:var(--success)">Complete</span>{% else %}<span class="badge b-open">Pending</span>{% endif %}</td>
+          <td style="text-align:right"><a class="lnk" href="{% url 'lead_detail' l.pk %}">Open →</a></td>
+        </tr>
+        {% empty %}<tr><td colspan="5" class="empty">No high-risk cases.</td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h">Suspicion Flags <span style="font-size:11px;color:var(--text-3);font-weight:500">confidential — do not tip off the client</span></div>
+      <table><thead><tr><th>#</th><th>Case</th><th>Raised By</th><th>Reason</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for f in flags %}
+        <tr>
+          <td>#{{ f.pk }}</td>
+          <td>{% if f.lead %}<a class="lnk" href="{% url 'lead_detail' f.lead.pk %}">{{ f.lead.case_number|default:f.lead.pk }}</a>{% else %}—{% endif %}</td>
+          <td>{{ f.raised_by.get_full_name|default:f.raised_by.username|default:'—' }}</td>
+          <td style="max-width:280px">{{ f.reason }}</td>
+          <td><span class="badge b-open">{{ f.status }}</span></td>
+          <td>
+            <form method="post" action="{% url 'suspicion_update' f.pk %}" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">{% csrf_token %}
+              <select name="status"><option {% if f.status == 'Open' %}selected{% endif %}>Open</option><option {% if f.status == 'Investigating' %}selected{% endif %}>Investigating</option><option {% if f.status == 'Resolved' %}selected{% endif %}>Resolved</option></select>
+              <input name="goaml_ref" value="{{ f.goaml_ref }}" placeholder="goAML ref" style="width:90px">
+              <input name="resolution" value="{{ f.resolution }}" placeholder="resolution" style="width:120px">
+              <button class="btn ghost" type="submit">Save</button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}<tr><td colspan="6" class="empty">No open flags.</td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h">Data Subject Requests (PDPL)
+        <button class="btn" onclick="document.getElementById('dsrForm').style.display=document.getElementById('dsrForm').style.display==='none'?'block':'none'">+ New DSR</button>
+      </div>
+      <form id="dsrForm" method="post" action="{% url 'dsr_create' %}" style="display:none;padding:14px 18px;border-bottom:1px solid var(--border-soft);display:none">{% csrf_token %}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input name="subject_name" placeholder="Subject name" required>
+          <select name="request_type"><option>Access</option><option>Correction</option><option>Deletion</option></select>
+          <input name="detail" placeholder="Detail" style="min-width:220px">
+          <button class="btn" type="submit">Log DSR</button>
+        </div>
+      </form>
+      <table><thead><tr><th>Subject</th><th>Type</th><th>Status</th><th>Raised</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for d in dsrs %}
+        <tr>
+          <td style="font-weight:600">{{ d.subject_name }}</td><td>{{ d.request_type }}</td>
+          <td><span class="badge b-open">{{ d.status }}</span></td>
+          <td>{{ d.created_at|date:"d M Y" }}</td>
+          <td><form method="post" action="{% url 'dsr_update' d.pk %}" style="display:flex;gap:6px">{% csrf_token %}
+            <select name="status"><option {% if d.status == 'Open' %}selected{% endif %}>Open</option><option {% if d.status == 'In Progress' %}selected{% endif %}>In Progress</option><option {% if d.status == 'Completed' %}selected{% endif %}>Completed</option><option {% if d.status == 'Rejected' %}selected{% endif %}>Rejected</option></select>
+            <button class="btn ghost" type="submit">Save</button></form></td>
+        </tr>
+        {% empty %}<tr><td colspan="5" class="empty">No open requests.</td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+  </main>
+</div>
+</div>
+<script>document.querySelectorAll('.nav-group>[data-toggle]').forEach(b=>b.addEventListener('click',()=>b.parentElement.classList.toggle('open')));</script>
+</body>
+</html>

@@ -340,6 +340,7 @@ a{color:inherit;text-decoration:none}
             <th>Uploaded By</th>
             <th class="sortable" data-k="date">Upload Date<span class="s-ic"></span></th>
             <th>Status</th>
+            <th>Expiry</th>
             <th>Verified By</th>
             <th>Last Updated</th>
             <th style="width:44px"></th>
@@ -531,17 +532,18 @@ function renderTable(){
   const slice=rows.slice((state.page-1)*per,state.page*per);
   $('#tblCount').textContent=total+' documents';
   $('#docBody').innerHTML=slice.length?slice.map(d=>`<tr>
-    <td><div class="doc-cell"><span class="doc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${DOC_SVG}</svg></span><div><b>${d.name}</b><span>${d.id}</span></div></div></td>
+    <td><div class="doc-cell"><span class="doc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${DOC_SVG}</svg></span><div><b>${d.name}${d.version>1?` <span style="font-size:10px;font-weight:700;color:var(--primary);background:var(--blue-50);padding:1px 6px;border-radius:99px">v${d.version}</span>`:''}</b><span>${d.id}</span></div></div></td>
     <td><a class="lead-link" href="/leads/${d.leadId}/"><b>${d.leadId}</b></a></td>
     <td>${d.leadName}</td>
     <td><span class="tag">${d.type}</span></td>
     <td style="color:var(--text-2)">${d.uploader}</td>
     <td style="color:var(--text-2)">${d.status==='Missing'?'—':dateStr(d.upDate)}</td>
     <td><span class="status ${STC[d.status]}"><i></i>${d.status}</span>${d.reason?`<div style="font-size:10px;color:var(--danger);margin-top:3px">${d.reason}</div>`:''}</td>
+    <td>${d.expiry?`<span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;color:${d.expiryStatus==='expired'?'#DC2626':d.expiryStatus==='expiring'?'#9A6B14':'#15803D'};background:${d.expiryStatus==='expired'?'#FEE2E2':d.expiryStatus==='expiring'?'#FBF0DA':'#E6F1EB'}">${d.expiry}</span>`:'<span style="color:var(--text-3)">—</span>'}</td>
     <td style="color:var(--text-2)">${d.verifiedBy}</td>
     <td style="color:var(--text-3);font-size:11.5px">${d.status==='Missing'?'—':dateStr(d.updated)}</td>
     <td><button class="kebab" data-id="${d.id}" aria-label="Actions"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button></td>
-  </tr>`).join(''):`<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-3)">No documents match your filters.</td></tr>`;
+  </tr>`).join(''):`<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text-3)">No documents match your filters.</td></tr>`;
   $$('.tbl th.sortable').forEach(th=>th.querySelector('.s-ic')&&(th.querySelector('.s-ic').textContent=th.dataset.k===state.sortK?(state.sortDir===1?'▲':'▼'):''));
   $('#pageInfo').textContent=total?`Showing ${(state.page-1)*per+1}–${Math.min(state.page*per,total)} of ${total} documents`:'0 documents';
   let pg=`<button class="pg-btn" ${state.page===1?'disabled':''} data-p="${state.page-1}">‹</button>`;
@@ -621,6 +623,7 @@ function openView(d){
     <div class="vm-row"><label>Lead</label><b>${d.leadName} (${d.leadId})</b></div>
     <div class="vm-row"><label>Uploaded By</label><b>${d.uploader}</b></div>
     <div class="vm-row"><label>Upload Date</label><b>${d.status==='Missing'?'—':dateStr(d.upDate)}</b></div>
+    <div class="vm-row"><label>Expiry Date</label><b>${d.expiry?`${d.expiry} ${d.expiryStatus==='expired'?'<span style="color:#DC2626">(Expired)</span>':d.expiryStatus==='expiring'?'<span style="color:#9A6B14">(Expiring soon)</span>':''}`:'—'}</b></div>
     <div class="vm-row"><label>Status</label><b><span class="status ${STC[d.status]}"><i></i>${d.status}</span></b></div>
     <div class="vm-row"><label>Verified By</label><b>${d.verifiedBy}</b></div>
     ${d.reason?`<div class="vm-row"><label>Rejection Reason</label><b style="color:var(--danger)">${d.reason}</b></div>`:''}`;

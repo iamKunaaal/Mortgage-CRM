@@ -312,8 +312,19 @@ input[type=checkbox].cbx{width:15px;height:15px;accent-color:var(--primary);curs
       <div class="actions">
         <button class="btn btn-ghost" id="refreshBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>Refresh</button>
         <button type="button" class="btn btn-ghost" id="exportBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export Leads</button>
+        {% if can_create %}<a class="btn btn-ghost" href="{% url 'lead_import' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5-5 5 5M12 10V21"/></svg>Import</a>{% endif %}
         <a class="btn btn-primary" href="{% url 'lead_create' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Create Lead</a>
       </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0 4px">
+      <span style="font-size:12px;color:var(--text-3);font-weight:600">Saved views:</span>
+      {% for v in saved_views %}<a class="btn btn-ghost" style="padding:5px 11px;font-size:12px" href="/leads/?{{ v.querystring }}">{{ v.name }}{% if v.shared %} ·👥{% endif %}</a>{% empty %}<span style="font-size:12px;color:var(--text-3)">none yet</span>{% endfor %}
+      <form method="post" action="{% url 'saved_view_create' %}" style="display:inline-flex;gap:6px;align-items:center;margin-left:6px">{% csrf_token %}
+        <input type="hidden" name="querystring" value="{{ cur_qs }}">
+        <input name="name" placeholder="Save current filter as…" style="padding:6px 9px;border:1px solid var(--border);border-radius:8px;font-size:12px">
+        <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" name="shared">share</label>
+        <button type="submit" class="btn btn-ghost" style="padding:5px 11px;font-size:12px">Save view</button>
+      </form>
     </div>
 
     <!-- KPI STRIP -->
@@ -684,7 +695,7 @@ function render(){
     return `<tr data-id="${l.id}" class="${state.selected.has(l.id)?'sel-row':''}">
       <td><input type="checkbox" class="cbx row-cbx" data-id="${l.id}" ${state.selected.has(l.id)?'checked':''}></td>
       <td><span class="lead-id">${l.id}</span></td>
-      <td><div class="lead-cell"><span class="p-avatar">${ini(l.name)}</span><div><a class="name-link" href="/leads/${l.id}/">${l.name}</a>${l.draft?'<span style="display:inline-block;margin-left:6px;font-size:10px;font-weight:700;color:#B45309;background:#FEF3E2;padding:1px 7px;border-radius:99px;vertical-align:middle">DRAFT</span>':''}<span class="${l.priority==='High'?'pr-high':l.priority==='Medium'?'pr-med':''}">${l.priority} priority</span></div></div></td>
+      <td><div class="lead-cell"><span class="p-avatar">${ini(l.name)}</span><div><a class="name-link" href="/leads/${l.id}/">${l.name}</a>${l.draft?'<span style="display:inline-block;margin-left:6px;font-size:10px;font-weight:700;color:#B45309;background:#FEF3E2;padding:1px 7px;border-radius:99px;vertical-align:middle">DRAFT</span>':''}${l.score!=null?`<span title="Lead score" style="display:inline-block;margin-left:6px;font-size:10px;font-weight:700;color:${l.score>=60?'#15803D':l.score>=35?'#9A6B14':'#64748B'};background:${l.score>=60?'#E6F1EB':l.score>=35?'#FBF0DA':'#EEF2F7'};padding:1px 7px;border-radius:99px;vertical-align:middle">★ ${l.score}</span>`:''}${(l.sla==='breached'||l.sla==='due-soon')?`<span title="First-contact SLA" style="display:inline-block;margin-left:6px;font-size:10px;font-weight:700;color:${l.sla==='breached'?'#DC2626':'#9A6B14'};background:${l.sla==='breached'?'#FEE2E2':'#FBF0DA'};padding:1px 7px;border-radius:99px;vertical-align:middle">${l.sla==='breached'?'SLA overdue':'SLA due soon'}</span>`:''}<span class="${l.priority==='High'?'pr-high':l.priority==='Medium'?'pr-med':''}">${l.priority} priority</span></div></div></td>
       <td class="num" style="font-weight:500">${l.mobile}</td>
       <td class="num">${fmtAED(l.loan)}</td>
       <td class="mut" style="color:var(--text-2)">${l.source}</td>

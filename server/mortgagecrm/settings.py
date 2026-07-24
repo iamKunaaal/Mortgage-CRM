@@ -18,7 +18,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'crm',
+    'esign',   # e-Signature module (removable: delete this line + esign/ folder + urls include + sidebar block)
 ]
+
+# Feature flag — set False to hide the e-Sign menu/feature in one place
+ESIGN_ENABLED = True
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

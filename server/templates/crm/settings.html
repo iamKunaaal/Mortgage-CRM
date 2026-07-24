@@ -278,6 +278,63 @@ a{color:inherit;text-decoration:none}
         </div>
         <div class="card-foot"><button type="button" class="btn btn-ghost" onclick="this.form.reset()">Cancel</button><button type="submit" class="btn btn-primary">Save Changes</button></div>
       </form>
+
+      <form class="card" method="post" action="{% url 'settings_rules_save' %}" style="margin-top:16px">
+        {% csrf_token %}
+        <div class="card-h"><div class="ch-l"><span class="c-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><div><h3>Business Rules (Eligibility &amp; SLA)</h3><div class="sub">Config over code — these numbers drive the eligibility check and speed-to-lead SLA (PRD §4.3, §9.3)</div></div></div></div>
+        <div class="card-body">
+          <div class="fgrid">
+            <div class="fld"><label>LTV cap — property ≤ 5M (%)</label><input type="number" step="0.1" name="ltv_upto_5m" value="{{ rules.ltv_upto_5m }}"></div>
+            <div class="fld"><label>LTV cap — property &gt; 5M (%)</label><input type="number" step="0.1" name="ltv_above_5m" value="{{ rules.ltv_above_5m }}"></div>
+            <div class="fld"><label>DBR cap (% of gross income)</label><input type="number" step="0.1" name="dbr_cap" value="{{ rules.dbr_cap }}"></div>
+            <div class="fld"><label>Income multiple (× annual)</label><input type="number" step="0.1" name="income_multiple" value="{{ rules.income_multiple }}"></div>
+            <div class="fld"><label>Cash-to-close (% of property)</label><input type="number" step="0.1" name="cash_to_close_pct" value="{{ rules.cash_to_close_pct }}"></div>
+            <div class="fld"><label>First-contact SLA (minutes)</label><input type="number" step="1" name="sla_first_contact_mins" value="{{ rules.sla_first_contact_mins }}"></div>
+          </div>
+          <div class="grp-head" style="margin-top:16px">Business-Hours Calendar <span style="font-weight:500;text-transform:none;letter-spacing:0;color:var(--text-3)">(SLA clock only runs in these hours — PRD §17.4)</span></div>
+          <div class="fgrid">
+            <div class="fld"><label>Work start (hour, 0–23)</label><input type="number" min="0" max="23" name="work_start" value="{{ cal.start }}"></div>
+            <div class="fld"><label>Work end (hour, 0–23)</label><input type="number" min="0" max="23" name="work_end" value="{{ cal.end }}"></div>
+            <div class="fld"><label>Working days (0=Mon … 6=Sun)</label><input type="text" name="work_days" value="{{ cal.days_csv }}" placeholder="0,1,2,3,4"></div>
+            <div class="fld full"><label>Public holidays (YYYY-MM-DD, comma-separated)</label><input type="text" name="holidays" value="{{ cal.holidays_csv }}" placeholder="2026-12-02, 2026-12-03"></div>
+          </div>
+        </div>
+        <div class="card-foot"><button type="submit" class="btn btn-primary">Save Business Rules</button></div>
+      </form>
+
+      <div class="card" style="margin-top:16px">
+        <div class="card-h"><div class="ch-l"><span class="c-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg></span><div><h3>Web-to-Lead API</h3><div class="sub">Post website enquiries straight into the CRM (auto-assign + scoring + dedup)</div></div></div></div>
+        <div class="card-body">
+          <div class="fld"><label>Endpoint (POST)</label><input type="text" readonly value="{{ web.url }}" onclick="this.select()"></div>
+          <div class="fld" style="margin-top:10px"><label>Token</label><input type="text" readonly value="{{ web.token }}" onclick="this.select()"></div>
+          <p style="font-size:12px;color:var(--text-3);margin-top:10px">Sample HTML form:</p>
+          <pre style="background:#0F172A;color:#E2E8F0;padding:12px;border-radius:9px;font-size:11.5px;overflow:auto">&lt;form method="post" action="{{ web.url }}"&gt;
+  &lt;input type="hidden" name="token" value="{{ web.token }}"&gt;
+  &lt;input name="name"&gt;  &lt;input name="mobile"&gt;  &lt;input name="email"&gt;
+  &lt;input name="loan_amount"&gt;  &lt;input name="property_value"&gt;
+  &lt;input type="text" name="company" style="display:none"&gt;&lt;!-- honeypot --&gt;
+  &lt;button&gt;Submit&lt;/button&gt;
+&lt;/form&gt;</pre>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="card-h"><div class="ch-l"><span class="c-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg></span><div><h3>Company Profile</h3><div class="sub">Used on invoices, generated documents and branding</div></div></div></div>
+        <div class="card-body">
+          <div class="fgrid">
+            <div class="fld"><label>Company Name</label><input type="text" id="coName" value="{{ data.company.name|default:'' }}" placeholder="BHITR Financing Broker"></div>
+            <div class="fld"><label>TRN (Tax Reg. No.)</label><input type="text" id="coTrn" value="{{ data.company.trn|default:'' }}" placeholder="1000xxxxxxxxxxx"></div>
+            <div class="fld"><label>Phone</label><input type="text" id="coPhone" value="{{ data.company.phone|default:'' }}"></div>
+            <div class="fld"><label>Email</label><input type="email" id="coEmail" value="{{ data.company.email|default:'' }}"></div>
+            <div class="fld" style="grid-column:1/-1"><label>Address</label><input type="text" id="coAddr" value="{{ data.company.address|default:'' }}" placeholder="Office, Building, Area, Dubai, UAE"></div>
+          </div>
+          <div class="fgrid" style="margin-top:12px">
+            <div class="fld"><label>Invoice Number Prefix</label><input type="text" id="numInv" value="{{ data.numbering.invoice_prefix|default:'INV' }}" placeholder="INV"></div>
+            <div class="fld"><label>Case Number Prefix</label><input type="text" id="numCase" value="{{ data.numbering.case_prefix|default:'CASE' }}" placeholder="CASE"></div>
+          </div>
+        </div>
+        <div class="card-foot"><button type="button" class="btn btn-primary" id="saveCompany">Save Company Profile</button></div>
+      </div>
     </div>
 
     <!-- ===== PIPELINE STAGES ===== -->
@@ -385,12 +442,21 @@ let docTypes=D.docTypes.map(asItem);
 /* ---------- server persistence ---------- */
 const CSRF=document.querySelector('[name=csrfmiddlewaretoken]').value;
 function persist(key,value){
-  fetch('/settings/state/',{
+  return fetch('/settings/state/',{
     method:'POST',
     headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken':CSRF},
     body:new URLSearchParams({key,value:JSON.stringify(value)})
   }).then(r=>{if(!r.ok)throw 0;}).catch(()=>toast('Could not save to server'));
 }
+(function(){
+  const btn=document.getElementById('saveCompany');if(!btn)return;
+  btn.addEventListener('click',()=>{
+    const co={name:coName.value.trim(),trn:coTrn.value.trim(),phone:coPhone.value.trim(),
+              email:coEmail.value.trim(),address:coAddr.value.trim()};
+    const num={invoice_prefix:numInv.value.trim()||'INV',case_prefix:numCase.value.trim()||'CASE'};
+    Promise.all([persist('company',co),persist('numbering',num)]).then(()=>toast('Company profile saved'));
+  });
+})();
 
 /* ---------- edit modal ---------- */
 let editCtx=null;

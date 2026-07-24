@@ -6,6 +6,7 @@ from django.views.static import serve
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('crm.urls')),
+    path('esign/', include('esign.urls')),   # e-Signature module (removable)
     # serve uploaded media in all environments (static() helper is DEBUG-only)
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 ]

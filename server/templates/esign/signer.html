@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign Document — {{ sr.title }}</title>
+<style>
+:root{--primary:#05448B;--primary-h:#0B5AB3;--blue-50:#F0F5FB;--text:#0F172A;--text-2:#64748B;--text-3:#94A3B8;--border:#E2E8F0;--success:#16A34A;--danger:#DC2626;--font:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:#525659;color:var(--text)}
+.topbar{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:14px}
+.topbar b{font-size:15px}.topbar .st{margin-left:auto;font-size:12px;font-weight:600;color:var(--text-2)}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:9px;font-size:13px;font-weight:600;border:none;cursor:pointer}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-h)}
+.btn-ghost{background:#fff;border:1px solid var(--border);color:var(--text-2)}
+.wrap{padding:24px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.pg{position:relative;box-shadow:0 4px 18px rgba(0,0,0,.35);background:#fff}
+.pg canvas{display:block}
+.sigbox{position:absolute;border:2px dashed var(--primary);background:rgba(5,68,139,.10);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-weight:600;font-size:13px;cursor:pointer;z-index:5;animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{background:rgba(5,68,139,.10)}50%{background:rgba(5,68,139,.22)}}
+.sigbox img{width:100%;height:100%;object-fit:contain}
+.banner{background:#EAF3FF;color:var(--primary);text-align:center;padding:10px;font-size:13px;font-weight:600}
+.done{background:#EAF7EF;color:var(--success)}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal .card{background:#fff;border-radius:14px;padding:22px;width:400px;max-width:100%}
+.modal h3{font-size:16px;font-weight:700;margin-bottom:4px}.modal p{font-size:12.5px;color:var(--text-2);margin-bottom:14px}
+#pad{width:100%;height:170px;border:1.5px dashed #CBD5E1;border-radius:10px;background:#fff;touch-action:none;cursor:crosshair}
+.inp{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:9px;font:inherit;font-size:13px;margin:10px 0}
+#signLine{position:fixed;left:0;height:0;border-top:1.5px dashed rgba(124,58,237,.55);z-index:29;display:none;pointer-events:none}
+#nextTab{position:fixed;left:0;z-index:31;background:#6D28D9;color:#fff;font-size:13px;font-weight:700;letter-spacing:.04em;padding:10px 16px 10px 14px;cursor:pointer;display:none;align-items:center;box-shadow:0 4px 14px rgba(0,0,0,.25);clip-path:polygon(0 0,88% 0,100% 50%,88% 100%,0 100%);transform:translateY(-50%)}
+#nextTab:hover{background:#5B21B6}
+#finishBtn{position:fixed;right:24px;bottom:24px;z-index:31;background:var(--success);color:#fff;font-size:14px;font-weight:700;border:none;border-radius:10px;padding:12px 20px;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,.25);display:none}
+.sigbox.pulse{box-shadow:0 0 0 4px rgba(109,40,217,.35)}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <b>{{ sr.title }}</b>
+  <span class="st">Signer: {{ sr.signer_name|default:"—" }}</span>
+</div>
+{% if sr.status == 'Signed' %}
+<div class="banner done">✓ This document has been signed. <a href="{% url 'esign_download' sr.token %}" style="color:var(--success);text-decoration:underline">Download signed copy</a></div>
+{% else %}
+<div class="banner" id="banner">Click <b>NEXT</b> to jump to each place you need to sign, then click the box to add your signature.</div>
+{% endif %}
+<div class="wrap" id="canvas"></div>
+
+{% if sr.status != 'Signed' %}
+<!-- Odoo-style NEXT tab + dashed guide line pointing to the current signature field -->
+<div id="signLine"></div>
+<div id="nextTab"><span>NEXT</span></div>
+<button id="finishBtn" type="button">Submit signed document ✓</button>
+{% endif %}
+
+<div class="modal" id="sigModal">
+  <div class="card">
+    <h3>Add your signature</h3>
+    <p>Draw below, or type your name.</p>
+    <canvas id="pad" width="360" height="170"></canvas>
+    <div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-ghost" id="clearPad" style="flex:1;justify-content:center">Clear</button></div>
+    <input class="inp" id="typedName" placeholder="or type full name to sign">
+    <div style="display:flex;gap:8px;margin-top:6px">
+      <button class="btn btn-ghost" id="cancelSig" style="flex:1;justify-content:center">Cancel</button>
+      <button class="btn btn-primary" id="applySig" style="flex:1.4;justify-content:center">Apply</button>
+    </div>
+  </div>
+</div>
+
+<form id="submitForm" method="post" action="{% url 'esign_public_submit' sr.token %}" style="display:none">{% csrf_token %}<input type="hidden" name="signature_data" id="sigData"></form>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+const DOC_URL="{{ sr.document.url }}";
+const STATUS="{{ sr.status }}";
+const FIELDS={{ sr.fields|default:'[]'|safe }};
+const SIG_IMG="{{ sr.signature_data|escapejs }}";
+const isPDF=DOC_URL.toLowerCase().split('?')[0].endsWith('.pdf');
+const canvas=document.getElementById('canvas');
+const sigBoxes=[]; let captured=null;
+
+function addBoxes(pgEl,pageNum){
+  FIELDS.filter(f=>f.page===pageNum).forEach(f=>{
+    const b=document.createElement('div');b.className='sigbox';
+    b.style.left=f.x+'%';b.style.top=f.y+'%';b.style.width=f.w+'%';b.style.height=f.h+'%';
+    if(STATUS==='Signed'&&SIG_IMG){b.innerHTML='<img src="'+SIG_IMG+'">';b.style.cursor='default';b.style.animation='none';}
+    else{b.textContent='sign here';b.addEventListener('click',openModal);}
+    pgEl.appendChild(b);sigBoxes.push(b);
+  });
+}
+if(isPDF){
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  pdfjsLib.getDocument(DOC_URL).promise.then(async pdf=>{
+    const dpr=window.devicePixelRatio||1, SCALE=1.4;
+    for(let n=1;n<=pdf.numPages;n++){
+      const page=await pdf.getPage(n);const vp=page.getViewport({scale:SCALE});
+      const pg=document.createElement('div');pg.className='pg';pg.style.width=vp.width+'px';pg.style.height=vp.height+'px';
+      const cv=document.createElement('canvas');
+      cv.width=Math.floor(vp.width*dpr);cv.height=Math.floor(vp.height*dpr);
+      cv.style.width=vp.width+'px';cv.style.height=vp.height+'px';
+      const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);
+      pg.appendChild(cv);canvas.appendChild(pg);
+      await page.render({canvasContext:ctx,viewport:vp}).promise;
+      addBoxes(pg,n);
+    }
+  });
+}else{
+  const pg=document.createElement('div');pg.className='pg';const im=new Image();im.src=DOC_URL;im.style.display='block';im.style.maxWidth='820px';
+  im.onload=()=>{pg.style.width=im.width+'px';pg.style.height=im.height+'px';addBoxes(pg,1);};pg.appendChild(im);canvas.appendChild(pg);
+}
+
+/* signature pad */
+const modal=document.getElementById('sigModal'),pad=document.getElementById('pad'),ctx=pad.getContext('2d');
+ctx.lineWidth=2.6;ctx.lineCap='round';ctx.strokeStyle='#0F172A';
+let drawing=false,dirty=false,last=null;
+function P(e){var r=pad.getBoundingClientRect(),t=e.touches?e.touches[0]:e;return{x:(t.clientX-r.left)*(pad.width/r.width),y:(t.clientY-r.top)*(pad.height/r.height)};}
+pad.addEventListener('mousedown',e=>{drawing=true;last=P(e);});
+pad.addEventListener('mousemove',e=>{if(!drawing)return;const p=P(e);ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke();last=p;dirty=true;});
+window.addEventListener('mouseup',()=>drawing=false);
+pad.addEventListener('touchstart',e=>{drawing=true;last=P(e);e.preventDefault();});
+pad.addEventListener('touchmove',e=>{if(!drawing)return;const p=P(e);ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke();last=p;dirty=true;e.preventDefault();});
+document.getElementById('clearPad').addEventListener('click',()=>{ctx.clearRect(0,0,pad.width,pad.height);dirty=false;});
+function openModal(){modal.style.display='flex';}
+document.getElementById('cancelSig').addEventListener('click',()=>modal.style.display='none');
+document.getElementById('applySig').addEventListener('click',()=>{
+  const typed=document.getElementById('typedName').value.trim();
+  if(!dirty&&typed){ctx.clearRect(0,0,pad.width,pad.height);ctx.font='46px "Segoe Script",cursive';ctx.fillStyle='#0F172A';ctx.fillText(typed,14,105);dirty=true;}
+  if(!dirty){alert('Please draw or type your signature.');return;}
+  captured=pad.toDataURL('image/png');
+  sigBoxes.forEach(b=>{b.innerHTML='<img src="'+captured+'">';b.style.animation='none';b.dataset.signed='1';});
+  modal.style.display='none';
+  document.getElementById('sigData').value=captured;
+  // all fields filled with one signature — hide guide, show Submit
+  const nt=document.getElementById('nextTab'),sl=document.getElementById('signLine'),fb=document.getElementById('finishBtn');
+  if(nt)nt.style.display='none';if(sl)sl.style.display='none';if(fb)fb.style.display='block';
+  const b=document.getElementById('banner');if(b){b.textContent='Signature added to all fields. Click “Submit signed document” to finish.';b.classList.add('done');}
+});
+
+/* ---------- NEXT navigation + dashed guide line ---------- */
+(function(){
+  const nt=document.getElementById('nextTab'),sl=document.getElementById('signLine'),fb=document.getElementById('finishBtn');
+  if(!nt)return;
+  let idx=0;
+  function unsignedBoxes(){return sigBoxes.filter(b=>!b.dataset.signed);}
+  function positionGuide(box){
+    // dashed line runs from the NEXT tab (viewport left) up to the box's left edge only
+    const r=box.getBoundingClientRect();const y=r.top+r.height/2;
+    sl.style.top=y+'px';sl.style.width=Math.max(0,r.left)+'px';sl.style.display='block';
+    nt.style.top=y+'px';nt.style.display='flex';
+  }
+  function currentTarget(){
+    const u=unsignedBoxes();if(!u.length){sl.style.display='none';nt.style.display='none';return null;}
+    return u[idx%u.length];
+  }
+  function refresh(){const t=currentTarget();if(t)positionGuide(t);}
+  nt.addEventListener('click',()=>{
+    const u=unsignedBoxes();if(!u.length)return;
+    idx=(idx+1)%u.length;const t=u[idx];
+    t.scrollIntoView({behavior:'smooth',block:'center'});
+    t.classList.add('pulse');setTimeout(()=>t.classList.remove('pulse'),1400);
+    setTimeout(refresh,350);
+  });
+  window.addEventListener('scroll',refresh,{passive:true});
+  window.addEventListener('resize',refresh);
+  // show guide once boxes are laid out
+  const wait=setInterval(()=>{if(sigBoxes.length){clearInterval(wait);refresh();}},200);
+  fb.addEventListener('click',()=>{
+    if(!captured){alert('Please add your signature first.');return;}
+    fb.textContent='Submitting…';fb.disabled=true;
+    document.getElementById('submitForm').submit();
+  });
+})();
+</script>
+</body>
+</html>

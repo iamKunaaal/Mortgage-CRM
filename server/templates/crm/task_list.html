@@ -568,8 +568,10 @@ $('#rowMenu').addEventListener('click',e=>{
   const id=$('#rowMenu').dataset.id,t=TASKS.find(x=>x.id===id);
   if(b.dataset.act==='viewlead'){if(t&&t.leadId)location.href=`/leads/${t.leadId}/`;else toast('No linked lead');return;}
   if(b.dataset.act==='complete'){
+    const outcome=prompt('Outcome / note for completing this task (optional):','');
+    if(outcome===null)return;   // cancelled
     const f=document.createElement('form');f.method='post';f.action=`/tasks/${id}/complete/`;
-    f.innerHTML=`<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">`;
+    f.innerHTML=`<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"><input type="hidden" name="outcome" value="${outcome.replace(/"/g,'&quot;')}">`;
     document.body.appendChild(f);f.submit();return;
   }
   if(b.dataset.act==='delete'){

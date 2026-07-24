@@ -339,6 +339,7 @@ a{color:inherit;text-decoration:none}
       <!-- ============ FORM ============ -->
       <form class="form-col" method="post" action="" id="leadForm" enctype="multipart/form-data">
         {% csrf_token %}
+        {% if force_dup %}<input type="hidden" name="force_dup" value="1">{% endif %}
         {% for err in form.non_field_errors %}<div style="grid-column:1/-1;color:var(--danger);font-size:12px;font-weight:600;margin-bottom:4px">{{ err }}</div>{% endfor %}
         <!-- hidden fields synced from decorative combos/pills -->
         <input type="hidden" name="nationality" id="hNationality" value="{{ form.nationality.value|default:'' }}">
@@ -453,6 +454,15 @@ a{color:inherit;text-decoration:none}
             <div class="full">
               <label class="t" style="display:block;font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:7px">Tags</label>
               <div class="tag-box" id="tagBox"><input type="text" id="tagInput" placeholder="Type a tag and press Enter…"></div>
+            </div>
+            <div class="full">
+              <label class="t" style="display:block;font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:7px">Contact Consent</label>
+              <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:var(--text-2)">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" name="consent_call" {% if form.consent_call.value %}checked{% endif %}> Call</label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" name="consent_sms" {% if form.consent_sms.value %}checked{% endif %}> SMS</label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" name="consent_whatsapp" {% if form.consent_whatsapp.value %}checked{% endif %}> WhatsApp</label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" name="consent_email" {% if form.consent_email.value %}checked{% endif %}> Email</label>
+              </div>
             </div>
           </div>
         </section>
@@ -707,6 +717,7 @@ function addDocRow(){
   row.innerHTML=`
     <input type="text" name="doc_name_${i}" class="doc-in doc-name" placeholder="Document name (e.g. Passport)">
     <select name="doc_type_${i}" class="doc-in doc-type" title="File type">${DOC_TYPES.map(t=>`<option value="${t}">${t}</option>`).join('')}</select>
+    <input type="date" name="doc_expiry_${i}" class="doc-in doc-expiry" title="Expiry date (optional)" style="max-width:150px">
     <label class="doc-file"><input type="file" name="doc_file_${i}" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg><span class="doc-fname">Choose file</span></label>
     <button type="button" class="doc-del" title="Remove" aria-label="Remove document">×</button>`;
   $('#docList').appendChild(row);

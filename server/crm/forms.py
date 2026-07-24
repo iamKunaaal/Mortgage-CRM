@@ -31,7 +31,8 @@ class LeadForm(StyledMixin, forms.ModelForm):
                   'industry', 'company_name', 'annual_turnover', 'business_years',
                   'property_value', 'property_type', 'preferred_area', 'ltv',
                   'loan_amount', 'bank_notes', 'advisor', 'bank', 'source', 'stage', 'priority',
-                  'referral_partner']
+                  'referral_partner',
+                  'consent_call', 'consent_sms', 'consent_whatsapp', 'consent_email']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -44,13 +45,18 @@ class UserForm(StyledMixin, forms.ModelForm):
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'username', 'email', 'phone', 'role',
-                  'department', 'status', 'target_calls', 'target_submissions',
-                  'target_partners', 'target_disbursement']
+                  'department', 'manager', 'team', 'status', 'target_calls',
+                  'target_submissions', 'target_partners', 'target_disbursement']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._style()
         self.fields['password'].widget.attrs.update({'class': 'fld-input'})
+        self.fields['manager'].required = False
+        self.fields['manager'].empty_label = '— No manager —'
+        # a user cannot be their own manager
+        if self.instance and self.instance.pk:
+            self.fields['manager'].queryset = User.objects.exclude(pk=self.instance.pk)
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -79,12 +85,14 @@ class TaskForm(StyledMixin, forms.ModelForm):
 class BankForm(StyledMixin, forms.ModelForm):
     class Meta:
         model = Bank
-        fields = ['name', 'bank_type']
+        fields = ['name', 'bank_type', 'commission_rate', 'contact_person', 'email', 'phone', 'notes']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._style()
         self.fields['name'].required = True
+        self.fields['commission_rate'].required = False
+        self.fields['commission_rate'].label = 'Commission %'
 
 
 class PartnerForm(StyledMixin, forms.ModelForm):

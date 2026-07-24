@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mortgage CRM — Sign Document</title>
+<style>
+:root{--primary:#05448B;--primary-h:#0B5AB3;--blue-50:#F0F5FB;--bg:#F7F9FC;--card:#fff;
+--text:#0F172A;--text-2:#64748B;--text-3:#94A3B8;--border:#E2E8F0;--border-soft:#EEF2F7;
+--success:#16A34A;--warning:#B45309;--danger:#DC2626;--r:14px;--sb:256px;
+--sh-xs:0 1px 2px rgba(15,23,42,.05);--sh-md:0 4px 12px -2px rgba(15,23,42,.08);
+--font:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px}
+a{color:inherit;text-decoration:none}button{font-family:inherit;cursor:pointer;border:none;background:none}
+.app{display:flex;min-height:100vh}.main{flex:1;min-width:0;margin-left:var(--sb)}
+.sidebar{position:fixed;inset:0 auto 0 0;width:var(--sb);background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:60}
+.brand{display:flex;align-items:center;gap:11px;padding:20px 20px 16px}
+.brand-mark{width:36px;height:36px;border-radius:10px;background:var(--primary);display:grid;place-items:center;flex-shrink:0}
+.brand-name{font-weight:700;font-size:15px}.brand-sub{font-size:11px;color:var(--text-3)}
+.nav{flex:1;overflow-y:auto;padding:6px 12px 16px}
+.nav-label{font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--text-3);padding:18px 12px 7px}
+.nav-label:first-child{padding-top:8px}
+.nav-item{display:flex;align-items:center;gap:11px;padding:8.5px 11px;border-radius:9px;color:#3F4C61;font-size:13.5px;font-weight:500}
+.nav-item svg{width:17px;height:17px;color:var(--text-2)}.nav-item:hover{background:#F3F6FA;color:var(--text)}
+.nav-item.active{background:var(--blue-50);color:var(--primary);font-weight:600}.nav-item.active svg{color:var(--primary)}
+.nav-group{margin-bottom:1px}.nav-item .chev{margin-left:auto;width:13px;height:13px;color:var(--text-3)}
+.nav-sub{overflow:hidden;max-height:0;transition:max-height .3s;padding-left:4px;margin-left:18px;border-left:1px solid var(--border-soft)}
+.nav-group.open .nav-sub{max-height:320px}.nav-group.open .chev{transform:rotate(90deg)}
+.nav-sub .nav-item{padding:6.5px 11px 6.5px 22px;font-size:12.75px;color:var(--text-2)}
+.nav-count{margin-left:auto;font-size:11px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--blue-50);color:var(--primary)}
+.sidebar-foot{padding:12px;border-top:1px solid var(--border-soft)}
+.user-card{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px}
+.user-card:hover{background:#F3F6FA}.user-card b{display:block;font-size:13px;font-weight:600}.user-card span{font-size:11.5px;color:var(--text-3)}
+.avatar{width:32px;height:32px;border-radius:9px;background:var(--primary);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center}
+.scrim{display:none}
+.content{padding:24px 28px 48px;max-width:1160px;margin:0 auto}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.page-head h1{font-size:21px;font-weight:700}.page-head p{color:var(--text-2);font-size:13.5px;margin-top:3px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:9px;font-size:13px;font-weight:600}
+.btn svg{width:15px;height:15px}.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-h)}
+.btn-ghost{background:#fff;border:1px solid var(--border);color:var(--text-2)}.btn-ghost:hover{background:var(--bg)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+@media(max-width:720px){.kpis{grid-template-columns:1fr 1fr}}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:15px 17px;box-shadow:var(--sh-xs)}
+.kpi label{font-size:11.5px;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+.kpi b{display:block;font-size:24px;font-weight:800;margin-top:4px}
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-xs);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);background:#FAFCFE;padding:11px 16px;border-bottom:1px solid var(--border)}
+td{padding:12px 16px;border-bottom:1px solid var(--border-soft);font-size:13px}
+tbody tr:last-child td{border-bottom:none}
+.st{font-size:11.5px;font-weight:600;padding:2px 10px;border-radius:99px}
+.st.Draft{background:#EEF2F7;color:#64748B}.st.Awaiting{background:#FBF0DA;color:#9A6B14}.st.Signed{background:#E6F1EB;color:#15803D}
+.empty{text-align:center;padding:50px;color:var(--text-3)}
+.lnk{color:var(--primary);font-weight:600}
+.del{color:var(--danger);font-weight:600;background:none;border:none;cursor:pointer;font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="app">
+{% include 'crm/_sidebar.html' %}
+<div class="main">
+  <main class="content">
+    <a class="lnk" href="{% url 'esign_list' %}" style="font-size:13px">← Back to e-Sign</a>
+    <div class="page-head" style="margin-top:10px">
+      <div><h1>{{ sr.title }}</h1><p>Signer: <b>{{ sr.signer_name }}</b> · <span class="st {{ sr.status }}">{{ sr.get_status_display }}</span></p></div>
+    </div>
+    {% if messages %}{% for m in messages %}<div style="margin-bottom:12px;padding:10px 14px;border-radius:9px;font-size:13px;font-weight:600;background:{% if 'error' in m.tags %}#FEECEC;color:#B42318{% else %}#EAF7EF;color:#15803D{% endif %}">{{ m }}</div>{% endfor %}{% endif %}
+
+    <div style="display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start">
+      <div class="card" style="padding:0;overflow:hidden">
+        {% with url=sr.document.url low=sr.document.url|lower %}
+        {% if '.pdf' in low %}
+          <iframe src="{{ url }}" style="width:100%;height:560px;border:none"></iframe>
+        {% else %}
+          <img src="{{ url }}" alt="{{ sr.title }}" style="width:100%;display:block">
+        {% endif %}
+        {% endwith %}
+      </div>
+
+      <div class="card" style="padding:20px">
+        {% if sr.status == 'Signed' %}
+          <h3 style="font-size:15px;font-weight:700;margin-bottom:4px">Signed ✓</h3>
+          <p style="font-size:12.5px;color:var(--text-2);margin-bottom:14px">Signed on {{ sr.signed_at|date:"d M Y · h:i A" }}{% if sr.signed_ip %} · IP {{ sr.signed_ip }}{% endif %}</p>
+          <div style="border:1px solid var(--border);border-radius:10px;padding:14px;background:var(--bg)">
+            <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Signature</div>
+            <img src="{{ sr.signature_data }}" alt="signature" style="max-width:100%;background:#fff;border-radius:6px">
+            <div style="margin-top:10px;font-size:12.5px;color:var(--text-2)">— {{ sr.signer_name }}</div>
+          </div>
+        {% else %}
+          <h3 style="font-size:15px;font-weight:700;margin-bottom:4px">Sign here</h3>
+          <p style="font-size:12.5px;color:var(--text-2);margin-bottom:12px">Draw your signature below, or type your name.</p>
+          <form method="post" action="{% url 'esign_submit' sr.pk %}" id="signForm">
+            {% csrf_token %}
+            <canvas id="pad" width="300" height="150" style="width:100%;height:150px;border:1.5px dashed #CBD5E1;border-radius:10px;background:#fff;touch-action:none;cursor:crosshair"></canvas>
+            <div style="display:flex;gap:8px;margin:10px 0">
+              <button type="button" class="btn btn-ghost" id="clearPad" style="flex:1;justify-content:center">Clear</button>
+            </div>
+            <div style="text-align:center;font-size:11px;color:var(--text-3);margin:6px 0">— or —</div>
+            <input type="text" id="typedName" placeholder="Type full name to sign" style="width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:9px;font:inherit;font-size:13px;margin-bottom:14px">
+            <input type="hidden" name="signature_data" id="sigData">
+            <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center">Sign Document</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </main>
+</div>
+</div>
+<script>
+document.querySelectorAll('.nav-group>[data-toggle]').forEach(b=>b.addEventListener('click',()=>b.parentElement.classList.toggle('open')));
+(function(){
+  var pad=document.getElementById('pad');if(!pad)return;
+  var ctx=pad.getContext('2d');ctx.lineWidth=2.4;ctx.lineCap='round';ctx.strokeStyle='#0F172A';
+  var drawing=false,dirty=false,last=null;
+  function pos(e){var r=pad.getBoundingClientRect(),t=e.touches?e.touches[0]:e;
+    return {x:(t.clientX-r.left)*(pad.width/r.width),y:(t.clientY-r.top)*(pad.height/r.height)};}
+  function start(e){drawing=true;last=pos(e);e.preventDefault();}
+  function move(e){if(!drawing)return;var p=pos(e);ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke();last=p;dirty=true;e.preventDefault();}
+  function end(){drawing=false;}
+  pad.addEventListener('mousedown',start);pad.addEventListener('mousemove',move);window.addEventListener('mouseup',end);
+  pad.addEventListener('touchstart',start);pad.addEventListener('touchmove',move);pad.addEventListener('touchend',end);
+  document.getElementById('clearPad').addEventListener('click',function(){ctx.clearRect(0,0,pad.width,pad.height);dirty=false;});
+  document.getElementById('signForm').addEventListener('submit',function(e){
+    var typed=document.getElementById('typedName').value.trim();
+    if(!dirty && typed){
+      ctx.clearRect(0,0,pad.width,pad.height);ctx.font='42px "Segoe Script",cursive';ctx.fillStyle='#0F172A';
+      ctx.fillText(typed,14,95);dirty=true;
+    }
+    if(!dirty){e.preventDefault();alert('Please draw or type your signature.');return;}
+    document.getElementById('sigData').value=pad.toDataURL('image/png');
+  });
+})();
+</script>
+</body>
+</html>

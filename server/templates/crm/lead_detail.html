@@ -373,6 +373,7 @@ a{color:inherit;text-decoration:none}
         <div>
           <div class="hero-id">
             <h1 id="leadName"></h1>
+            <span class="case-chip" id="caseChip" style="display:none;font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;background:var(--blue-50,#F0F5FB);color:var(--primary,#05448B);letter-spacing:.02em"></span>
             <span class="stage" id="stageBadge"><i></i><span id="stageTxt"></span></span>
             <span class="pr-badge" id="prBadge"></span>
           </div>
@@ -384,11 +385,19 @@ a{color:inherit;text-decoration:none}
           </div>
         </div>
         <div class="hero-actions">
-          <a class="btn btn-ghost" href="tel:{{ lead.mobile }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Call</a>
-          <a class="btn btn-ghost" target="_blank" href="https://wa.me/{{ lead.mobile|cut:'+'|cut:' ' }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.8-.9L3 21l2-5.2a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 8.4-8.5 8.38 8.38 0 0 1 8.5 8z"/></svg>WhatsApp</a>
+          <a class="btn btn-ghost js-call" href="tel:{{ lead.mobile }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Call</a>
+          <a class="btn btn-ghost js-wa" target="_blank" href="https://wa.me/{{ lead.mobile|cut:'+'|cut:' ' }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.8-.9L3 21l2-5.2a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 8.4-8.5 8.38 8.38 0 0 1 8.5 8z"/></svg>WhatsApp</a>
+          <a class="btn btn-ghost" href="{% url 'client_360' lead.pk %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Client 360</a>
           <a class="btn btn-ghost" href="{% url 'lead_edit' lead.pk %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>Edit</a>
           {% if can_delete %}<form method="post" action="{% url 'lead_delete' lead.pk %}" onsubmit="return confirm('Delete this lead permanently?')" style="display:inline">{% csrf_token %}<button type="submit" class="btn btn-ghost" style="border-color:#FCA5A5;color:#DC2626"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>Delete</button></form>{% endif %}
-          {% if can_edit %}<button type="button" class="btn btn-primary" onclick="document.getElementById('stageModal').classList.add('show')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20v-6M6 20V10M18 20V4"/></svg>Update Stage</button>{% endif %}
+          {% if can_edit %}
+          {% if lead.nurture_until %}
+          <form method="post" action="{% url 'lead_nurture' lead.pk %}" style="display:inline">{% csrf_token %}<input type="hidden" name="clear" value="1"><button type="submit" class="btn btn-ghost" title="Reactivates {{ lead.nurture_until|date:'d M Y' }}">🌱 Nurturing till {{ lead.nurture_until|date:'d M' }} — clear</button></form>
+          {% else %}
+          <button type="button" class="btn btn-ghost" onclick="var d=document.getElementById('nurtureBox');d.style.display=d.style.display==='none'?'inline-flex':'none'">🌱 Nurture</button>
+          <form id="nurtureBox" method="post" action="{% url 'lead_nurture' lead.pk %}" style="display:none;gap:6px;align-items:center">{% csrf_token %}<input type="date" name="until" required style="padding:7px;border:1px solid var(--border);border-radius:8px"><button type="submit" class="btn btn-ghost">Set</button></form>
+          {% endif %}
+          <button type="button" class="btn btn-primary" onclick="document.getElementById('stageModal').classList.add('show')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20v-6M6 20V10M18 20V4"/></svg>Update Stage</button>{% endif %}
         </div>
       </div>
 
@@ -408,7 +417,8 @@ a{color:inherit;text-decoration:none}
           <button class="tab on" data-pane="pTimeline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Timeline</button>
           <button class="tab" data-pane="pDocs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Documents<span class="tc">6</span></button>
           <button class="tab" data-pane="pApp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 15l2 2 4-4"/></svg>Application</button>
-          <button class="tab" data-pane="pFin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/></svg>Finance</button>
+          {% if can_finance %}<button class="tab" data-pane="pFin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/></svg>Finance</button>{% endif %}
+          <button class="tab" data-pane="pFollow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Follow-ups<span class="tc" id="followCount"></span></button>
           <button class="tab" data-pane="pNotes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Notes</button>
           <button class="tab" data-pane="pAudit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>Audit Log<span class="tc" id="auditCount"></span></button>
         </div>
@@ -426,6 +436,31 @@ a{color:inherit;text-decoration:none}
           <div class="card">
             <div class="card-h"><div><h3>Audit Log</h3><div class="sub">Who changed what on this lead, with date &amp; time</div></div></div>
             <div class="card-body" id="auditLog"></div>
+          </div>
+        </div>
+
+        <!-- FOLLOW-UPS -->
+        <div class="pane" id="pFollow">
+          <div class="card">
+            <div class="card-h">
+              <div><h3>Follow-up Log</h3><div class="sub" id="silenceSub">Log every touch; set the next follow-up date so nothing goes silent</div></div>
+              {% if can_edit %}<button type="button" class="btn btn-ghost" id="fuAddBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Log Follow-up</button>{% endif %}
+            </div>
+            {% if can_edit %}
+            <form id="fuForm" method="post" action="{% url 'followup_add' lead.pk %}" style="display:none;padding:0 18px 16px;border-bottom:1px solid var(--border-soft)">
+              {% csrf_token %}
+              <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
+                <label style="font-size:12px">Channel<select name="channel" id="fuChannel" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px"></select></label>
+                <label style="font-size:12px">Next Follow-up Date<input type="date" name="next_date" id="fuNext" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px"></label>
+                <label style="font-size:12px;grid-column:1/3">Note<textarea name="note" id="fuNote" rows="2" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px"></textarea></label>
+              </div>
+              <div style="margin-top:10px;display:flex;gap:8px">
+                <button type="submit" class="btn btn-primary">Save Follow-up</button>
+                <button type="button" class="btn btn-ghost" id="fuCancel">Cancel</button>
+              </div>
+            </form>
+            {% endif %}
+            <div class="card-body" id="fuList"></div>
           </div>
         </div>
 
@@ -462,6 +497,206 @@ a{color:inherit;text-decoration:none}
 
         <!-- APPLICATION -->
         <div class="pane" id="pApp">
+          <!-- OPERATIONS HANDOVER -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-h"><div><h3>Operations</h3><div class="sub">Handover gate, process owner &amp; hold</div></div></div>
+            <div class="card-body">
+              <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+                <div style="min-width:160px">
+                  <label style="font-size:11px;color:var(--text-3);text-transform:uppercase">Handover</label>
+                  <div style="font-weight:700;margin-top:3px">
+                    {% if lead.handed_over %}<span style="color:var(--success)">✓ Submitted ({{ lead.handover_score }}%)</span>{% else %}<span style="color:var(--text-2)">Not submitted</span>{% endif %}
+                  </div>
+                </div>
+                <div style="min-width:160px">
+                  <label style="font-size:11px;color:var(--text-3);text-transform:uppercase">Client Owner</label>
+                  <div style="font-weight:600;margin-top:3px">{{ lead.advisor.get_full_name|default:'—' }}</div>
+                </div>
+                <div style="min-width:160px">
+                  <label style="font-size:11px;color:var(--text-3);text-transform:uppercase">Process Owner (Ops)</label>
+                  <div style="font-weight:600;margin-top:3px">{{ lead.ops_owner.get_full_name|default:'— unassigned' }}</div>
+                </div>
+                {% if lead.ops_hold %}<div style="min-width:160px"><label style="font-size:11px;color:var(--danger);text-transform:uppercase">On Hold</label><div style="font-weight:600;margin-top:3px;color:var(--danger)">{{ lead.hold_reason|default:'—' }}</div></div>{% endif %}
+              </div>
+
+              {% if not lead.handed_over and can_edit %}
+                {% if handover_blockers %}
+                <div style="margin-top:14px;padding:11px 14px;border-radius:9px;background:#FEF3E2;color:#B45309;font-size:12.5px">
+                  <b>Cannot submit to Operations yet:</b>
+                  <ul style="margin:6px 0 0 18px">{% for b in handover_blockers %}<li>{{ b }}</li>{% endfor %}</ul>
+                </div>
+                {% else %}
+                <form method="post" action="{% url 'lead_handover' lead.pk %}" style="margin-top:14px">{% csrf_token %}
+                  <button type="submit" class="btn btn-primary">Submit to Operations →</button>
+                </form>
+                {% endif %}
+              {% endif %}
+
+              {% if is_ops_mgr and lead.handed_over %}
+              <form method="post" action="{% url 'ops_assign' lead.pk %}" style="margin-top:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">{% csrf_token %}
+                <label style="font-size:12px">Assign process owner:</label>
+                <select name="ops_owner" style="padding:7px;border:1px solid var(--border);border-radius:8px">
+                  <option value="">— unassigned —</option>
+                  {% for u in ops_execs %}<option value="{{ u.pk }}" {% if lead.ops_owner_id == u.pk %}selected{% endif %}>{{ u.get_full_name|default:u.username }} ({{ u.role_label }})</option>{% endfor %}
+                </select>
+                <button type="submit" class="btn btn-ghost">Save</button>
+              </form>
+              {% endif %}
+
+              {% if can_edit %}
+              <form method="post" action="{% url 'ops_hold' lead.pk %}" style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">{% csrf_token %}
+                {% if lead.ops_hold %}
+                  <input type="hidden" name="release" value="1"><button type="submit" class="btn btn-ghost">Release from hold</button>
+                {% else %}
+                  <input name="reason" placeholder="Hold reason" style="padding:7px;border:1px solid var(--border);border-radius:8px">
+                  <input type="date" name="review_date" style="padding:7px;border:1px solid var(--border);border-radius:8px">
+                  <button type="submit" class="btn btn-ghost">Put on hold</button>
+                {% endif %}
+              </form>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- COMPLIANCE -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-h"><div><h3>Compliance &amp; AML</h3><div class="sub">Sanctions/PEP screening, risk rating &amp; EDD before KYC can pass</div></div></div>
+            <div class="card-body">
+              <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+                <div style="min-width:140px"><label style="font-size:11px;color:var(--text-3);text-transform:uppercase">Sanctions</label><div style="font-weight:700;margin-top:3px;color:{% if lead.sanctions_status == 'Hit' %}var(--danger){% elif lead.sanctions_status == 'Clear' %}var(--success){% else %}var(--text-2){% endif %}">{{ lead.sanctions_status }}</div></div>
+                <div style="min-width:140px"><label style="font-size:11px;color:var(--text-3);text-transform:uppercase">PEP</label><div style="font-weight:700;margin-top:3px;color:{% if lead.pep_status == 'Hit' %}var(--danger){% elif lead.pep_status == 'Clear' %}var(--success){% else %}var(--text-2){% endif %}">{{ lead.pep_status }}</div></div>
+                <div style="min-width:140px"><label style="font-size:11px;color:var(--text-3);text-transform:uppercase">Risk</label><div style="font-weight:700;margin-top:3px;color:{% if lead.risk_rating == 'High' %}var(--danger){% elif lead.risk_rating == 'Medium' %}var(--warning){% else %}var(--text-2){% endif %}">{{ lead.risk_rating|default:'—' }}</div><div style="font-size:11px;color:var(--text-3)">{{ lead.risk_note }}</div></div>
+                {% if lead.edd_required %}<div style="min-width:120px"><label style="font-size:11px;color:var(--text-3);text-transform:uppercase">EDD</label><div style="font-weight:700;margin-top:3px;color:{% if lead.edd_complete %}var(--success){% else %}var(--warning){% endif %}">{{ lead.edd_complete|yesno:"Complete,Pending" }}</div></div>{% endif %}
+              </div>
+              {% if kyc_blockers %}<div style="margin-top:12px;padding:10px 13px;border-radius:9px;background:#FEF3E2;color:#B45309;font-size:12.5px"><b>KYC blocked:</b> {{ kyc_blockers|join:"; " }}</div>{% endif %}
+
+              {% if can_kyc %}
+              <form method="post" action="{% url 'lead_screening' lead.pk %}" enctype="multipart/form-data" style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">{% csrf_token %}
+                <label style="font-size:12px">Sanctions<br><select name="sanctions_status" style="padding:7px;border:1px solid var(--border);border-radius:8px">{% for s in screen_opts %}<option {% if lead.sanctions_status == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></label>
+                <label style="font-size:12px">PEP<br><select name="pep_status" style="padding:7px;border:1px solid var(--border);border-radius:8px">{% for s in screen_opts %}<option {% if lead.pep_status == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></label>
+                <label style="font-size:12px">Evidence<br><input type="file" name="evidence"></label>
+                <button type="submit" class="btn btn-primary">Save Screening</button>
+              </form>
+              <form method="post" action="{% url 'lead_risk' lead.pk %}" style="margin-top:10px">{% csrf_token %}
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+                  <label style="font-size:12px">Risk<br><select name="risk_rating" style="padding:7px;border:1px solid var(--border);border-radius:8px">{% for r in risk_opts %}<option {% if lead.risk_rating == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select></label>
+                  <label style="font-size:12px">Note<br><input name="risk_note" value="{{ lead.risk_note }}" style="padding:7px;border:1px solid var(--border);border-radius:8px"></label>
+                </div>
+                {% if lead.edd_required %}
+                <div style="margin-top:8px;padding:10px;border:1px dashed var(--warning);border-radius:9px">
+                  <div style="font-size:11px;font-weight:700;color:var(--warning);text-transform:uppercase;margin-bottom:6px">Enhanced Due Diligence (High risk)</div>
+                  <label style="font-size:12px;display:block">Source of Funds<textarea name="edd_source_of_funds" rows="2" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:8px">{{ lead.edd_source_of_funds }}</textarea></label>
+                  <label style="font-size:12px;display:block;margin-top:6px">Source of Wealth<textarea name="edd_source_of_wealth" rows="2" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:8px">{{ lead.edd_source_of_wealth }}</textarea></label>
+                  <label style="font-size:12px;display:flex;align-items:center;gap:5px;margin-top:6px"><input type="checkbox" name="edd_ceo_ack" {% if lead.edd_ceo_ack %}checked{% endif %}> CEO acknowledgment</label>
+                </div>
+                {% endif %}
+                <label style="font-size:12px;display:flex;align-items:center;gap:5px;margin-top:8px"><input type="checkbox" name="edd_complete" {% if lead.edd_complete %}checked{% endif %}> EDD complete</label>
+                <div style="margin-top:8px"><button type="submit" class="btn btn-ghost">Save Risk / EDD</button></div>
+              </form>
+
+              {% if lead.kyc_override %}
+              <div style="margin-top:10px;padding:9px 12px;border-radius:8px;background:#FEF3E2;color:#B45309;font-size:12px"><b>KYC override in force</b> until {{ lead.kyc_override_until|date:'d M Y' }} — {{ lead.kyc_override_reason }}</div>
+              {% elif kyc_blockers %}
+              <details style="margin-top:10px">
+                <summary style="cursor:pointer;font-size:12.5px;color:var(--warning);font-weight:600">Override KYC gate (time-boxed)</summary>
+                <form method="post" action="{% url 'lead_kyc_override' lead.pk %}" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">{% csrf_token %}
+                  <label style="font-size:12px">Reason<br><input name="reason" required style="padding:7px;border:1px solid var(--border);border-radius:8px;width:220px"></label>
+                  <label style="font-size:12px">Review by<br><input type="date" name="until" required style="padding:7px;border:1px solid var(--border);border-radius:8px"></label>
+                  <button type="submit" class="btn btn-ghost" style="border-color:#F5C4C0;color:var(--danger)">Apply override</button>
+                </form>
+              </details>
+              {% endif %}
+              {% endif %}
+
+              {% if can_edit %}
+              <details style="margin-top:12px">
+                <summary style="cursor:pointer;font-size:12.5px;color:var(--danger);font-weight:600">Raise confidential suspicion flag</summary>
+                <form method="post" action="{% url 'suspicion_raise' lead.pk %}" style="margin-top:8px">{% csrf_token %}
+                  <textarea name="reason" rows="2" placeholder="Reason (visible to Compliance only — never tell the client)" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px"></textarea>
+                  <button type="submit" class="btn btn-ghost" style="margin-top:6px;border-color:#FCA5A5;color:var(--danger)">Raise flag</button>
+                </form>
+              </details>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- PROCESSING (OPS) -->
+          {% if can_edit %}
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-h"><div><h3>Processing Details</h3><div class="sub">Pre-approval validity, valuation, FOL terms, insurance &amp; title deed</div></div></div>
+            <div class="card-body">
+              <form method="post" action="{% url 'lead_processing' lead.pk %}">{% csrf_token %}
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+                  <label style="font-size:12px">Pre-approval valid till<input type="date" name="preapproval_validity_end" value="{{ lead.preapproval_validity_end|date:'Y-m-d' }}" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:8px"></label>
+                  <label style="font-size:12px">Valuer<input name="valuer_name" value="{{ lead.valuer_name }}" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:8px"></label>
+                  <label style="font-size:12px">Valuation date<input type="date" name="valuation_date" value="{{ lead.valuation_date|date:'Y-m-d' }}" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:8px"></label>
+                  <label style="font-size:12px">Valuation amount<input type="number" name="valuation_amount" value="{{ lead.valuation_amount|floatformat:'0' }}" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:8px"></label>
+                  <label style="font-size:12px">FOL rate type<select name="fol_rate_type" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:8px"><option value="">—</option><option {% if lead.fol_rate_type == 'Fixed' %}selected{% endif %}>Fixed</option><option {% if lead.fol_rate_type == 'Variable' %}selected{% endif %}>Variable</option></select></label>
+                  <label style="font-size:12px">Fixed rate %<input type="number" step="0.01" name="fol_fixed_rate" value="{{ lead.fol_fixed_rate|floatformat:'2' }}" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:8px"></label>
+                  <label style="font-size:12px">Fixed period end<input type="date" name="fol_fixed_period_end" value="{{ lead.fol_fixed_period_end|date:'Y-m-d' }}" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:8px"></label>
+                  <label style="font-size:12px">Variable index<input name="fol_variable_index" value="{{ lead.fol_variable_index }}" placeholder="EIBOR + 1.5%" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:8px"></label>
+                  <label style="font-size:12px">Tenor (yrs)<input type="number" name="fol_tenor_years" value="{{ lead.fol_tenor_years }}" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:8px"></label>
+                  <label style="font-size:12px">EMI<input type="number" name="fol_emi" value="{{ lead.fol_emi|floatformat:'0' }}" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:8px"></label>
+                  <label style="font-size:12px">Offer valid till<input type="date" name="fol_offer_validity" value="{{ lead.fol_offer_validity|date:'Y-m-d' }}" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:8px"></label>
+                  <label style="font-size:12px">Processing fee<input type="number" name="fol_processing_fee" value="{{ lead.fol_processing_fee|floatformat:'0' }}" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:8px"></label>
+                  <label style="font-size:12px">Insurance provider<input name="insurance_provider" value="{{ lead.insurance_provider }}" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:8px"></label>
+                  <label style="font-size:12px">Insurance policy #<input name="insurance_policy_no" value="{{ lead.insurance_policy_no }}" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:8px"></label>
+                  <label style="font-size:12px">Title deed #<input name="title_deed_number" value="{{ lead.title_deed_number }}" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:8px"></label>
+                </div>
+                <div style="margin-top:12px"><button type="submit" class="btn btn-primary">Save Processing Details</button></div>
+              </form>
+
+              <div style="margin-top:16px;border-top:1px solid var(--border-soft);padding-top:14px">
+                <div style="font-weight:700;font-size:13px;margin-bottom:8px">Bank Queries</div>
+                {% for q in bank_queries %}
+                <div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-soft)">
+                  <span class="d-badge {% if q.status == 'Open' %}pend{% else %}ok{% endif %}">{{ q.status }}</span>
+                  <div style="flex:1"><b style="font-size:12.5px">{{ q.query_type|default:'Query' }}</b> — {{ q.description }} <span style="color:var(--text-3);font-size:11px">({{ q.owner_side }}{% if q.due_date %} · due {{ q.due_date|date:'d M' }}{% endif %})</span></div>
+                  {% if q.status == 'Open' %}<form method="post" action="{% url 'query_update' lead.pk q.pk %}" style="display:inline">{% csrf_token %}<input type="hidden" name="status" value="Answered"><button class="link-btn" type="submit">Mark answered</button></form>{% endif %}
+                </div>
+                {% empty %}<div style="color:var(--text-3);font-size:12.5px">No open queries.</div>{% endfor %}
+                <form method="post" action="{% url 'query_add' lead.pk %}" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">{% csrf_token %}
+                  <input name="query_type" placeholder="Type" style="padding:7px;border:1px solid var(--border);border-radius:8px;width:120px">
+                  <input name="description" placeholder="Query description" required style="padding:7px;border:1px solid var(--border);border-radius:8px;flex:1;min-width:180px">
+                  <select name="owner_side" style="padding:7px;border:1px solid var(--border);border-radius:8px"><option>Ops</option><option>Advisor</option></select>
+                  <input type="date" name="due_date" style="padding:7px;border:1px solid var(--border);border-radius:8px">
+                  <button type="submit" class="btn btn-ghost">Add Query</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          <div class="card">
+            <div class="card-h">
+              <div><h3>Bank Applications</h3><div class="sub">Submit this case to one or more banks in parallel &amp; track each decision</div></div>
+              {% if can_edit %}<button type="button" class="btn btn-ghost" id="baAddBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Add Application</button>{% endif %}
+            </div>
+            {% if can_edit %}
+            <form id="baForm" method="post" action="{% url 'bankapp_save' lead.pk %}" style="display:none;padding:0 18px 16px;border-bottom:1px solid var(--border-soft)">
+              {% csrf_token %}
+              <input type="hidden" name="app_id" id="baAppId">
+              <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
+                <label style="font-size:12px">Bank
+                  <select name="bank" id="baBank" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px"></select>
+                </label>
+                <label style="font-size:12px">Status
+                  <select name="status" id="baStatus" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px"></select>
+                </label>
+                <label style="font-size:12px">Reference No<input name="reference_no" id="baRef" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px"></label>
+                <label style="font-size:12px">Interest Rate %<input name="interest_rate" id="baRate" type="number" step="0.01" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px"></label>
+                <label style="font-size:12px">Requested Amount<input name="requested_amount" id="baReq" type="number" step="1" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px"></label>
+                <label style="font-size:12px">Sanctioned Amount<input name="sanctioned_amount" id="baSanc" type="number" step="1" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px"></label>
+                <label style="font-size:12px;grid-column:1/3">Rejection Reason (if rejected)<input name="rejection_reason" id="baReject" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px"></label>
+                <label style="font-size:12px;grid-column:1/3">Notes<textarea name="notes" id="baNotes" rows="2" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px"></textarea></label>
+              </div>
+              <div style="margin-top:10px;display:flex;gap:8px">
+                <button type="submit" class="btn btn-primary">Save Application</button>
+                <button type="button" class="btn btn-ghost" id="baCancel">Cancel</button>
+              </div>
+            </form>
+            {% endif %}
+            <div class="card-body" id="baList" style="padding:0"></div>
+          </div>
           <div class="card" data-role-section="operations">
             <div class="card-h"><div><h3>Application Tracking</h3><div class="sub">Live status of the bank application</div></div></div>
             <div class="card-body">
@@ -476,12 +711,14 @@ a{color:inherit;text-decoration:none}
         </div>
 
         <!-- FINANCE -->
+        {% if can_finance %}
         <div class="pane" id="pFin" data-role-section="finance">
           <div class="card">
             <div class="card-h"><div><h3>Finance Center</h3><div class="sub">Commission and revenue attribution for this lead</div></div></div>
             <div class="card-body"><div class="fin-grid" id="finGrid"></div></div>
           </div>
         </div>
+        {% endif %}
 
         <!-- NOTES -->
         <div class="pane" id="pNotes">
@@ -545,6 +782,10 @@ a{color:inherit;text-decoration:none}
           <div class="r-row"><label>LTV</label><b id="rLtv"></b></div>
           <div class="r-row"><label>Preferred Bank(s)</label><b id="rBank" style="text-align:right;max-width:170px"></b></div>
           <div class="r-row"><label>Lead Source</label><b id="rSource"></b></div>
+          <div class="r-row"><label>Eligibility</label><b id="rElig" style="text-align:right;max-width:200px"></b></div>
+          <div class="r-row"><label>KYC</label><b id="rKyc" style="display:flex;align-items:center;gap:8px;justify-content:flex-end"></b></div>
+          <div class="r-row"><label>Lead Score</label><b id="rScore"></b></div>
+          <div class="r-row"><label>Consent</label><b id="rConsent" style="text-align:right;max-width:170px"></b></div>
           <div class="r-row"><label>Created</label><b id="rCreated"></b></div>
           <div class="r-row"><label>Disbursed At</label>
             <b id="rDisbursed" style="display:flex;align-items:center;gap:6px;justify-content:flex-end">
@@ -565,8 +806,8 @@ a{color:inherit;text-decoration:none}
         <div class="rail-card">
           <h3>Quick Actions</h3>
           <div class="quick-grid">
-            <a class="q-btn" href="tel:{{ lead.mobile }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Call</a>
-            <a class="q-btn" target="_blank" href="https://wa.me/{{ lead.mobile|cut:'+'|cut:' ' }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.8-.9L3 21l2-5.2a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 8.4-8.5 8.38 8.38 0 0 1 8.5 8z"/></svg>WhatsApp</a>
+            <a class="q-btn js-call" href="tel:{{ lead.mobile }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Call</a>
+            <a class="q-btn js-wa" target="_blank" href="https://wa.me/{{ lead.mobile|cut:'+'|cut:' ' }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.8-.9L3 21l2-5.2a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 8.4-8.5 8.38 8.38 0 0 1 8.5 8z"/></svg>WhatsApp</a>
             <a class="q-btn" href="mailto:{{ lead.email }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/></svg>Email</a>
             <a class="q-btn" href="mailto:{{ lead.email }}?subject=Documents%20Requested"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15h6"/></svg>Request Docs</a>
             <a class="q-btn" href="{% url 'document_list' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>Upload Doc</a>
@@ -707,7 +948,8 @@ document.title=`Mortgage CRM — ${L.name}`;
 $('#crumbId').textContent=`${L.name} (${L.id})`;
 $('#bigAvatar').textContent=ini(L.name);
 $('#leadName').textContent=L.name;
-$('#leadId').textContent=L.id;
+$('#leadId').textContent=(L.caseNo&&L.caseNo!=='—')?L.caseNo:('#'+L.id);
+if(L.caseNo&&L.caseNo!=='—'){const cc=$('#caseChip');cc.textContent='Case '+L.caseNo;cc.style.display='inline-flex';}
 $('#leadMobile').textContent=L.mobile;
 $('#leadEmail').textContent=email;
 $('#leadNat').textContent=L.nat;
@@ -922,12 +1164,85 @@ const APP=[
 ];
 $('#appGrid').innerHTML=APP.map(a=>`<div class="info-cell"><label>${a[0]}</label><b>${a[1]}</b><span>${a[2]}</span></div>`).join('');
 
+/* ---------- bank applications ---------- */
+(function(){
+  const baList=$('#baList'); if(!baList) return;
+  const statusColor={Draft:['#F1F5F9','#475569'],Submitted:['#E0F2FE','#0369A1'],'Under Review':['#EDE9FE','#6D28D9'],'Pre-Approved':['#DBEAFE','#1D4ED8'],Approved:['#DCFCE7','#15803D'],Rejected:['#FEE2E2','#DC2626'],Withdrawn:['#F1F5F9','#64748B']};
+  const money=v=>v?('AED '+Number(v).toLocaleString()):'—';
+  function render(){
+    const apps=D.bankApps||[];
+    if(!apps.length){baList.innerHTML='<div style="padding:34px;text-align:center;color:var(--text-3)">No bank applications yet.'+(D.kycPassed?' Click “Add Application”.':' KYC must be Passed first.')+'</div>';return;}
+    baList.innerHTML='<table style="width:100%;border-collapse:collapse">'+
+      '<thead><tr>'+['Bank','Status','Ref','Requested','Sanctioned','Rate','Decision',''].map(h=>`<th style="text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);padding:10px 14px;border-bottom:1px solid var(--border)">${h}</th>`).join('')+'</tr></thead><tbody>'+
+      apps.map(a=>{const c=statusColor[a.status]||['#F1F5F9','#475569'];
+        return `<tr style="border-bottom:1px solid var(--border-soft)">
+        <td style="padding:11px 14px;font-weight:600">${esc(a.bank)}</td>
+        <td style="padding:11px 14px"><span class="d-badge" style="background:${c[0]};color:${c[1]}">${esc(a.status)}</span>${a.status==='Rejected'&&a.reject?`<div style="font-size:11px;color:var(--danger);margin-top:3px">${esc(a.reject)}</div>`:''}</td>
+        <td style="padding:11px 14px;font-size:12.5px">${esc(a.ref)||'—'}</td>
+        <td style="padding:11px 14px;font-size:12.5px">${money(a.req)}</td>
+        <td style="padding:11px 14px;font-size:12.5px">${money(a.sanc)}</td>
+        <td style="padding:11px 14px;font-size:12.5px">${a.rate?a.rate+'%':'—'}</td>
+        <td style="padding:11px 14px;font-size:12px;color:var(--text-2)">${esc(a.decision)||esc(a.submitted)||'—'}</td>
+        <td style="padding:11px 14px;text-align:right">${CAN_EDIT?`<button type="button" class="link-btn baEdit" data-id="${a.id}">Edit</button> <button type="button" class="link-btn baDel" data-id="${a.id}" style="color:var(--danger)">Delete</button>`:''}</td>
+      </tr>`;}).join('')+'</tbody></table>';
+    $$('.baEdit').forEach(b=>b.onclick=()=>openForm(apps.find(x=>x.id==b.dataset.id)));
+    $$('.baDel').forEach(b=>b.onclick=()=>{if(confirm('Remove this bank application?')){const f=document.createElement('form');f.method='post';f.action=`/leads/${L.id}/bank-app/${b.dataset.id}/delete/`;f.innerHTML=`<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">`;document.body.appendChild(f);f.submit();}});
+  }
+  const CAN_EDIT={{ can_edit|yesno:"true,false" }};
+  const form=$('#baForm'),addBtn=$('#baAddBtn');
+  if(CAN_EDIT&&form){
+    $('#baBank').innerHTML='<option value="">— Select bank —</option>'+(D.bankOptions||[]).map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join('');
+    $('#baStatus').innerHTML=(D.appStatuses||[]).map(s=>`<option value="${s}">${s}</option>`).join('');
+    function openForm(a){
+      $('#baAppId').value=a?a.id:'';$('#baBank').value=a?a.bankId:'';$('#baStatus').value=a?a.status:'Draft';
+      $('#baRef').value=a?a.ref:'';$('#baRate').value=a&&a.rate?a.rate:'';
+      $('#baReq').value=a?(a.req||''):(L.loan||'');$('#baSanc').value=a&&a.sanc?a.sanc:'';
+      $('#baReject').value=a?a.reject:'';$('#baNotes').value=a?a.notes:'';
+      form.style.display='block';form.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+    window.openForm=openForm;
+    if(addBtn)addBtn.onclick=()=>{if(!D.kycPassed){alert('KYC must be Passed before submitting to a bank.');return;}openForm(null);};
+    $('#baCancel').onclick=()=>form.style.display='none';
+  } else { window.openForm=()=>{}; }
+  render();
+})();
+
+/* ---------- follow-ups ---------- */
+(function(){
+  const list=$('#fuList'); if(!list) return;
+  const fus=D.followups||[];
+  $('#followCount').textContent=fus.length||'';
+  const icon={Call:'📞',WhatsApp:'💬',Email:'✉️',SMS:'📱',Meeting:'🤝',Other:'•'};
+  /* silence banner */
+  const sMap={warn:['#FEF3E2','#B45309','No activity for 3+ days — follow up soon'],
+              escalate:['#FEE2E2','#DC2626','Silent for 7+ days — escalate to ops/manager']};
+  if(sMap[D.silence]){const b=sMap[D.silence];$('#silenceSub').innerHTML=`<span style="display:inline-block;padding:2px 9px;border-radius:99px;font-weight:700;background:${b[0]};color:${b[1]}">${b[2]}</span>`;}
+  if(!fus.length){list.innerHTML='<div style="padding:34px;text-align:center;color:var(--text-3)">No follow-ups logged yet.</div>';}
+  else{list.innerHTML='<div style="padding:6px 0">'+fus.map(f=>`
+    <div style="display:flex;gap:12px;padding:12px 18px;border-bottom:1px solid var(--border-soft)">
+      <div style="font-size:18px">${icon[f.channel]||'•'}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:13px">${esc(f.channel)}${f.next?` · <span style="color:var(--primary)">Next: ${esc(f.next)}</span>`:''}</div>
+        ${f.note?`<div style="font-size:12.5px;color:var(--text-2);margin-top:2px">${esc(f.note)}</div>`:''}
+        <div style="font-size:11px;color:var(--text-3);margin-top:3px">${esc(f.by)} · ${esc(f.when)}</div>
+      </div>
+    </div>`).join('')+'</div>';}
+  const form=$('#fuForm'),addBtn=$('#fuAddBtn');
+  if(form){
+    $('#fuChannel').innerHTML=(D.channels||[]).map(c=>`<option value="${c}">${c}</option>`).join('');
+    addBtn.onclick=()=>{form.style.display='block';form.scrollIntoView({behavior:'smooth',block:'nearest'});};
+    $('#fuCancel').onclick=()=>form.style.display='none';
+  }
+})();
+
 /* ---------- finance ---------- */
-const comm=Math.round(L.loan*0.011);
+const commPct=+L.commRate||0;                 // real bank commission % from the bank master
+const comm=Math.round(L.loan*commPct/100);    // gross commission = loan × commission %
+const commNote=commPct?('Per '+L.bank+' agreement'):('Not set for '+L.bank);
 const FIN=[
   ['Property Value',fmtAED(L.propVal),'Purchase price',''],
   ['Loan Amount',fmtAED(L.loan),ltv+'% LTV',''],
-  ['Bank Commission %','1.1%','Per '+L.bank+' agreement',''],
+  ['Bank Commission %',commPct?commPct+'%':'—',commNote,''],
   ['Gross Revenue','AED '+comm.toLocaleString(),'Expected on disbursal',''],
   ['Advisor Commission','AED '+Math.round(comm*0.3).toLocaleString(),'30% split — '+L.advisor,''],
   ['Referral Commission','AED '+Math.round(comm*0.12).toLocaleString(),L.source==='Referral Partner'?'12% — partner payout':'Not applicable',''],
@@ -935,7 +1250,7 @@ const FIN=[
   ['Projected Revenue','AED '+Math.round(comm*1.04).toLocaleString(),'Incl. processing fee share',''],
   ['Net Revenue','AED '+Math.round(comm*0.53).toLocaleString(),'After splits & VAT','hl']
 ];
-$('#finGrid').innerHTML=FIN.map(f=>`<div class="fin-tile ${f[3]}"><label>${f[0]}</label><b>${f[1]}</b><span>${f[2]}</span></div>`).join('');
+{const _fg=$('#finGrid');if(_fg)_fg.innerHTML=FIN.map(f=>`<div class="fin-tile ${f[3]}"><label>${f[0]}</label><b>${f[1]}</b><span>${f[2]}</span></div>`).join('');}
 
 /* ---------- internal team discussion ---------- */
 const ROLE_STYLE={
@@ -968,6 +1283,33 @@ $('#rLoan').textContent=fmtAED(L.loan);
 $('#rLtv').textContent=ltv+'%';
 $('#rBank').textContent=submittedBanks.join(', ');
 $('#rSource').textContent=L.source;
+(function(){
+  const ee=$('#rElig');
+  if(ee){let lbl,col;
+    if(L.eligible===true){lbl='Eligible';col='var(--success)';}
+    else if(L.eligible===false){lbl='Review needed';col='var(--danger)';}
+    else{lbl='—';col='var(--text-3)';}
+    ee.innerHTML=`<span style="color:${col};font-weight:700">${lbl}</span>`+(L.eligibilityNote?`<div style="font-size:10.5px;color:var(--text-3);font-weight:400;margin-top:2px">${L.eligibilityNote}</div>`:'');}
+  const kc={Passed:'#15803D',Rejected:'#DC2626',Pending:'#9A6B14'}[L.kyc]||'#64748B';
+  const ke=$('#rKyc');
+  if(ke){let h=`<span style="color:${kc};font-weight:700">${L.kyc}</span>`;
+    {% if can_kyc %}if(L.kyc!=='Passed')h+=`<button type="button" data-kyc="pass" class="link-btn" style="color:var(--success)">Pass</button>`;
+    if(L.kyc!=='Rejected')h+=`<button type="button" data-kyc="reject" class="link-btn" style="color:var(--danger)">Reject</button>`;{% endif %}
+    ke.innerHTML=h;
+    ke.querySelectorAll('[data-kyc]').forEach(b=>b.addEventListener('click',()=>{
+      const f=document.createElement('form');f.method='post';f.action=`/leads/{{ lead.pk }}/kyc/`;
+      f.innerHTML=`<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"><input type="hidden" name="action" value="${b.dataset.kyc}">`;
+      document.body.appendChild(f);f.submit();}));}
+  const sc=L.score||0,col=sc>=60?'var(--success)':sc>=35?'var(--warning)':'var(--text-2)';
+  const el=$('#rScore');if(el){el.innerHTML=`<span style="color:${col}">★ ${sc}</span>`;}
+  const ce=$('#rConsent');if(ce)ce.textContent=L.dnc?'Do Not Contact':((L.consent&&L.consent.length)?L.consent.join(', '):'None');
+  if(ce&&L.dnc)ce.style.color='var(--danger)';
+  // do-not-contact enforcement: DNC blocks ALL channels; else disable a channel with no consent
+  const consent=L.consent||[];
+  function gate(sel,ch){document.querySelectorAll(sel).forEach(b=>{
+    if(L.dnc||!consent.includes(ch)){b.style.opacity='.45';b.style.pointerEvents='none';b.style.cursor='not-allowed';
+      b.title=L.dnc?'Customer is on Do-Not-Contact':('No '+ch+' consent from this customer');b.removeAttribute('href');}});}
+  gate('.js-call','Call');gate('.js-wa','WhatsApp');})();
 $('#rCreated').textContent=fmtD(L.created);
 $('#rDisbursedVal').textContent=L.disbursedAt||'—';
 (function(){
@@ -1069,6 +1411,7 @@ function toast(msg){
     row.innerHTML=`
       <input type="text" name="doc_name_${i}" placeholder="Document name (e.g. Passport)" style="flex:1;min-width:180px;padding:8px 11px;border:1px solid var(--border);border-radius:9px;font:inherit;font-size:12.5px">
       <select name="doc_type_${i}" style="padding:8px 10px;border:1px solid var(--border);border-radius:9px;font:inherit;font-size:12.5px;background:#fff">${DTYPES.map(t=>`<option>${t}</option>`).join('')}</select>
+      <input type="date" name="doc_expiry_${i}" title="Expiry date (optional)" style="padding:7px 9px;border:1px solid var(--border);border-radius:9px;font:inherit;font-size:12.5px;color:var(--text-2)">
       <label style="display:inline-flex;align-items:center;gap:6px;padding:8px 11px;border:1px solid var(--border);border-radius:9px;font-size:12.5px;color:var(--text-2);cursor:pointer;white-space:nowrap"><input type="file" name="doc_file_${i}" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg><span class="ddfn">Choose file</span></label>
       <button type="button" class="ddx" title="Remove" style="width:30px;height:30px;border:1px solid var(--border);border-radius:8px;color:var(--danger);background:none;cursor:pointer">×</button>`;
     list.appendChild(row);

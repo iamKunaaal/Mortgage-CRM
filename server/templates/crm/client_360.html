@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mortgage CRM — Client 360</title>
+<style>
+:root{--primary:#05448B;--blue-50:#F0F5FB;--bg:#F7F9FC;--text:#0F172A;--text-2:#64748B;--text-3:#94A3B8;
+--border:#E2E8F0;--border-soft:#EEF2F7;--success:#16A34A;--warning:#B45309;--danger:#DC2626;
+--r:14px;--sb:256px;--sh-xs:0 1px 2px rgba(15,23,42,.05);--font:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px}
+a{color:inherit;text-decoration:none}button{font-family:inherit;cursor:pointer;border:none;background:none}
+.app{display:flex;min-height:100vh}.main{flex:1;min-width:0;margin-left:var(--sb)}
+.sidebar{position:fixed;inset:0 auto 0 0;width:var(--sb);background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:60}
+.brand{display:flex;align-items:center;gap:11px;padding:20px 20px 16px}
+.brand-mark{width:36px;height:36px;border-radius:10px;background:var(--primary);display:grid;place-items:center;flex-shrink:0}
+.brand-name{font-weight:700;font-size:15px}.brand-sub{font-size:11px;color:var(--text-3)}
+.nav{flex:1;overflow-y:auto;padding:6px 12px 16px}
+.nav-label{font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--text-3);padding:18px 12px 7px}
+.nav-label:first-child{padding-top:8px}
+.nav-item{display:flex;align-items:center;gap:11px;padding:8.5px 11px;border-radius:9px;color:#3F4C61;font-size:13.5px;font-weight:500}
+.nav-item svg{width:17px;height:17px;color:var(--text-2)}.nav-item:hover{background:#F3F6FA;color:var(--text)}
+.nav-item.active{background:var(--blue-50);color:var(--primary);font-weight:600}.nav-item.active svg{color:var(--primary)}
+.nav-group{margin-bottom:1px}.nav-item .chev{margin-left:auto;width:13px;height:13px;color:var(--text-3)}
+.nav-sub{overflow:hidden;max-height:0;transition:max-height .3s;padding-left:4px;margin-left:18px;border-left:1px solid var(--border-soft)}
+.nav-group.open .nav-sub{max-height:320px}.nav-group.open .chev{transform:rotate(90deg)}
+.nav-sub .nav-item{padding:6.5px 11px 6.5px 22px;font-size:12.75px;color:var(--text-2)}
+.nav-count{margin-left:auto;font-size:11px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--blue-50);color:var(--primary)}
+.scrim{display:none}
+.content{padding:24px 28px 48px;max-width:1080px;margin:0 auto}
+.hero{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-xs);padding:20px 22px;margin-bottom:18px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.big-av{width:56px;height:56px;border-radius:14px;background:var(--primary);color:#fff;font-size:20px;font-weight:700;display:grid;place-items:center}
+.hero h1{font-size:20px;font-weight:700}
+.hero-meta{display:flex;gap:18px;flex-wrap:wrap;margin-top:6px;font-size:12.5px;color:var(--text-2)}
+.chips{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.chip{font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--blue-50);color:var(--primary)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:15px 16px;box-shadow:var(--sh-xs)}
+.kpi .lbl{font-size:11.5px;color:var(--text-2)}.kpi b{font-size:22px;font-weight:700;display:block;margin-top:3px}
+.panel{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-xs);margin-bottom:18px;overflow:hidden}
+.panel-h{padding:13px 18px;border-bottom:1px solid var(--border-soft);font-size:14px;font-weight:700}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);padding:9px 18px;background:#FAFCFE;border-bottom:1px solid var(--border)}
+td{padding:10px 18px;border-bottom:1px solid var(--border-soft);font-size:12.75px}
+tbody tr:last-child td{border-bottom:none}
+.empty{padding:28px;text-align:center;color:var(--text-3)}
+.badge{font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:99px;background:#F1F5F9;color:var(--text-2)}
+.lnk{color:var(--primary);font-weight:600}
+@media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}}
+
+/* --- sidebar footer (canonical) --- */
+.sidebar-foot{padding:12px;border-top:1px solid var(--border-soft,#EEF2F7);margin-top:auto}
+.user-card{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px}
+.user-card:hover{background:#F3F6FA}
+.user-card>span:last-child{display:flex;flex-direction:column;min-width:0}
+.user-card b{display:block;font-size:13px;font-weight:600;color:var(--text,#0F172A);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-card>span:last-child span{font-size:11.5px;color:var(--text-3,#94A3B8)}
+.avatar{width:32px;height:32px;border-radius:9px;background:var(--primary,#05448B);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="app">
+{% include 'crm/_sidebar.html' %}
+<div class="main">
+  <main class="content">
+    <div class="hero">
+      <div class="big-av">{{ client.name|slice:":2"|upper }}</div>
+      <div style="flex:1;min-width:200px">
+        <h1>{{ client.name }} <span style="font-size:12px;font-weight:600;color:var(--text-3)">· Client 360</span>
+          <span class="chip" style="background:#EDE9FE;color:#6D28D9">{{ client.lifecycle }}</span>
+          {% if client.dnc %}<span class="chip" style="background:#FEE2E2;color:var(--danger)">Do Not Contact</span>{% endif %}
+        </h1>
+        <div class="hero-meta">
+          <span>📱 {{ client.mobile }}</span><span>✉️ {{ client.email }}</span>
+          <span>🌍 {{ client.nationality }}</span><span>🏢 {{ client.employer }}</span>
+        </div>
+        <div class="chips">
+          {% for c in client.consent %}<span class="chip">Consent: {{ c }}</span>{% empty %}<span class="chip" style="background:#FEE2E2;color:var(--danger)">No consent</span>{% endfor %}
+        </div>
+      </div>
+      <a class="lnk" href="{% url 'lead_detail' base_pk %}">Open primary case →</a>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="lbl">Total Cases</div><b>{{ client.total_cases }}</b></div>
+      <div class="kpi"><div class="lbl">Disbursed</div><b>{{ client.disbursed_cases }}</b></div>
+      <div class="kpi"><div class="lbl">Total Loan (all cases)</div><b style="font-size:17px">{{ client.total_loan }}</b></div>
+      <div class="kpi"><div class="lbl">Documents on File</div><b>{{ documents|length }}</b></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h">Cases ({{ cases|length }})</div>
+      <table><thead><tr><th>Case</th><th>Stage</th><th>Loan</th><th>Bank</th><th>Advisor</th><th>KYC</th><th>Created</th></tr></thead>
+      <tbody>
+        {% for c in cases %}
+        <tr>
+          <td><a class="lnk" href="{% url 'lead_detail' c.pk %}">{{ c.case }}</a></td>
+          <td>{{ c.stage }}</td><td>{{ c.loan }}</td><td>{{ c.bank }}</td>
+          <td>{{ c.advisor }}</td><td><span class="badge">{{ c.kyc }}</span></td><td>{{ c.created }}</td>
+        </tr>
+        {% empty %}<tr><td colspan="7" class="empty">No cases.</td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h">Bank Applications ({{ apps|length }})</div>
+      <table><thead><tr><th>Bank</th><th>Status</th><th>Case</th><th>Sanctioned</th></tr></thead>
+      <tbody>
+        {% for a in apps %}<tr><td style="font-weight:600">{{ a.bank }}</td><td><span class="badge">{{ a.status }}</span></td><td>{{ a.case }}</td><td>{{ a.sanc }}</td></tr>
+        {% empty %}<tr><td colspan="4" class="empty">No bank applications.</td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h">Documents ({{ documents|length }})</div>
+      <table><thead><tr><th>Document</th><th>Type</th><th>Status</th><th>Case</th><th>Expiry</th></tr></thead>
+      <tbody>
+        {% for d in documents %}<tr><td style="font-weight:600">{{ d.name }}</td><td>{{ d.type }}</td><td><span class="badge">{{ d.status }}</span></td><td>{{ d.case }}</td><td>{{ d.expiry }}</td></tr>
+        {% empty %}<tr><td colspan="5" class="empty">No documents.</td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h">Recent Follow-ups ({{ followups|length }})</div>
+      <table><thead><tr><th>Channel</th><th>Note</th><th>Case</th><th>By</th><th>When</th></tr></thead>
+      <tbody>
+        {% for f in followups %}<tr><td>{{ f.channel }}</td><td>{{ f.note|default:"—" }}</td><td>{{ f.case }}</td><td>{{ f.by }}</td><td>{{ f.when }}</td></tr>
+        {% empty %}<tr><td colspan="5" class="empty">No follow-ups logged.</td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+
+    {% if client_id %}
+    <div class="panel">
+      <div class="panel-h">Consent &amp; Communications</div>
+      <div style="padding:16px 18px">
+        {% if can_edit %}
+        <form method="post" action="{% url 'consent_update' client_id %}" style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">{% csrf_token %}
+          <input type="hidden" name="next" value="/clients/{{ base_pk }}/">
+          <label style="font-size:12.5px;display:flex;align-items:center;gap:5px"><input type="checkbox" name="c_Call">Call</label>
+          <label style="font-size:12.5px;display:flex;align-items:center;gap:5px"><input type="checkbox" name="c_SMS">SMS</label>
+          <label style="font-size:12.5px;display:flex;align-items:center;gap:5px"><input type="checkbox" name="c_WhatsApp">WhatsApp</label>
+          <label style="font-size:12.5px;display:flex;align-items:center;gap:5px"><input type="checkbox" name="c_Email">Email</label>
+          <label style="font-size:12px">Source
+            <select name="source" style="padding:6px;border:1px solid var(--border);border-radius:8px"><option>Verbal</option><option>Web form</option><option>Manual</option><option>Import</option></select>
+          </label>
+          <button type="submit" class="lnk" style="padding:7px 13px;border:1px solid var(--border);border-radius:8px">Save consent</button>
+        </form>
+        <form method="post" action="{% url 'consent_update' client_id %}" style="margin-bottom:14px">{% csrf_token %}
+          <input type="hidden" name="next" value="/clients/{{ base_pk }}/">
+          <label style="font-size:12.5px;display:flex;align-items:center;gap:6px;color:var(--danger)"><input type="checkbox" name="dnc" {% if client.dnc %}checked{% endif %} onchange="this.form.submit()"> Do Not Contact (global override — blocks all channels)</label>
+        </form>
+        {% endif %}
+        <table><thead><tr><th>Channel</th><th>Status</th><th>Source</th><th>Captured By</th><th>When</th></tr></thead>
+        <tbody>
+          {% for r in consent_log %}
+          <tr><td style="font-weight:600">{{ r.channel }}</td><td>{% if r.granted %}<span class="chip" style="background:#EAF7EF;color:var(--success)">Granted</span>{% else %}<span class="chip" style="background:#FEE2E2;color:var(--danger)">Withdrawn</span>{% endif %}</td><td>{{ r.source }}</td><td>{{ r.by }}</td><td>{{ r.when }}</td></tr>
+          {% empty %}<tr><td colspan="5" class="empty">No consent events recorded.</td></tr>{% endfor %}
+        </tbody></table>
+      </div>
+    </div>
+    {% endif %}
+  </main>
+</div>
+</div>
+<script>document.querySelectorAll('.nav-group>[data-toggle]').forEach(b=>b.addEventListener('click',()=>b.parentElement.classList.toggle('open')));</script>
+</body>
+</html>

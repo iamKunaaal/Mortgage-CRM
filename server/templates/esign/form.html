@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mortgage CRM — New Signature Request</title>
+<style>
+:root{--primary:#05448B;--primary-h:#0B5AB3;--blue-50:#F0F5FB;--bg:#F7F9FC;--card:#fff;
+--text:#0F172A;--text-2:#64748B;--text-3:#94A3B8;--border:#E2E8F0;--border-soft:#EEF2F7;
+--success:#16A34A;--warning:#B45309;--danger:#DC2626;--r:14px;--sb:256px;
+--sh-xs:0 1px 2px rgba(15,23,42,.05);--sh-md:0 4px 12px -2px rgba(15,23,42,.08);
+--font:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px}
+a{color:inherit;text-decoration:none}button{font-family:inherit;cursor:pointer;border:none;background:none}
+.app{display:flex;min-height:100vh}.main{flex:1;min-width:0;margin-left:var(--sb)}
+.sidebar{position:fixed;inset:0 auto 0 0;width:var(--sb);background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:60}
+.brand{display:flex;align-items:center;gap:11px;padding:20px 20px 16px}
+.brand-mark{width:36px;height:36px;border-radius:10px;background:var(--primary);display:grid;place-items:center;flex-shrink:0}
+.brand-name{font-weight:700;font-size:15px}.brand-sub{font-size:11px;color:var(--text-3)}
+.nav{flex:1;overflow-y:auto;padding:6px 12px 16px}
+.nav-label{font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--text-3);padding:18px 12px 7px}
+.nav-label:first-child{padding-top:8px}
+.nav-item{display:flex;align-items:center;gap:11px;padding:8.5px 11px;border-radius:9px;color:#3F4C61;font-size:13.5px;font-weight:500}
+.nav-item svg{width:17px;height:17px;color:var(--text-2)}.nav-item:hover{background:#F3F6FA;color:var(--text)}
+.nav-item.active{background:var(--blue-50);color:var(--primary);font-weight:600}.nav-item.active svg{color:var(--primary)}
+.nav-group{margin-bottom:1px}.nav-item .chev{margin-left:auto;width:13px;height:13px;color:var(--text-3)}
+.nav-sub{overflow:hidden;max-height:0;transition:max-height .3s;padding-left:4px;margin-left:18px;border-left:1px solid var(--border-soft)}
+.nav-group.open .nav-sub{max-height:320px}.nav-group.open .chev{transform:rotate(90deg)}
+.nav-sub .nav-item{padding:6.5px 11px 6.5px 22px;font-size:12.75px;color:var(--text-2)}
+.nav-count{margin-left:auto;font-size:11px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--blue-50);color:var(--primary)}
+.sidebar-foot{padding:12px;border-top:1px solid var(--border-soft)}
+.user-card{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px}
+.user-card:hover{background:#F3F6FA}.user-card b{display:block;font-size:13px;font-weight:600}.user-card span{font-size:11.5px;color:var(--text-3)}
+.avatar{width:32px;height:32px;border-radius:9px;background:var(--primary);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center}
+.scrim{display:none}
+.content{padding:24px 28px 48px;max-width:1160px;margin:0 auto}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.page-head h1{font-size:21px;font-weight:700}.page-head p{color:var(--text-2);font-size:13.5px;margin-top:3px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:9px;font-size:13px;font-weight:600}
+.btn svg{width:15px;height:15px}.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-h)}
+.btn-ghost{background:#fff;border:1px solid var(--border);color:var(--text-2)}.btn-ghost:hover{background:var(--bg)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+@media(max-width:720px){.kpis{grid-template-columns:1fr 1fr}}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:15px 17px;box-shadow:var(--sh-xs)}
+.kpi label{font-size:11.5px;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+.kpi b{display:block;font-size:24px;font-weight:800;margin-top:4px}
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-xs);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);background:#FAFCFE;padding:11px 16px;border-bottom:1px solid var(--border)}
+td{padding:12px 16px;border-bottom:1px solid var(--border-soft);font-size:13px}
+tbody tr:last-child td{border-bottom:none}
+.st{font-size:11.5px;font-weight:600;padding:2px 10px;border-radius:99px}
+.st.Draft{background:#EEF2F7;color:#64748B}.st.Awaiting{background:#FBF0DA;color:#9A6B14}.st.Signed{background:#E6F1EB;color:#15803D}
+.empty{text-align:center;padding:50px;color:var(--text-3)}
+.lnk{color:var(--primary);font-weight:600}
+.del{color:var(--danger);font-weight:600;background:none;border:none;cursor:pointer;font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="app">
+{% include 'crm/_sidebar.html' %}
+<div class="main">
+  <main class="content">
+    <a class="lnk" href="{% url 'esign_list' %}" style="font-size:13px">← Back to e-Sign</a>
+    <div class="page-head" style="margin-top:10px"><div><h1>New Signature Request</h1><p>Upload a document and enter who needs to sign it.</p></div></div>
+    {% if messages %}{% for m in messages %}<div style="margin-bottom:12px;padding:10px 14px;border-radius:9px;font-size:13px;font-weight:600;background:{% if 'error' in m.tags %}#FEECEC;color:#B42318{% else %}#EAF7EF;color:#15803D{% endif %}">{{ m }}</div>{% endfor %}{% endif %}
+    <div class="card" style="max-width:620px;padding:24px">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:5px">Document Title *</label>
+        <input type="text" name="title" required placeholder="e.g. Channel Partner Agreement" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:9px;font:inherit;font-size:13.5px;margin-bottom:16px">
+        <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:5px">Document (PDF / image) *</label>
+        <input type="file" name="document" accept=".pdf,.jpg,.jpeg,.png" required style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:9px;font:inherit;font-size:13px;margin-bottom:16px">
+        <div style="display:flex;gap:10px">
+          <a class="btn btn-ghost" href="{% url 'esign_list' %}">Cancel</a>
+          <button class="btn btn-primary" type="submit">Upload & Place Signature</button>
+        </div>
+      </form>
+    </div>
+  </main>
+</div>
+</div>
+<script>document.querySelectorAll('.nav-group>[data-toggle]').forEach(b=>b.addEventListener('click',()=>b.parentElement.classList.toggle('open')));</script>
+</body>
+</html>

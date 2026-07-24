@@ -403,7 +403,12 @@ canvas{display:block;width:100%}
     {% csrf_token %}
     <div class="modal-body">
       <div class="fld full"><label>Bank Name</label><input type="text" id="fName" name="name" placeholder="e.g. Dubai Islamic Bank"></div>
-      <div class="fld full"><label>Bank Type</label><select id="fType" name="bank_type"><option>Conventional</option><option>Islamic</option></select></div>
+      <div class="fld"><label>Bank Type</label><select id="fType" name="bank_type"><option>Conventional</option><option>Islamic</option></select></div>
+      {% if can_finance %}<div class="fld"><label>Commission %</label><input type="number" step="0.01" id="fComm" name="commission_rate" placeholder="e.g. 0.75"></div>{% endif %}
+      <div class="fld"><label>Contact Person</label><input type="text" id="fContact" name="contact_person"></div>
+      <div class="fld"><label>Phone</label><input type="text" id="fPhone" name="phone"></div>
+      <div class="fld"><label>Email</label><input type="email" id="fEmail" name="email"></div>
+      <div class="fld full"><label>Notes</label><input type="text" id="fNotes" name="notes"></div>
     </div>
     <div class="modal-foot">
       <button type="button" class="btn btn-ghost" id="mCancel">Cancel</button>
@@ -419,7 +424,8 @@ canvas{display:block;width:100%}
 <script>
 const D=JSON.parse(document.getElementById('page-data').textContent);
 /* per-row metadata (same order as D.banks — both built from the same sorted list) */
-const BANK_META=[{% for r in banks %}{pk:{{ r.obj.pk }},comm:"{{ r.obj.commission_rate|default_if_none:''|escapejs }}",email:"{{ r.obj.email|default:''|escapejs }}",phone:"{{ r.obj.phone|default:''|escapejs }}",notes:"{{ r.obj.notes|default:''|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}];
+const BANK_META=[{% for r in banks %}{pk:{{ r.obj.pk }},comm:"{% if can_finance %}{{ r.obj.commission_rate|default_if_none:''|escapejs }}{% endif %}",email:"{{ r.obj.email|default:''|escapejs }}",phone:"{{ r.obj.phone|default:''|escapejs }}",notes:"{{ r.obj.notes|default:''|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}];
+const CAN_FINANCE={{ can_finance|yesno:"true,false" }};
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 
 /* sidebar */
@@ -642,6 +648,11 @@ function openModal(bank){
   $('#modalSub').textContent=bank?'Update lending partner details':'Register a new lending partner';
   $('#fName').value=bank?bank.name:'';$('#fName').readOnly=false;
   $('#fType').value=bank?bank.type:'Conventional';
+  if($('#fComm'))$('#fComm').value=bank&&bank.comm?bank.comm:'';
+  $('#fContact').value=bank&&bank.contact?bank.contact:'';
+  $('#fPhone').value=bank&&bank.phone?bank.phone:'';
+  $('#fEmail').value=bank&&bank.email?bank.email:'';
+  $('#fNotes').value=bank&&bank.notes?bank.notes:'';
   $('#bankModal').classList.add('show');
 }
 function closeModal(){$('#bankModal').classList.remove('show');editing=null;}

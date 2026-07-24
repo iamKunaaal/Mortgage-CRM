@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mortgage CRM — Prepare Document</title>
+<style>
+:root{--primary:#05448B;--primary-h:#0B5AB3;--blue-50:#F0F5FB;--bg:#F7F9FC;--card:#fff;
+--text:#0F172A;--text-2:#64748B;--text-3:#94A3B8;--border:#E2E8F0;--border-soft:#EEF2F7;
+--success:#16A34A;--warning:#B45309;--danger:#DC2626;--r:14px;--sb:256px;
+--sh-xs:0 1px 2px rgba(15,23,42,.05);--sh-md:0 4px 12px -2px rgba(15,23,42,.08);
+--font:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px}
+a{color:inherit;text-decoration:none}button{font-family:inherit;cursor:pointer;border:none;background:none}
+.app{display:flex;min-height:100vh}.main{flex:1;min-width:0;margin-left:var(--sb)}
+.sidebar{position:fixed;inset:0 auto 0 0;width:var(--sb);background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:60}
+.brand{display:flex;align-items:center;gap:11px;padding:20px 20px 16px}
+.brand-mark{width:36px;height:36px;border-radius:10px;background:var(--primary);display:grid;place-items:center;flex-shrink:0}
+.brand-name{font-weight:700;font-size:15px}.brand-sub{font-size:11px;color:var(--text-3)}
+.nav{flex:1;overflow-y:auto;padding:6px 12px 16px}
+.nav-label{font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--text-3);padding:18px 12px 7px}
+.nav-label:first-child{padding-top:8px}
+.nav-item{display:flex;align-items:center;gap:11px;padding:8.5px 11px;border-radius:9px;color:#3F4C61;font-size:13.5px;font-weight:500}
+.nav-item svg{width:17px;height:17px;color:var(--text-2)}.nav-item:hover{background:#F3F6FA;color:var(--text)}
+.nav-item.active{background:var(--blue-50);color:var(--primary);font-weight:600}.nav-item.active svg{color:var(--primary)}
+.nav-group{margin-bottom:1px}.nav-item .chev{margin-left:auto;width:13px;height:13px;color:var(--text-3)}
+.nav-sub{overflow:hidden;max-height:0;transition:max-height .3s;padding-left:4px;margin-left:18px;border-left:1px solid var(--border-soft)}
+.nav-group.open .nav-sub{max-height:320px}.nav-group.open .chev{transform:rotate(90deg)}
+.nav-sub .nav-item{padding:6.5px 11px 6.5px 22px;font-size:12.75px;color:var(--text-2)}
+.nav-count{margin-left:auto;font-size:11px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--blue-50);color:var(--primary)}
+.sidebar-foot{padding:12px;border-top:1px solid var(--border-soft)}
+.user-card{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px}
+.user-card:hover{background:#F3F6FA}.user-card b{display:block;font-size:13px;font-weight:600}.user-card span{font-size:11.5px;color:var(--text-3)}
+.avatar{width:32px;height:32px;border-radius:9px;background:var(--primary);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center}
+.scrim{display:none}
+.content{padding:24px 28px 48px;max-width:1160px;margin:0 auto}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.page-head h1{font-size:21px;font-weight:700}.page-head p{color:var(--text-2);font-size:13.5px;margin-top:3px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:9px;font-size:13px;font-weight:600}
+.btn svg{width:15px;height:15px}.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-h)}
+.btn-ghost{background:#fff;border:1px solid var(--border);color:var(--text-2)}.btn-ghost:hover{background:var(--bg)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+@media(max-width:720px){.kpis{grid-template-columns:1fr 1fr}}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:15px 17px;box-shadow:var(--sh-xs)}
+.kpi label{font-size:11.5px;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+.kpi b{display:block;font-size:24px;font-weight:800;margin-top:4px}
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-xs);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);background:#FAFCFE;padding:11px 16px;border-bottom:1px solid var(--border)}
+td{padding:12px 16px;border-bottom:1px solid var(--border-soft);font-size:13px}
+tbody tr:last-child td{border-bottom:none}
+.st{font-size:11.5px;font-weight:600;padding:2px 10px;border-radius:99px}
+.st.Draft{background:#EEF2F7;color:#64748B}.st.Awaiting{background:#FBF0DA;color:#9A6B14}.st.Signed{background:#E6F1EB;color:#15803D}
+.empty{text-align:center;padding:50px;color:var(--text-3)}
+.lnk{color:var(--primary);font-weight:600}
+.del{color:var(--danger);font-weight:600;background:none;border:none;cursor:pointer;font-size:12.5px}
+</style>
+<style>
+.esign-wrap{display:grid;grid-template-columns:260px 1fr;gap:0;height:calc(100vh - 0px)}
+.esign-side{background:#fff;border-right:1px solid var(--border);padding:18px;overflow:auto}
+.esign-side h4{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin:14px 0 8px}
+.field-chip{display:flex;align-items:center;gap:9px;padding:11px 13px;border:1px solid var(--border);border-radius:10px;background:var(--blue-50);color:var(--primary);font-size:13px;font-weight:600;cursor:grab;margin-bottom:8px;user-select:none}
+.field-chip svg{width:15px;height:15px}
+.esign-canvas{background:#525659;overflow:auto;padding:24px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.pg{position:relative;box-shadow:0 4px 18px rgba(0,0,0,.35);background:#fff}
+.pg canvas{display:block}
+.sigbox{position:absolute;border:1.5px solid var(--primary);background:rgba(5,68,139,.10);border-radius:5px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-family:'Segoe Script',cursive;font-size:15px;cursor:move;z-index:5}
+.sigbox .rm{position:absolute;top:-9px;right:-9px;width:18px;height:18px;border-radius:50%;background:var(--danger);color:#fff;font-size:11px;display:grid;place-items:center;cursor:pointer;border:2px solid #fff}
+.guide{position:absolute;z-index:8;pointer-events:none;display:none}
+.guide.v{top:0;bottom:0;border-left:1px dashed #F59E0B}
+.guide.h{left:0;right:0;border-top:1px dashed #F59E0B}
+.sig-ghost{position:fixed;z-index:9999;pointer-events:none;border:1.5px solid var(--primary);background:rgba(5,68,139,.14);border-radius:5px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-family:'Segoe Script',cursive;font-size:15px}
+.inp{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;font:inherit;font-size:13px;margin-bottom:10px;box-sizing:border-box}
+.hint{font-size:11.5px;color:var(--text-3);margin-bottom:10px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="app">
+{% include 'crm/_sidebar.html' %}
+<div class="main">
+  <div style="padding:14px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;background:#fff">
+    <a class="lnk" href="{% url 'esign_list' %}" style="font-size:13px">← e-Sign</a>
+    <b style="font-size:15px">{{ sr.title }}</b>
+    <span class="st {{ sr.status }}" style="margin-left:auto">{{ sr.get_status_display }}</span>
+  </div>
+  {% if messages %}{% for m in messages %}<div style="margin:12px 22px;padding:11px 14px;border-radius:9px;font-size:12.5px;font-weight:600;background:{% if 'error' in m.tags %}#FEECEC;color:#B42318{% else %}#EAF7EF;color:#15803D{% endif %};word-break:break-all">{{ m }}</div>{% endfor %}{% endif %}
+  <div class="esign-wrap">
+    <div class="esign-side">
+      <h4>Fields</h4>
+      <div class="field-chip" id="addSig"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Signature</div>
+      <p class="hint"><b>Drag</b> the Signature field onto the document (any page). Add as many as you need. Drag a box to reposition, × to remove.</p>
+      <h4>Send to signer</h4>
+      <form method="post" action="{% url 'esign_send' sr.pk %}" id="sendForm">
+        {% csrf_token %}
+        <input class="inp" type="text" name="signer_name" placeholder="Signer name" value="{{ sr.signer_name }}">
+        <input class="inp" type="email" name="signer_email" placeholder="Customer email (optional)" value="{{ sr.signer_email }}">
+        <input type="hidden" name="fields" id="fFields">
+        <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center">Send for Signature</button>
+      </form>
+      <p class="hint" style="margin-top:8px">Email sending isn't enabled yet — after sending, a shareable signing link appears above to give the customer.</p>
+    </div>
+    <div class="esign-canvas" id="canvas"></div>
+  </div>
+</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+document.querySelectorAll('.nav-group>[data-toggle]').forEach(b=>b.addEventListener('click',()=>b.parentElement.classList.toggle('open')));
+const DOC_URL="{{ sr.document.url }}", PW=18, PH=6;
+const EXISTING={{ sr.fields|default:'[]'|safe }};
+const isPDF=DOC_URL.toLowerCase().split('?')[0].endsWith('.pdf');
+const canvas=document.getElementById('canvas');
+const boxes=[];   // {el, pgEl}
+
+function ensureGuides(pgEl){
+  if(pgEl._g)return;
+  const g={vL:'guide v',vR:'guide v',hT:'guide h',hB:'guide h'},els={};
+  for(const k in g){const d=document.createElement('div');d.className=g[k];pgEl.appendChild(d);els[k]=d;}
+  pgEl._g=els;
+}
+/* dashed guides at the box's four edges, spanning the page (Odoo-style) */
+function showGuides(pgEl,x,y,w,h){
+  ensureGuides(pgEl);const g=pgEl._g;
+  g.vL.style.left=x+'%';g.vR.style.left=(x+w)+'%';
+  g.hT.style.top=y+'%';g.hB.style.top=(y+h)+'%';
+  for(const k in g)g[k].style.display='block';
+}
+function hideGuides(pgEl){if(pgEl._g)for(const k in pgEl._g)pgEl._g[k].style.display='none';}
+
+/* create a movable signature box inside a page at given % position */
+function makeBox(pgEl,leftPct,topPct){
+  const b=document.createElement('div');b.className='sigbox';
+  b.style.left=leftPct+'%';b.style.top=topPct+'%';b.style.width=PW+'%';b.style.height=PH+'%';
+  b.innerHTML='sign here<span class="rm">×</span>';
+  pgEl.appendChild(b);
+  const entry={el:b,pgEl};boxes.push(entry);
+  b.querySelector('.rm').addEventListener('click',ev=>{ev.stopPropagation();b.remove();boxes.splice(boxes.indexOf(entry),1);});
+  let dragging=false,ox=0,oy=0;
+  b.addEventListener('mousedown',ev=>{if(ev.target.classList.contains('rm'))return;dragging=true;
+    const r=b.getBoundingClientRect();ox=ev.clientX-r.left;oy=ev.clientY-r.top;ev.preventDefault();});
+  window.addEventListener('mousemove',ev=>{if(!dragging)return;const r=pgEl.getBoundingClientRect();
+    let x=(ev.clientX-r.left-ox)/r.width*100, y=(ev.clientY-r.top-oy)/r.height*100;
+    x=Math.max(0,Math.min(x,100-PW));y=Math.max(0,Math.min(y,100-PH));
+    if(Math.abs(x+PW/2-50)<2)x=50-PW/2;   // snap to page centre
+    b.style.left=x+'%';b.style.top=y+'%';
+    showGuides(pgEl,x,y,PW,PH);});
+  window.addEventListener('mouseup',()=>{if(dragging)hideGuides(pgEl);dragging=false;});
+  return entry;
+}
+
+/* ---- pointer-based drag: a live ghost follows the cursor; drops exactly where released ---- */
+const chip=document.getElementById('addSig');
+let ghost=null;
+function pageUnder(cx,cy){
+  return Array.from(document.querySelectorAll('.pg')).find(pg=>{
+    const r=pg.getBoundingClientRect();
+    return cx>=r.left&&cx<=r.right&&cy>=r.top&&cy<=r.bottom;});
+}
+function ghostSize(pg){const r=pg.getBoundingClientRect();return {w:r.width*PW/100,h:r.height*PH/100};}
+chip.addEventListener('mousedown',e=>{
+  e.preventDefault();
+  ghost=document.createElement('div');ghost.className='sig-ghost';ghost.textContent='sign here';
+  document.body.appendChild(ghost);
+  moveGhost(e.clientX,e.clientY);
+  window.addEventListener('mousemove',onGhostMove);
+  window.addEventListener('mouseup',onGhostDrop);
+});
+function moveGhost(cx,cy){
+  const pg=pageUnder(cx,cy);
+  let w=110,h=36;
+  if(pg){const s=ghostSize(pg);w=s.w;h=s.h;
+    const r=pg.getBoundingClientRect();
+    let x=(cx-r.left)/r.width*100-PW/2, y=(cy-r.top)/r.height*100-PH/2;
+    x=Math.max(0,Math.min(x,100-PW));y=Math.max(0,Math.min(y,100-PH));
+    if(Math.abs(x+PW/2-50)<2)x=50-PW/2;
+    showGuides(pg,x,y,PW,PH);pg._lastX=x;pg._lastY=y;
+    document.querySelectorAll('.pg').forEach(o=>{if(o!==pg)hideGuides(o);});
+  }else{document.querySelectorAll('.pg').forEach(hideGuides);}
+  ghost.style.width=w+'px';ghost.style.height=h+'px';
+  ghost.style.left=(cx-w/2)+'px';ghost.style.top=(cy-h/2)+'px';
+}
+function onGhostMove(e){moveGhost(e.clientX,e.clientY);}
+function onGhostDrop(e){
+  window.removeEventListener('mousemove',onGhostMove);
+  window.removeEventListener('mouseup',onGhostDrop);
+  const pg=pageUnder(e.clientX,e.clientY);
+  if(ghost){ghost.remove();ghost=null;}
+  document.querySelectorAll('.pg').forEach(hideGuides);
+  if(pg){makeBox(pg, pg._lastX!=null?pg._lastX:40, pg._lastY!=null?pg._lastY:20);}
+}
+function enableDrop(pgEl){/* pages are targets via pageUnder(); nothing to bind */}
+
+const pageEls={};
+function renderExisting(){
+  EXISTING.forEach(f=>{const pg=pageEls[f.page];if(pg)makeBox(pg,f.x,f.y);});
+}
+if(isPDF){
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  pdfjsLib.getDocument(DOC_URL).promise.then(async pdf=>{
+    const dpr=window.devicePixelRatio||1, SCALE=1.4;
+    for(let n=1;n<=pdf.numPages;n++){
+      const page=await pdf.getPage(n);const vp=page.getViewport({scale:SCALE});
+      const pg=document.createElement('div');pg.className='pg';pg.dataset.page=n;
+      pg.style.width=vp.width+'px';pg.style.height=vp.height+'px';
+      const cv=document.createElement('canvas');
+      cv.width=Math.floor(vp.width*dpr);cv.height=Math.floor(vp.height*dpr);
+      cv.style.width=vp.width+'px';cv.style.height=vp.height+'px';
+      const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);
+      pg.appendChild(cv);canvas.appendChild(pg);pageEls[n]=pg;enableDrop(pg);
+      await page.render({canvasContext:ctx,viewport:vp}).promise;
+    }
+    renderExisting();
+  }).catch(()=>{canvas.innerHTML='<p style="color:#fff">Could not render PDF preview.</p>';});
+}else{
+  const pg=document.createElement('div');pg.className='pg';pg.dataset.page=1;
+  const im=new Image();im.src=DOC_URL;im.style.display='block';im.style.maxWidth='820px';
+  im.onload=()=>{pg.style.width=im.width+'px';pg.style.height=im.height+'px';pageEls[1]=pg;renderExisting();};
+  pg.appendChild(im);canvas.appendChild(pg);enableDrop(pg);
+}
+
+document.getElementById('sendForm').addEventListener('submit',e=>{
+  if(!boxes.length){e.preventDefault();alert('Drag the Signature field onto the document first.');return;}
+  const data=boxes.map(en=>({page:+en.pgEl.dataset.page,x:parseFloat(en.el.style.left),
+                             y:parseFloat(en.el.style.top),w:PW,h:PH}));
+  document.getElementById('fFields').value=JSON.stringify(data);
+});
+</script>
+</body>
+</html>

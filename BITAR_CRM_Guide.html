@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bitar CRM — Simple Guide (what it does & where)</title>
+<style>
+:root{--p:#05448B;--bg:#F7F9FC;--card:#fff;--text:#0F172A;--t2:#475569;--t3:#94A3B8;--b:#E2E8F0;--ok:#16A34A;--warn:#B45309;--font:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.55;font-size:15px}
+.wrap{max-width:900px;margin:0 auto;padding:32px 22px 80px}
+h1{font-size:27px;font-weight:800;letter-spacing:-.02em}
+.lead{color:var(--t2);font-size:15px;margin:8px 0 6px}
+.legend{background:#EEF4FB;border:1px solid #D6E4F5;border-radius:12px;padding:12px 16px;font-size:13.5px;color:var(--t2);margin:16px 0 28px}
+h2{font-size:20px;font-weight:700;margin:34px 0 4px;padding-top:14px;border-top:2px solid var(--b)}
+.sub{color:var(--t3);font-size:13px;margin-bottom:14px}
+.mod{background:#fff;border:1px solid var(--b);border-radius:14px;padding:16px 18px;margin-bottom:14px;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+.mod h3{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.tag{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:#DCFCE7;color:#14532D}
+.tag.new{background:#DBEAFE;color:#1E3A8A}
+.mod p{font-size:14px;color:var(--t2);margin-top:6px}
+.mod .where{font-size:13px;margin-top:8px;color:var(--p);font-weight:600}
+.mod .old{font-size:12.5px;color:var(--t3);margin-top:4px}
+.step{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #EEF2F7}
+.step:last-child{border-bottom:none}
+.num{width:28px;height:28px;border-radius:8px;background:var(--p);color:#fff;font-weight:700;display:grid;place-items:center;flex-shrink:0;font-size:13px}
+.step b{font-size:14.5px}.step .who{font-size:12px;color:var(--warn);font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.step p{font-size:13.5px;color:var(--t2);margin-top:2px}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--b);border-radius:12px;overflow:hidden;margin-top:8px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--t3);background:#FAFCFE;padding:9px 12px;border-bottom:1px solid var(--b)}
+td{padding:9px 12px;border-bottom:1px solid #EEF2F7;font-size:13px;vertical-align:top}tr:last-child td{border-bottom:none}
+code{background:#0F172A;color:#E2E8F0;padding:1px 6px;border-radius:5px;font-size:12.5px}
+.tip{background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px;padding:12px 15px;font-size:13.5px;color:#9A3412;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Bitar CRM — The Simple Guide</h1>
+  <p class="lead">Ye guide plain language me batati hai ki CRM me kya-kya hai, har cheez <b>kya kaam karti hai</b> aur <b>kahaan milti hai</b> — taaki aap khud samjho aur client ko confidently dikha sako. Technical terms nahi, sirf "kya hota hai".</p>
+  <div class="legend">🟢 <b>Old</b> = purane (v0) system me bhi tha &nbsp;·&nbsp; 🔵 <b>New</b> = ab naya add hua. Har module me "Kahaan" me menu ka naam diya hai.</div>
+
+  <h2>Part A — Ek line me: CRM kya karta hai</h2>
+  <div class="sub">Client ko yeh ek sentence bolna</div>
+  <div class="mod">
+    <p style="font-size:15px;color:var(--text)"><b>"Ek customer ki mortgage enquiry aane se lekar loan disburse hone tak — har lead, document, bank application, approval aur paisa — ek jagah track hota hai, har role ko sirf apna kaam dikhta hai, aur har step ka record (audit) rehta hai."</b></p>
+  </div>
+
+  <h2>Part B — Ek lead ki poori journey (kaun kya karta hai)</h2>
+  <div class="sub">Yehi flow client ko demo karna — start se end tak</div>
+  <div class="mod">
+    <div class="step"><div class="num">1</div><div><span class="who">Advisor</span><br><b>Lead banata hai</b><p>Create Lead wizard bharta hai — customer ki detail + consent (call/WhatsApp allowed hai ya nahi). System duplicate check karta hai.</p></div></div>
+    <div class="step"><div class="num">2</div><div><span class="who">System (automatic)</span><br><b>Lead ko advisor ko de deta hai + score deta hai</b><p>Rules ke hisaab se advisor assign, ek score (0–100), aur turant bata deta hai loan eligible hai ya nahi (green/red). Ek 15-min "pehli call" ka timer chalu.</p></div></div>
+    <div class="step"><div class="num">3</div><div><span class="who">Advisor</span><br><b>Customer ko call/follow-up karta hai</b><p>"My Day" screen pe sabse zaroori kaam upar. Har baat ka follow-up log + agli call ki date. Abhi ready nahi toh "Nurture" pe daal do — baad me apne aap yaad dila dega.</p></div></div>
+    <div class="step"><div class="num">4</div><div><span class="who">Advisor → Ops</span><br><b>Documents collect + verify</b><p>Advisor documents upload karta hai. Ops verify/reject (reason ke saath) karta hai. Reject hua toh advisor ko dobara maangne ka task automatic.</p></div></div>
+    <div class="step"><div class="num">5</div><div><span class="who">Compliance Officer</span><br><b>KYC + screening</b><p>Compliance sanctions/PEP check karta hai, risk rating deta hai, aur <b>KYC pass</b> karta hai. Jab tak ye na ho, file bank tak nahi jaa sakti. (Advisor khud KYC pass nahi kar sakta.)</p></div></div>
+    <div class="step"><div class="num">6</div><div><span class="who">Advisor → Ops Manager</span><br><b>File Operations ko handover</b><p>Sab complete ho toh advisor "Submit to Operations" dabata hai. Adhura ho toh system rok deta hai. Ops Manager ek Ops Executive ko file deta hai.</p></div></div>
+    <div class="step"><div class="num">7</div><div><span class="who">Ops Executive</span><br><b>Bank(s) me submit + track</b><p>Ek ya kai bank me parallel apply. Bank ki query, follow-up, pre-approval, valuation, FOL terms — sab record. Chup-chaap 3–7 din ho gaye toh alert.</p></div></div>
+    <div class="step"><div class="num">8</div><div><span class="who">Ops → Accounts / CEO</span><br><b>Disbursement + revenue</b><p>Loan disburse → case complete, customer "Active Client" ban gaya, revenue CEO ke pipeline sheet me. Fixed-rate 120 din pehle khatam ho raha ho toh naya buyout lead apne aap.</p></div></div>
+  </div>
+
+  <h2>Part C — Module by module (kya = kaam, kahaan = menu)</h2>
+  <div class="sub">Client ko screen dikhate waqt yeh reference</div>
+
+  <div class="mod"><h3>Leads &amp; Pipeline <span class="tag">Old+</span></h3>
+    <p>Leads list, pipeline kanban, sources, lost leads. Naya: eligibility check, lead score, consent, duplicate block, CSV import (preview + undo), saved filter views.</p>
+    <div class="where">Kahaan: Sidebar → Leads</div>
+    <div class="old">Pehle: sirf flat list. Ab: score/SLA/eligibility/consent sab lead ke andar.</div>
+  </div>
+
+  <div class="mod"><h3>My Day <span class="tag new">New</span></h3>
+    <p>Advisor/Ops ki daily to-do — SLA-risk leads upar, phir overdue tasks, phir follow-ups. "Aaj kya karna hai" ek jagah.</p>
+    <div class="where">Kahaan: Sidebar → My Day</div>
+  </div>
+
+  <div class="mod"><h3>Client 360 <span class="tag new">New</span></h3>
+    <p>Ek customer ke saare cases, documents, bank applications, follow-ups aur consent history ek page pe. Customer permanent record ban gaya (pehle sirf leads the).</p>
+    <div class="where">Kahaan: koi lead kholo → "Client 360" button</div>
+  </div>
+
+  <div class="mod"><h3>Documents <span class="tag">Old+</span></h3>
+    <p>Upload, verify/reject (reason), versioning, expiry alerts. Reject → advisor ko auto task.</p>
+    <div class="where">Kahaan: Sidebar → Documents</div>
+  </div>
+
+  <div class="mod"><h3>Compliance &amp; KYC <span class="tag new">New</span></h3>
+    <p>KYC gate (sirf Compliance pass kare), sanctions/PEP screening, risk rating + EDD, confidential suspicion flags, data-subject requests. Ek dedicated Compliance workspace.</p>
+    <div class="where">Kahaan: Sidebar → Compliance (Compliance/CEO login)</div>
+  </div>
+
+  <div class="mod"><h3>Operations <span class="tag new">New</span></h3>
+    <p>Handover gate (adhura file rok deta hai), Ops queues (New Handovers, In Verification, Awaiting Bank, Query, Valuation, FOL, Transfer, On-Hold), dual ownership, silence escalation, structured FOL/valuation/pre-approval.</p>
+    <div class="where">Kahaan: Sidebar → Ops Queue · lead ke andar "Application" tab</div>
+  </div>
+
+  <div class="mod"><h3>Bank Applications <span class="tag new">New</span></h3>
+    <p>Ek case ko kai banks me parallel bhejo, har ek ka status/rate/query alag track.</p>
+    <div class="where">Kahaan: lead → Application tab → Bank Applications</div>
+  </div>
+
+  <div class="mod"><h3>Approvals <span class="tag new">New</span></h3>
+    <p>Jahaan approval chahiye (jaise advisor ne partner banaya) — request approver ke paas jaata hai. Jo request kare woh khud approve nahi kar sakta.</p>
+    <div class="where">Kahaan: Sidebar → Approvals</div>
+  </div>
+
+  <div class="mod"><h3>Reports &amp; Dashboards <span class="tag">Old+</span></h3>
+    <p>Har role ka apna dashboard. Report catalogue (9 reports) — number pe click karke underlying list, CSV export (watermark + logged).</p>
+    <div class="where">Kahaan: Sidebar → Dashboard / Reports</div>
+  </div>
+
+  <div class="mod"><h3>Audit Log <span class="tag new">New</span></h3>
+    <p>Har change, login, export, config — record. Koi delete nahi kar sakta (tamper-proof). Regulator/auditor ke liye.</p>
+    <div class="where">Kahaan: Sidebar → Audit Log (CEO/Compliance/Auditor)</div>
+  </div>
+
+  <div class="mod"><h3>Recycle Bin <span class="tag">Old+</span></h3>
+    <p>Lead/task/document delete karo toh permanently nahi jaate — Recycle Bin se restore ho sakte hain.</p>
+    <div class="where">Kahaan: Sidebar → Recycle Bin</div>
+  </div>
+
+  <div class="mod"><h3>Settings <span class="tag">Old+</span></h3>
+    <p>Company profile, stages, sources, doc types, <b>Business Rules</b> (eligibility caps + SLA + working-hours calendar), case-number format, web-to-lead API. Sab bina developer ke change ho.</p>
+    <div class="where">Kahaan: Sidebar → Settings · Assignment Rules</div>
+  </div>
+
+  <h2>Part D — Kaun kya dekhta hai (roles)</h2>
+  <table>
+    <thead><tr><th>Role</th><th>Kya karta hai</th><th>Data</th></tr></thead>
+    <tbody>
+      <tr><td><b>CEO</b></td><td>Sab kuch, final approvals, sirf yehi delete kare</td><td>Sab</td></tr>
+      <tr><td><b>Sales Director</b></td><td>Poori sales team, assign, targets, approvals</td><td>Sab leads</td></tr>
+      <tr><td><b>Team Leader</b></td><td>Apni team ke cases, coaching</td><td>Team ke</td></tr>
+      <tr><td><b>Advisor</b></td><td>Apne leads — client relationship, docs, follow-up</td><td>Sirf apne</td></tr>
+      <tr><td><b>Ops Manager / Executive</b></td><td>Processing — banks, valuation, transfer</td><td>Saare cases</td></tr>
+      <tr><td><b>Compliance</b></td><td>KYC, screening, audit</td><td>View + KYC</td></tr>
+      <tr><td><b>Accountant</b></td><td>Revenue, disbursals, invoices</td><td>Finance</td></tr>
+      <tr><td><b>HR / Marketing / Auditor</b></td><td>Staff / campaigns / read-only audit</td><td>Apna area</td></tr>
+    </tbody>
+  </table>
+
+  <div class="tip">💡 <b>Client demo ka sabse aasaan tareeka:</b> ek nayi lead banao (advisor) → Compliance se KYC pass → advisor se "Submit to Operations" → Ops se bank apply → Disbursed → CEO dashboard me revenue. Isi 5-step me poora system dikh jaata hai.</div>
+
+  <p style="text-align:center;color:var(--t3);font-size:12px;margin-top:30px">Bitar Mortgage CRM — internal guide · Phase 1</p>
+</div>
+</body>
+</html>

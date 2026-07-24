@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mortgage CRM — Notifications</title>
+<style>
+:root{--primary:#05448B;--primary-h:#0B5AB3;--blue-50:#F0F5FB;--bg:#F7F9FC;--card:#fff;
+--text:#0F172A;--text-2:#64748B;--text-3:#94A3B8;--border:#E2E8F0;--border-soft:#EEF2F7;--r:14px;--sb:256px;
+--sh-xs:0 1px 2px rgba(15,23,42,.05);--font:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px}
+a{color:inherit;text-decoration:none}button{font-family:inherit;cursor:pointer;border:none;background:none}
+.app{display:flex;min-height:100vh}.main{flex:1;min-width:0;margin-left:var(--sb)}
+.sidebar{position:fixed;inset:0 auto 0 0;width:var(--sb);background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:60}
+.brand{display:flex;align-items:center;gap:11px;padding:20px 20px 16px}
+.brand-mark{width:36px;height:36px;border-radius:10px;background:var(--primary);display:grid;place-items:center;flex-shrink:0}
+.brand-name{font-weight:700;font-size:15px}.brand-sub{font-size:11px;color:var(--text-3)}
+.nav{flex:1;overflow-y:auto;padding:6px 12px 16px}
+.nav-label{font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--text-3);padding:18px 12px 7px}
+.nav-label:first-child{padding-top:8px}
+.nav-item{display:flex;align-items:center;gap:11px;padding:8.5px 11px;border-radius:9px;color:#3F4C61;font-size:13.5px;font-weight:500}
+.nav-item svg{width:17px;height:17px;color:var(--text-2)}.nav-item:hover{background:#F3F6FA;color:var(--text)}
+.nav-item.active{background:var(--blue-50);color:var(--primary);font-weight:600}.nav-item.active svg{color:var(--primary)}
+.nav-group{margin-bottom:1px}.nav-item .chev{margin-left:auto;width:13px;height:13px;color:var(--text-3)}
+.nav-sub{overflow:hidden;max-height:0;transition:max-height .3s;padding-left:4px;margin-left:18px;border-left:1px solid var(--border-soft)}
+.nav-group.open .nav-sub{max-height:320px}.nav-group.open .chev{transform:rotate(90deg)}
+.nav-sub .nav-item{padding:6.5px 11px 6.5px 22px;font-size:12.75px;color:var(--text-2)}
+.nav-count{margin-left:auto;font-size:11px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--blue-50);color:var(--primary)}
+.sidebar-foot{padding:12px;border-top:1px solid var(--border-soft)}
+.user-card{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px}
+.user-card:hover{background:#F3F6FA}.user-card b{display:block;font-size:13px;font-weight:600}.user-card span{font-size:11.5px;color:var(--text-3)}
+.avatar{width:32px;height:32px;border-radius:9px;background:var(--primary);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center}
+.scrim{display:none}
+.content{padding:24px 28px 48px;max-width:760px;margin:0 auto}
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.page-head h1{font-size:21px;font-weight:700}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:9px;font-size:13px;font-weight:600;background:#fff;border:1px solid var(--border);color:var(--text-2)}
+.btn:hover{background:var(--bg)}
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-xs);overflow:hidden}
+.n-item{display:flex;align-items:flex-start;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border-soft)}
+.n-item:last-child{border-bottom:none}
+.n-item.unread{background:#EAF3FF;border-left:3px solid var(--primary)}
+.n-dot{width:9px;height:9px;border-radius:50%;background:var(--primary);margin-top:6px;flex-shrink:0;box-shadow:0 0 0 3px rgba(5,68,139,.15)}
+.n-dot.read{background:#CBD5E1;box-shadow:none}
+.n-item p{font-size:13.5px;color:var(--text);font-weight:500}
+.n-item.unread p{font-weight:700}
+.n-item time{font-size:11.5px;color:var(--text-3)}
+.empty{text-align:center;padding:56px;color:var(--text-3)}
+</style>
+</head>
+<body>
+<div class="app">
+{% include 'crm/_sidebar.html' %}
+<div class="main">
+  <main class="content">
+    <div class="page-head">
+      <h1>Notifications</h1>
+      {% if unread %}<form method="post" action="{% url 'notifications_read_all' %}">{% csrf_token %}<button class="btn" type="submit">Mark all read</button></form>{% endif %}
+    </div>
+    <div class="card">
+      {% for n in notes %}
+      <a class="n-item {% if not n.read %}unread{% endif %}" href="{% url 'notification_open' n.pk %}">
+        <span class="n-dot {% if n.read %}read{% endif %}"></span>
+        <div style="flex:1"><p>{{ n.text }}</p><time>{{ n.created_at|date:"d M Y · h:i A" }}</time></div>
+      </a>
+      {% empty %}
+      <div class="empty">🔔 No notifications yet.</div>
+      {% endfor %}
+    </div>
+  </main>
+</div>
+</div>
+<script>document.querySelectorAll('.nav-group>[data-toggle]').forEach(b=>b.addEventListener('click',()=>b.parentElement.classList.toggle('open')));</script>
+</body>
+</html>
