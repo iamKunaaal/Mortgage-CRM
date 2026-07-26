@@ -108,7 +108,7 @@ class CaseSequence(models.Model):
 
 
 def generate_case_number():
-    """Sequential per-year case number, e.g. BHITR-2026-0007.
+    """Sequential per-year case number, e.g. BITAR-2026-0007.
     Concurrency-safe: the counter row is locked for the duration of the transaction."""
     from django.utils import timezone as _tz
     from django.db import transaction
@@ -119,7 +119,7 @@ def generate_case_number():
         counter.save(update_fields=['last_seq'])
         seq = counter.last_seq
     # configurable prefix/padding (PRD §22.5) — Settings > numbering
-    prefix, pad = 'BHITR', 4
+    prefix, pad = 'BITAR', 4
     try:
         row = AppSetting.objects.filter(key='numbering').first()
         if row and isinstance(row.value, dict):
@@ -640,6 +640,7 @@ class CallLog(models.Model):
     note = models.TextField(blank=True)
     lead = models.ForeignKey(Lead, on_delete=models.SET_NULL, null=True, blank=True,
                              related_name='call_logs')
+    follow_up_date = models.DateField(null=True, blank=True)   # next follow-up from this call (PRD)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

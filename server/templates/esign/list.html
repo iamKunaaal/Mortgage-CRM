@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mortgage CRM — e-Sign</title>
+<title>BITAR CRM — e-Sign</title>
 <style>
 :root{--primary:#05448B;--primary-h:#0B5AB3;--blue-50:#F0F5FB;--bg:#F7F9FC;--card:#fff;
 --text:#0F172A;--text-2:#64748B;--text-3:#94A3B8;--border:#E2E8F0;--border-soft:#EEF2F7;
@@ -84,7 +84,7 @@ tbody tr:last-child td{border-bottom:none}
             <td><span class="st {{ d.status }}">{{ d.get_status_display }}</span></td>
             <td style="color:var(--text-2)">{{ d.created_at|date:"d M Y" }}</td>
             <td style="text-align:right;white-space:nowrap">
-              {% if d.status == 'Signed' %}<a class="lnk" href="{% url 'esign_download' d.token %}">Download</a>
+              {% if d.status == 'Signed' %}<a class="lnk" href="{% url 'esign_view' d.pk %}">View signature</a>&nbsp;·&nbsp;<a class="lnk" href="{% url 'esign_download' d.token %}">Download</a>
               {% else %}<a class="lnk" href="{% url 'esign_prepare' d.pk %}">Prepare / Send</a>{% endif %}
               &nbsp;·&nbsp;
               <form method="post" action="{% url 'esign_delete' d.pk %}" style="display:inline" onsubmit="return confirm('Delete this signature request?')">{% csrf_token %}<button class="del" type="submit">Delete</button></form>

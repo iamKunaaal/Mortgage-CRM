@@ -794,6 +794,15 @@ def advisor_detail(request, pk):
     })
 
 
+def _decline_not_interested(lead, actor):
+    """Move a lead to Lost (Declined) and remove it from the advisor's queue (client req #3)."""
+    lead.stage = 'Declined'
+    lead.lost_reason = lead.lost_reason or 'Not Interested'
+    lead.advisor = None          # advisor no longer has access
+    lead.save(update_fields=['stage', 'lost_reason', 'advisor'])
+    _audit(lead, actor, 'Marked Not Interested', 'Stage', '', 'Declined (Not Interested)')
+
+
 @login_required
 @require_POST
 def log_call(request):
@@ -802,10 +811,11 @@ def log_call(request):
     phone = request.POST.get('phone', '').strip()
     outcome = request.POST.get('outcome', 'No Answer').strip()
     note = request.POST.get('note', '').strip()
+    follow = _parse_date(request.POST.get('follow_up_date', ''))
     if outcome not in dict(CallLog.OUTCOME):
         outcome = 'No Answer'
     call = CallLog.objects.create(advisor=request.user, name=name, phone=phone,
-                                  outcome=outcome, note=note)
+                                  outcome=outcome, note=note, follow_up_date=follow)
     # if the prospect is interested, optionally spin up a real lead from the same call
     if request.POST.get('create_lead') and name and perm.can_create(request.user, 'Leads'):
         lead = Lead.objects.create(name=name, mobile=phone, advisor=request.user,
@@ -816,7 +826,88 @@ def log_call(request):
         messages.success(request, f'Call logged and lead "{name}" created.')
     else:
         messages.success(request, 'Call logged.')
+    # a follow-up date creates a reminder task (#4)
+    if follow and call.lead:
+        _auto_task(call.lead, f'Call follow-up — {name or call.lead.name}', 'Customer Call',
+                   days=max(0, (follow - timezone.localdate()).days), actor=request.user)
+    elif follow:
+        Task.objects.create(title=f'Call follow-up — {name or phone}', assignee=request.user,
+                            task_type='Customer Call', priority='Medium', status='Pending',
+                            due_date=follow)
+    # Not Interested → decline the linked lead + drop from advisor (#3)
+    if outcome == 'Not Interested' and call.lead:
+        _decline_not_interested(call.lead, request.user)
+        messages.info(request, f'Lead "{call.lead.name}" moved to Lost Leads (Not Interested).')
     return redirect('dashboard')
+
+
+@login_required
+def call_history(request):
+    """Call log — filterable by date range, with edit/delete (client req #2).
+    Own-scope users see only their own; managers/CEO can view any advisor via ?advisor=<pk>."""
+    own = perm.is_own_scope(request.user, 'Leads')
+    view_adv = request.user
+    if not own and request.GET.get('advisor'):
+        view_adv = get_object_or_404(User, pk=request.GET['advisor'])
+    calls = CallLog.objects.filter(advisor=view_adv).select_related('lead')
+    frm = _parse_date(request.GET.get('from', ''))
+    to = _parse_date(request.GET.get('to', ''))
+    if frm:
+        calls = calls.filter(created_at__date__gte=frm)
+    if to:
+        calls = calls.filter(created_at__date__lte=to)
+    rows = [{
+        'id': c.pk, 'name': c.name or '—', 'phone': c.phone or '—', 'outcome': c.outcome,
+        'note': c.note or '', 'lead_pk': c.lead_id,
+        'follow': c.follow_up_date.strftime('%Y-%m-%d') if c.follow_up_date else '',
+        'when': timezone.localtime(c.created_at).strftime('%d %b %Y · %I:%M %p'),
+    } for c in calls[:500]]
+    return render(request, 'crm/call_history.html', {
+        'rows': rows, 'outcomes': [o[0] for o in CallLog.OUTCOME],
+        'frm': request.GET.get('from', ''), 'to': request.GET.get('to', ''),
+        'viewing_other': view_adv != request.user,
+        'viewing_name': view_adv.get_full_name() or view_adv.username,
+        'active_nav': 'Advisors' if view_adv != request.user else 'Dashboard'})
+
+
+@login_required
+@require_POST
+def call_edit(request, pk):
+    # own-scope users may edit only their own calls; managers/CEO may edit any
+    if perm.is_own_scope(request.user, 'Leads'):
+        call = get_object_or_404(CallLog, pk=pk, advisor=request.user)
+    else:
+        call = get_object_or_404(CallLog, pk=pk)
+    if request.POST.get('delete'):
+        adv=call.advisor_id
+        call.delete()
+        messages.success(request, 'Call log entry deleted.')
+        return redirect(request.META.get('HTTP_REFERER') or 'call_history')
+    outcome = request.POST.get('outcome', call.outcome)
+    if outcome in dict(CallLog.OUTCOME):
+        call.outcome = outcome
+    call.name = request.POST.get('name', call.name).strip()
+    call.phone = request.POST.get('phone', call.phone).strip()
+    call.note = request.POST.get('note', call.note).strip()
+    call.follow_up_date = _parse_date(request.POST.get('follow_up_date', '')) or None
+    call.save()
+    # if edited to Not Interested and linked to a lead, decline it
+    if call.outcome == 'Not Interested' and call.lead_id:
+        _decline_not_interested(call.lead, request.user)
+    messages.success(request, 'Call log updated.')
+    return redirect(request.META.get('HTTP_REFERER') or 'call_history')
+
+
+@login_required
+@perm.module_required('Leads', 'edit')
+@require_POST
+def lead_not_interested(request, pk):
+    """Mark a lead Not Interested from its detail page → Lost Leads + advisor loses access (#3)."""
+    lead = get_object_or_404(visible_leads(request.user), pk=pk)
+    lead.lost_reason = request.POST.get('reason', '').strip() or 'Not Interested'
+    _decline_not_interested(lead, request.user)
+    messages.success(request, f'"{lead.name}" marked Not Interested and moved to Lost Leads.')
+    return redirect('lead_list')
 
 
 # ---------- leads ----------
@@ -890,8 +981,13 @@ def lead_list(request):
     ]
     customized_ids = list(Customization.objects.values_list('lead_id', flat=True)) \
         if request.user.role == Role.CEO else []
+    can_assign = perm.can_edit(request.user, 'Leads') and not own_scope
+    assign_advisors = ([{'id': u.pk, 'name': u.get_full_name() or u.username}
+                        for u in User.objects.filter(role=Role.ADVISOR, status='Active')]
+                       if can_assign else [])
     data = {'leads': leads_js, 'advisors': advisors, 'banks': banks, 'sources': SOURCES,
-            'me': me, 'kpis': kpis_js, 'customizedIds': customized_ids, 'ownScope': own_scope}
+            'me': me, 'kpis': kpis_js, 'customizedIds': customized_ids, 'ownScope': own_scope,
+            'assignAdvisors': assign_advisors, 'canAssign': can_assign}
     from .models import SavedView
     saved_views = SavedView.objects.filter(module='Leads').filter(Q(user=request.user) | Q(shared=True))
     return render(request, 'crm/lead_list.html', {
@@ -2854,6 +2950,7 @@ def settings_view(request):
 @perm.module_required('Leads', 'edit')
 def lead_edit(request, pk):
     lead = get_object_or_404(visible_leads(request.user), pk=pk)
+    orig_advisor_id = lead.advisor_id   # preserve — advisors don't see the Assign field
     # snapshot BEFORE the form binds/validates (is_valid() mutates the instance)
     before = _snapshot(lead)
     is_draft = bool(request.POST.get('draft'))
@@ -2863,6 +2960,9 @@ def lead_edit(request, pk):
             f.required = False
     if request.method == 'POST' and form.is_valid():
         lead = form.save(commit=False)
+        # own-scope users (advisors) can't reassign — keep the existing owner instead of nulling it
+        if perm.is_own_scope(request.user, 'Leads') and not lead.advisor_id:
+            lead.advisor_id = orig_advisor_id or request.user.id
         lead.is_draft = is_draft   # normal save finalizes; Save Draft keeps it a draft
         _coerce_lead_numbers(lead)
         lead.score = lead.compute_score(); _compute_eligibility(lead)

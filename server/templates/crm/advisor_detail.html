@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mortgage CRM — Advisor Scorecard</title>
+<title>BITAR CRM — Advisor Scorecard</title>
 <style>
 :root{
   --primary:#05448B;--primary-h:#0B5AB3;--blue-2:#2D6CB0;--blue-3:#7FA6CF;
@@ -131,7 +131,7 @@ tbody tr:last-child td{border-bottom:none}
 
     <div class="sec-h">Calls</div>
     <div class="card">
-      <div class="card-h"><h3>Call Log</h3><div class="sub" id="callSub"></div></div>
+      <div class="card-h" style="display:flex;align-items:center;justify-content:space-between"><div><h3>Call Log</h3><div class="sub" id="callSub"></div></div><a href="/calls/history/?advisor={{ advisor.pk }}" style="color:var(--primary);font-weight:600;font-size:13px">Open with filters →</a></div>
       <div class="twrap"><table>
         <thead><tr><th>Date</th><th>Name</th><th>Phone</th><th>Outcome</th><th>Note</th></tr></thead>
         <tbody id="callBody"></tbody>

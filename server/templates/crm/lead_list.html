@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mortgage CRM — All Leads</title>
+<title>BITAR CRM — All Leads</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -418,12 +418,15 @@ input[type=checkbox].cbx{width:15px;height:15px;accent-color:var(--primary);curs
 <div class="bulk-bar" id="bulkBar">
   <span class="cnt"><b id="bulkCnt">0</b> selected</span>
   <button id="bulkStageBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20v-6M6 20V10M18 20V4"/></svg>Change Stage</button>
+  <button id="bulkAssignBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Assign</button>
   {% if can_delete %}<button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>Delete</button>{% endif %}
   <button class="bulk-x" id="bulkClear" aria-label="Clear selection"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
 </div>
 
 <!-- BULK STAGE MENU -->
 <div class="menu-pop" id="bulkStageMenu" style="max-height:300px;overflow-y:auto"></div>
+<!-- BULK ASSIGN MENU -->
+<div class="menu-pop" id="bulkAssignMenu" style="max-height:300px;overflow-y:auto"></div>
 
 <!-- ROW MENU (single floating instance) -->
 <div class="menu-pop" id="rowMenu">
@@ -814,6 +817,30 @@ $$('#bulkBar > button:not(.bulk-x)').forEach(b=>b.addEventListener('click',()=>{
     const b=e.target.closest('button[data-stage]');if(!b)return;
     menu.classList.remove('show');
     bulkSubmit('stage',{stage:b.dataset.stage});
+  });
+  document.addEventListener('click',()=>menu.classList.remove('show'));
+})();
+/* bulk assign advisor */
+(function(){
+  const btn=$('#bulkAssignBtn'),menu=$('#bulkAssignMenu');
+  if(!btn)return;
+  const advs=(D.assignAdvisors||[]);
+  if(!D.canAssign||!advs.length){btn.style.display='none';return;}
+  menu.innerHTML=advs.map(a=>`<button data-adv="${a.id}"><i style="width:7px;height:7px;border-radius:50%;background:var(--primary);flex-shrink:0"></i>${a.name}</button>`).join('')
+    +`<button data-adv="" style="color:var(--text-3)">— Unassign —</button>`;
+  btn.addEventListener('click',e=>{
+    e.stopPropagation();
+    if(!state.selected.size)return;
+    const r=e.currentTarget.getBoundingClientRect();
+    menu.classList.add('show');
+    const mh=menu.offsetHeight||300;
+    menu.style.left=Math.max(8,r.left)+'px';
+    menu.style.top=Math.max(8,r.top-mh-8)+'px';
+  });
+  menu.addEventListener('click',e=>{
+    const b=e.target.closest('button[data-adv]');if(!b)return;
+    menu.classList.remove('show');
+    bulkSubmit('assign',{advisor:b.dataset.adv});
   });
   document.addEventListener('click',()=>menu.classList.remove('show'));
 })();
