@@ -20,7 +20,10 @@ def _client_ip(request):
 @login_required
 def esign_list(request):
     docs = SignRequest.objects.all()
-    if not request.user.is_superuser:
+    # management sees all requests; everyone else sees only the ones they created
+    mgmt = request.user.is_superuser or getattr(request.user, 'role', '') in (
+        'CEO', 'SUPER_ADMIN', 'OPS_MANAGER', 'SALES_DIRECTOR')
+    if not mgmt:
         docs = docs.filter(created_by=request.user)
     kpis = {'total': docs.count(),
             'awaiting': docs.filter(status='Awaiting').count(),
@@ -102,7 +105,9 @@ def esign_public_submit(request, token):
 def esign_view(request, pk):
     """Show a signature request in the dashboard — including the customer's captured signature."""
     sr = get_object_or_404(SignRequest, pk=pk)
-    if not request.user.is_superuser and sr.created_by_id != request.user.id:
+    mgmt = request.user.is_superuser or getattr(request.user, 'role', '') in (
+        'CEO', 'SUPER_ADMIN', 'OPS_MANAGER', 'SALES_DIRECTOR')
+    if not mgmt and sr.created_by_id != request.user.id:
         raise Http404()
     return render(request, 'esign/view.html', {'sr': sr, 'active_nav': 'eSign'})
 
