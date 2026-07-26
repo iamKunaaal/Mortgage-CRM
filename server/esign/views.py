@@ -156,8 +156,12 @@ def esign_download(request, token):
         writer.write(out)
         out.seek(0)
         data = out.read()
-    except Exception:
-        # malformed/unsupported PDF — fall back to the original file
+    except Exception as ex:
+        # surface the real cause in server logs, then fall back to the original file
+        import traceback
+        traceback.print_exc()
+        if request.GET.get('debug'):
+            return HttpResponse(f'e-Sign stamp error: {ex!r}', content_type='text/plain', status=500)
         return redirect(sr.document.url)
 
     resp = HttpResponse(data, content_type='application/pdf')
