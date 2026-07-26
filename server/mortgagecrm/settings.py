@@ -81,7 +81,9 @@ STORAGES = {
 }
 
 MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# On Railway the container disk is ephemeral (wiped on every deploy) — point MEDIA_ROOT at a
+# mounted persistent Volume via the MEDIA_ROOT env var so uploaded PDFs/documents survive.
+MEDIA_ROOT = os.environ.get('MEDIA_ROOT') or (BASE_DIR / 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
