@@ -643,7 +643,8 @@ def management_dashboard(request):
     if unassigned:
         actions.append({'t': f'{unassigned} unassigned lead(s)',
                         'p': 'New leads waiting for advisor assignment.', 'due': 'Assign today', 'dc': 'var(--primary)'})
-    overdue = Task.objects.filter(is_deleted=False).exclude(status='Completed').filter(due_date__lt=date.today()).count()
+    overdue = Task.objects.filter(is_deleted=False, due_date__isnull=False).exclude(
+        status__in=['Completed', 'Cancelled']).filter(due_date__lt=date.today()).count()
     if overdue:
         actions.append({'t': f'{overdue} overdue task(s)',
                         'p': 'Tasks past their due date.', 'due': 'Overdue', 'dc': 'var(--warning)'})
@@ -1019,6 +1020,10 @@ def _save_lead_documents(request, lead, uploader):
             idx = None
         else:
             continue
+        # auto-name from the uploaded file when no name was typed
+        if not dname:
+            import os as _os
+            dname = _os.path.splitext(_os.path.basename(f.name))[0][:160] or dtype
         exp = _parse_date(request.POST.get('doc_expiry_' + idx)) if idx is not None else None
         doc = Document.objects.create(lead=lead, name=dname, doc_type=dtype, file=f,
                                       status='Pending Review', uploaded_by=uploader, expiry_date=exp)
@@ -1029,8 +1034,12 @@ def _save_lead_documents(request, lead, uploader):
 
 
 def _supersede_previous(new_doc):
-    """When a doc of the same type is re-uploaded, keep the old one as a prior version."""
-    prev = (Document.objects.filter(lead=new_doc.lead, doc_type=new_doc.doc_type, is_current=True)
+    """Version only a TRUE re-upload of the same document (same name + type). Different files
+    uploaded together stay as independent documents — they never replace each other."""
+    if not new_doc.name:
+        return
+    prev = (Document.objects.filter(lead=new_doc.lead, name__iexact=new_doc.name,
+                                    doc_type=new_doc.doc_type, is_current=True, is_deleted=False)
             .exclude(pk=new_doc.pk).order_by('-version').first())
     if prev:
         new_doc.version = prev.version + 1
@@ -1522,6 +1531,8 @@ def lead_detail(request, pk):
         'email': lead.email or '—', 'nat': lead.nationality or '—',
         'propVal': float(lead.property_value or 0), 'loan': float(lead.loan_amount or 0),
         'ltv': lead.ltv or 0, 'advisor': advisor_name, 'bank': bank_name or '—',
+        'referralPartner': lead.referral_partner.name if lead.referral_partner else '',
+        'referralPartnerId': lead.referral_partner_id or '',
         'source': lead.source, 'stage': lead.stage, 'priority': lead.priority,
         'created': lead.created_at.isoformat(), 'act': lead.updated_at.strftime('%d %b %Y'),
         'initials': lead.initials,
@@ -2671,8 +2682,9 @@ def lost_leads(request):
 @perm.module_required('Tasks')
 def overdue_tasks(request):
     today = timezone.localdate()
-    tasks_qs = visible_tasks(request.user).exclude(status='Completed').filter(
-        due_date__lt=today).order_by('due_date')
+    tasks_qs = visible_tasks(request.user).exclude(
+        status__in=['Completed', 'Cancelled']).filter(
+        due_date__isnull=False, due_date__lt=today).order_by('due_date')
 
     TYPE_COLORS = {
         'Documents': '#05448B', 'Bank Follow-up': '#2D6CB0', 'Valuation': '#BE185D',
@@ -3310,9 +3322,9 @@ def advisor_list(request):
 @perm.module_required('Referral Partners')
 def partner_list(request):
     partners = ReferralPartner.objects.order_by('-created_at')
-    # CEO sees every partner; all other roles see only the ones they added.
-    if request.user.role != Role.CEO:
-        partners = partners.filter(created_by=request.user)
+    # CEO/management see every partner; others see partners they created OR are assigned to.
+    if request.user.role not in (Role.CEO, Role.SUPER_ADMIN, Role.SALES_DIRECTOR):
+        partners = partners.filter(Q(created_by=request.user) | Q(advisor=request.user))
     kpis = {
         'total': partners.count(),
         'active': partners.filter(status='Active').count(),
@@ -3326,6 +3338,9 @@ def partner_list(request):
         return ''.join(w[0] for w in (n or '').replace('&amp;', '').split() if w)[:2].upper()
 
     partners_js = [{
+        'pk': p.pk,
+        'advisor': (p.advisor.get_full_name() or p.advisor.username) if p.advisor else '',
+        'advisorId': p.advisor_id or '',
         'name': p.name,
         'company': p.company or p.name,
         'org': p.organization or '',
@@ -3378,7 +3393,11 @@ def partner_list(request):
          'svg': '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/>'},
     ]
 
-    data = {'partners': partners_js, 'kpis': kpis_js, 'pt_types': pt_types}
+    can_assign = perm.can_edit(request.user, 'Referral Partners')
+    advisors_js = [{'id': u.pk, 'name': u.get_full_name() or u.username}
+                   for u in User.objects.filter(role=Role.ADVISOR, status='Active')] if can_assign else []
+    data = {'partners': partners_js, 'kpis': kpis_js, 'pt_types': pt_types,
+            'advisors': advisors_js, 'canAssign': can_assign}
     return render(request, 'crm/partner_list.html', {
         'partners': partners, 'kpis': kpis, 'data': data,
         'can_create': perm.can_create(request.user, 'Referral Partners'),
@@ -3468,6 +3487,27 @@ def partner_edit(request, pk):
         return redirect('partner_list')
     return render(request, 'crm/partner_form.html', {
         'form': form, 'active_nav': 'Referral Partners', 'editing': True, 'partner': partner})
+
+
+@login_required
+@perm.module_required('Referral Partners', 'edit')
+@require_POST
+def partner_assign(request, pk):
+    """Assign a referral partner to an advisor (relationship owner)."""
+    partner = get_object_or_404(ReferralPartner, pk=pk)
+    uid = request.POST.get('advisor', '')
+    if uid:
+        adv = get_object_or_404(User, pk=uid, role=Role.ADVISOR)
+        partner.advisor = adv
+        partner.save(update_fields=['advisor'])
+        _notify(adv, f'You were assigned referral partner "{partner.name}"',
+                '/partners/', 'partner', actor=request.user)
+        messages.success(request, f'"{partner.name}" assigned to {adv.get_full_name() or adv.username}.')
+    else:
+        partner.advisor = None
+        partner.save(update_fields=['advisor'])
+        messages.success(request, f'"{partner.name}" unassigned.')
+    return redirect('partner_list')
 
 
 @login_required

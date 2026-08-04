@@ -81,6 +81,9 @@ class ReferralPartner(models.Model):
     kyc_doc = models.FileField(upload_to='partners/', blank=True, null=True)
     created_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True,
                                    related_name='referral_partners')
+    advisor = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='assigned_partners',
+                                limit_choices_to={'role': 'ADVISOR'})   # relationship owner
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -515,6 +518,7 @@ class FollowUp(models.Model):
     note = models.TextField(blank=True)
     next_date = models.DateField(null=True, blank=True)
     done = models.BooleanField(default=False)
+    reminded = models.BooleanField(default=False)   # due-date reminder already sent
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
                                    related_name='followups')
     created_at = models.DateTimeField(auto_now_add=True)

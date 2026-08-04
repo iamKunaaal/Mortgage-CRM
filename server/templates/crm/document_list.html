@@ -567,7 +567,7 @@ $('#rowMenu').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
   const d=DOCS.find(x=>x.id===+$('#rowMenu').dataset.id),act=b.dataset.act;
   $('#rowMenu').classList.remove('show');
-  if(act==='view')openView(d);
+  if(act==='view'){ if(d.url){window.open(d.url,'_blank','noopener');} else {openView(d);} }
   else if(act==='verify')openAction('verify',d);
   else if(act==='reject')openAction('reject',d);
   else if(act==='reupload')openAction('reupload',d);
@@ -633,13 +633,15 @@ function openView(d){
 function renderPreview(d){
   const box=$('#docPreview'),url=d.url;
   const ph=(txt)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg><b>${d.name}</b><span>${txt}</span>`;
-  if(!url){box.style.height='200px';box.innerHTML=ph('No file attached to this document');return;}
+  if(!url){box.style.height='200px';box.style.border='';box.style.padding='';box.innerHTML=ph('No file attached to this document');return;}
+  // a prominent "open in new tab" bar on every preview
+  const openBar=`<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><a href="${url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:8px;background:var(--primary);color:#fff;font-size:12.5px;font-weight:600">Open in new tab ↗</a></div>`;
   if(/\.(png|jpe?g|gif|webp|bmp)(\?|$)/i.test(url)){
     box.style.height='auto';box.style.padding='0';box.style.border='none';
-    box.innerHTML=`<img src="${url}" alt="${d.name}" style="max-width:100%;max-height:460px;border-radius:10px;object-fit:contain">`;
+    box.innerHTML=openBar+`<img src="${url}" alt="${d.name}" style="max-width:100%;max-height:440px;border-radius:10px;object-fit:contain">`;
   }else if(/\.pdf(\?|$)/i.test(url)){
     box.style.height='auto';box.style.padding='0';box.style.border='none';
-    box.innerHTML=`<iframe src="${url}" title="${d.name}" style="width:100%;height:460px;border:1px solid var(--border);border-radius:10px"></iframe>`;
+    box.innerHTML=openBar+`<iframe src="${url}" title="${d.name}" style="width:100%;height:440px;border:1px solid var(--border);border-radius:10px"></iframe>`;
   }else{
     box.style.height='200px';
     box.innerHTML=ph(`<a href="${url}" target="_blank" rel="noopener" style="color:var(--primary);font-weight:600">Open document in new tab ↗</a>`);

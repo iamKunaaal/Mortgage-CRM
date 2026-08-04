@@ -98,6 +98,7 @@ urlpatterns = [
     path('approvals/<int:pk>/decide/', views.approval_decide, name='approval_decide'),
     path('partners/export/', views.partner_export, name='partner_export'),
     path('partners/<int:pk>/edit/', views.partner_edit, name='partner_edit'),
+    path('partners/<int:pk>/assign/', views.partner_assign, name='partner_assign'),
     path('partners/<int:pk>/delete/', views.partner_delete, name='partner_delete'),
 
     path('documents/', views.document_list, name='document_list'),

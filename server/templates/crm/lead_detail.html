@@ -783,6 +783,7 @@ a{color:inherit;text-decoration:none}
           <div class="r-row"><label>LTV</label><b id="rLtv"></b></div>
           <div class="r-row"><label>Preferred Bank(s)</label><b id="rBank" style="text-align:right;max-width:170px"></b></div>
           <div class="r-row"><label>Lead Source</label><b id="rSource"></b></div>
+          <div class="r-row"><label>Referral Partner</label><b id="rReferral" style="text-align:right;max-width:170px"></b></div>
           <div class="r-row"><label>Eligibility</label><b id="rElig" style="text-align:right;max-width:200px"></b></div>
           <div class="r-row"><label>KYC</label><b id="rKyc" style="display:flex;align-items:center;gap:8px;justify-content:flex-end"></b></div>
           <div class="r-row"><label>Lead Score</label><b id="rScore"></b></div>
@@ -1284,6 +1285,7 @@ $('#rLoan').textContent=fmtAED(L.loan);
 $('#rLtv').textContent=ltv+'%';
 $('#rBank').textContent=submittedBanks.join(', ');
 $('#rSource').textContent=L.source;
+{const rp=$('#rReferral');if(rp){rp.innerHTML=L.referralPartner?(L.referralPartnerId?`<a href="/partners/${L.referralPartnerId}/edit/" style="color:var(--primary);font-weight:700">${L.referralPartner}</a>`:L.referralPartner):'—';}}
 (function(){
   const ee=$('#rElig');
   if(ee){let lbl,col;
@@ -1307,10 +1309,21 @@ $('#rSource').textContent=L.source;
   if(ce&&L.dnc)ce.style.color='var(--danger)';
   // do-not-contact enforcement: DNC blocks ALL channels; else disable a channel with no consent
   const consent=L.consent||[];
+  const blocked=[];
   function gate(sel,ch){document.querySelectorAll(sel).forEach(b=>{
     if(L.dnc||!consent.includes(ch)){b.style.opacity='.45';b.style.pointerEvents='none';b.style.cursor='not-allowed';
-      b.title=L.dnc?'Customer is on Do-Not-Contact':('No '+ch+' consent from this customer');b.removeAttribute('href');}});}
-  gate('.js-call','Call');gate('.js-wa','WhatsApp');})();
+      b.title=L.dnc?'Customer is on Do-Not-Contact':('No '+ch+' consent from this customer');b.removeAttribute('href');
+      if(blocked.indexOf(ch)<0)blocked.push(ch);}});}
+  gate('.js-call','Call');gate('.js-wa','WhatsApp');
+  // show a visible reason so a greyed button never looks like a bug
+  const ha=document.querySelector('.hero-actions');
+  if(ha&&(blocked.length||L.dnc)){
+    const note=document.createElement('div');
+    note.style.cssText='flex-basis:100%;font-size:11.5px;color:var(--warning);margin-top:4px;display:flex;align-items:center;gap:5px';
+    note.innerHTML=L.dnc?'🔒 Customer is on <b>Do&nbsp;Not&nbsp;Contact</b> — all channels disabled':
+      ('🔒 No consent for <b>'+blocked.join(', ')+'</b> — enable it in the Consent section to use these buttons');
+    ha.appendChild(note);
+  }})();
 $('#rCreated').textContent=fmtD(L.created);
 $('#rDisbursedVal').textContent=L.disbursedAt||'—';
 (function(){
