@@ -433,7 +433,7 @@ class Task(models.Model):
     STATUS = [('Pending', 'Pending'), ('In Progress', 'In Progress'),
               ('Completed', 'Completed'), ('Cancelled', 'Cancelled')]
     TYPE = [('Documents', 'Documents'), ('Bank Follow-up', 'Bank Follow-up'),
-            ('Valuation', 'Valuation'), ('Customer Call', 'Customer Call'),
+            ('Valuation', 'Valuation'), ('Customer Call', 'Customer Call'), ('Follow-up', 'Follow-up'),
             ('FOL', 'FOL'), ('Disbursement', 'Disbursement'), ('Application', 'Application')]
 
     title = models.CharField(max_length=160)

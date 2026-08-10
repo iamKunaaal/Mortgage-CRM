@@ -38,6 +38,15 @@ class LeadForm(StyledMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         self._style()
 
+    def clean(self):
+        cleaned = super().clean()
+        # a referral-sourced lead must name the referral partner (skipped for drafts)
+        is_draft = bool(self.data.get('draft'))
+        if not is_draft and cleaned.get('source') == 'Referral Partner' and not cleaned.get('referral_partner'):
+            self.add_error('referral_partner',
+                           'Referral Partner is required when the source is Referral Partner.')
+        return cleaned
+
 
 class UserForm(StyledMixin, forms.ModelForm):
     password = forms.CharField(required=False, widget=forms.PasswordInput(attrs={'placeholder': 'Set / reset password'}))

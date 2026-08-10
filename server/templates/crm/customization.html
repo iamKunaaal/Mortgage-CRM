@@ -400,6 +400,8 @@ const STATUS_C={'Disbursed':'#16A34A','FOL Signed':'#16A34A','Declined':'#DC2626
 /* ---------- search / filter ---------- */
 const state={search:'',status:null,bank:null,month:null,range:null,customFrom:null,customTo:null,mode:'preview'};
 const NOW=new Date();
+// default this page to the current disbursed month (table + top totals both follow the filter)
+state.disbursedMonth=NOW.toLocaleString('en-US',{month:'short'})+' '+NOW.getFullYear();
 function inRange(d){
   if(!state.range)return true;
   const diff=(NOW-d)/864e5;
@@ -456,6 +458,13 @@ function buildFilters(){
       dd.querySelectorAll('.f-dd-menu>button').forEach(x=>x.classList.toggle('sel',x.dataset.v===nv));
       dd.classList.remove('open');render();
     }));
+    // reflect any pre-set default (e.g. Disbursed Month defaults to the current month)
+    const cur=state[k];
+    if(cur){
+      dd.querySelector('.lbl').textContent=cur;
+      dd.querySelector('.f-dd-btn').classList.add('on');
+      dd.querySelectorAll('.f-dd-menu>button').forEach(x=>x.classList.toggle('sel',x.dataset.v===cur));
+    }
   });
 }
 function openCustomRange(dd){

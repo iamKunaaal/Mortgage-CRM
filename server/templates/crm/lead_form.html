@@ -869,7 +869,14 @@ function validate(){
     f.classList.toggle('err',!valid);
     if(!valid){ok=false;first=first||f;}
   });
-  if(first)first.scrollIntoView({behavior:'smooth',block:'center'});
+  // referral partner is mandatory when source is Referral Partner
+  if(comboState['cSource']==='Referral Partner' && !multiState.cPartners.length){
+    const pf=document.getElementById('cPartners');
+    if(pf){pf.classList.add('err');pf.style.border='1px solid var(--danger,#DC2626)';pf.style.borderRadius='9px';}
+    ok=false;first=first||(pf&&pf.closest('.field'))||pf;
+    toast('Select a Referral Partner (required for referral leads)');
+  }
+  if(first&&first.scrollIntoView)first.scrollIntoView({behavior:'smooth',block:'center'});
   return ok;
 }
 $$('[data-req]').forEach(el=>el.addEventListener('blur',()=>{

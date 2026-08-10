@@ -397,6 +397,7 @@ a{color:inherit;text-decoration:none}
           <button type="button" class="btn btn-ghost" onclick="var d=document.getElementById('nurtureBox');d.style.display=d.style.display==='none'?'inline-flex':'none'">🌱 Nurture</button>
           <form id="nurtureBox" method="post" action="{% url 'lead_nurture' lead.pk %}" style="display:none;gap:6px;align-items:center">{% csrf_token %}<input type="date" name="until" required style="padding:7px;border:1px solid var(--border);border-radius:8px"><button type="submit" class="btn btn-ghost">Set</button></form>
           {% endif %}
+          <button type="button" class="btn btn-ghost" style="border-color:#F5C4C0;color:var(--warning)" onclick="document.getElementById('escModal').classList.add('show')">⤴ Escalate</button>
           <form method="post" action="{% url 'lead_not_interested' lead.pk %}" style="display:inline" onsubmit="return confirm('Mark Not Interested? This moves the lead to Lost Leads and removes it from the advisor.')">{% csrf_token %}<button type="submit" class="btn btn-ghost" style="border-color:#FCA5A5;color:#DC2626">Not Interested</button></form>
           <button type="button" class="btn btn-primary" onclick="document.getElementById('stageModal').classList.add('show')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20v-6M6 20V10M18 20V4"/></svg>Update Stage</button>{% endif %}
         </div>
@@ -875,6 +876,45 @@ a{color:inherit;text-decoration:none}
     </form>
   </div>
 </div>
+
+<!-- ESCALATE MODAL -->
+<div class="td-scrim" id="escModal">
+  <div class="td-modal" role="dialog" aria-modal="true">
+    <div class="td-h">
+      <span class="ic" style="background:#FEF2F2;color:var(--warning)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg></span>
+      <div><b>Escalate Case</b><span>Choose who to notify about this case</span></div>
+      <button class="x" type="button" onclick="document.getElementById('escModal').classList.remove('show')" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <form method="post" action="{% url 'lead_escalate' lead.pk %}" onsubmit="return escValidate()">
+      {% csrf_token %}
+      <div class="td-body">
+        <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px">Escalate to <span style="color:var(--warning)">*</span></label>
+        <input type="text" id="escSearch" placeholder="Search name or role…" onkeyup="escFilter()" style="width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:9px;margin-bottom:8px">
+        <div id="escList" style="max-height:230px;overflow-y:auto;border:1px solid var(--border);border-radius:9px;padding:4px">
+          {% for u in escalate_recipients %}
+          <label class="esc-row" data-txt="{{ u.get_full_name|default:u.username|lower }} {{ u.get_role_display|lower }}" style="display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:7px;cursor:pointer">
+            <input type="checkbox" name="recipients" value="{{ u.pk }}" style="width:16px;height:16px;accent-color:var(--warning)">
+            <span style="display:flex;flex-direction:column"><b style="font-size:13px">{{ u.get_full_name|default:u.username }}</b><span style="font-size:11px;color:var(--muted)">{{ u.get_role_display }}</span></span>
+          </label>
+          {% empty %}
+          <div style="padding:12px;color:var(--muted);font-size:13px">No recipients available.</div>
+          {% endfor %}
+        </div>
+        <label style="display:block;font-size:12px;font-weight:600;margin:14px 0 6px">Reason (optional)</label>
+        <textarea name="reason" rows="2" placeholder="What needs attention?" style="width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:9px;resize:vertical"></textarea>
+      </div>
+      <div class="td-foot">
+        <button class="btn btn-ghost" type="button" onclick="document.getElementById('escModal').classList.remove('show')">Cancel</button>
+        <button class="btn btn-primary" type="submit" style="background:var(--warning);border-color:var(--warning)">Send Escalation</button>
+      </div>
+    </form>
+  </div>
+</div>
+<style>.esc-row:hover{background:var(--surface-2,#f6f7f9)}</style>
+<script>
+function escFilter(){var q=document.getElementById('escSearch').value.toLowerCase();document.querySelectorAll('#escList .esc-row').forEach(function(r){r.style.display=r.getAttribute('data-txt').indexOf(q)>-1?'flex':'none'})}
+function escValidate(){if(!document.querySelectorAll('#escList input[name=recipients]:checked').length){alert('Select at least one person to escalate to.');return false}return true}
+</script>
 
 <!-- ASSIGN ADVISOR MODAL -->
 <div class="td-scrim" id="assignModal">

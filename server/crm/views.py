@@ -510,8 +510,12 @@ def management_dashboard(request):
     submitted_stages = ['Logged In', 'Under Review', 'Pre-Approved', 'Valuation',
                         'Valuation Received', 'FOL Initiated', 'FOL Issued',
                         'FOL Signing Fixed', 'FOL Signed', 'Under Disbursement']
+    # loans that have actually reached approval (Pre-Approved onward), still in pipeline (not disbursed).
+    # NOTE: 'Logged In' / 'Under Review' in submitted_stages are PRE-approval, so they must NOT count here.
+    approval_stages = ['Pre-Approved', 'Valuation', 'Valuation Received', 'FOL Initiated',
+                       'FOL Issued', 'FOL Signing Fixed', 'FOL Signed', 'Under Disbursement']
     disbursed_val = _f(leads.filter(stage__in=DISB).aggregate(v=Sum('loan_amount'))['v'])
-    approval_val = _f(leads.filter(stage__in=['Pre-Approved'] + submitted_stages).aggregate(v=Sum('loan_amount'))['v'])
+    approval_val = _f(leads.filter(stage__in=approval_stages).aggregate(v=Sum('loan_amount'))['v'])
     pipeline_val = _f(active.aggregate(v=Sum('loan_amount'))['v'])
     # Revenue & Net Profit come straight from the Monthly Disbursed Pipeline (Customization) sheet:
     #   Revenue = sum of Actual Revenue,  Net Profit = sum of Final Revenue.
@@ -522,16 +526,24 @@ def management_dashboard(request):
     n_total = leads.count()
     n_disbursed = leads.filter(stage__in=DISB).count()
 
+    # --- "This Month at a Glance": scope the KPI cards to the current calendar month ---
+    _mstart = date.today().replace(day=1)
+    mleads = leads.filter(created_at__date__gte=_mstart)
+    m_disbursed_val = _f(mleads.filter(stage__in=DISB).aggregate(v=Sum('loan_amount'))['v'])
+    _mcz = [c for c in _cz if c.lead and c.lead.created_at and c.lead.created_at.date() >= _mstart]
+    m_revenue = sum(c.actual_revenue for c in _mcz)
+    m_net_profit = sum(c.final_revenue for c in _mcz)
+
     IC = ['users', 'plus', 'file', 'shield', 'home', 'file', 'cash', 'trend']
     kpi_defs = [
-        ('Total Leads', n_total, '', '', 'all sources'),
+        ('Leads This Month', mleads.count(), '', '', 'created this month'),
         ('New Leads Today', leads.filter(created_at__date=date.today()).count(), '', '', 'since midnight'),
-        ('Applications Submitted', leads.filter(stage__in=submitted_stages).count(), '', '', 'in progress'),
-        ('Pre-Approval', leads.filter(stage='Pre-Approved').count(), '', '', 'awaiting final'),
-        ('Loan Disbursed', n_disbursed, '', '', f'AED {disbursed_val:,.0f} value'),
-        ('Pending Title Deed', leads.filter(stage__in=['Disbursed', 'Property Transfer Scheduled', 'Property Transfer']).count(), '', '', 'awaiting transfer'),
-        ('Revenue This Month', round(revenue), '', 'AED ', 'net commission · excl VAT'),
-        ('Net Profit', round(net_profit), '', 'AED ', 'final revenue'),
+        ('Applications Submitted', mleads.filter(stage__in=submitted_stages).count(), '', '', 'in progress'),
+        ('Pre-Approval', mleads.filter(stage='Pre-Approved').count(), '', '', 'awaiting final'),
+        ('Loan Disbursed', mleads.filter(stage__in=DISB).count(), '', '', f'AED {m_disbursed_val:,.0f} value'),
+        ('Pending Title Deed', mleads.filter(stage__in=['Disbursed', 'Property Transfer Scheduled', 'Property Transfer']).count(), '', '', 'awaiting transfer'),
+        ('Revenue This Month', round(m_revenue), '', 'AED ', 'net commission · excl VAT'),
+        ('Net Profit', round(m_net_profit), '', 'AED ', 'final revenue'),
     ]
     kpis_js = [
         {'label': lbl, 'val': val, 'suf': suf, 'pre': pre, 'ic': IC[i],
@@ -967,8 +979,8 @@ def lead_list(request):
          'ic': '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>'},
         {'l': 'New Leads Today', 'v': str(base.filter(created_at__date=timezone.localdate()).count()),
          'ic': '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/><path d="M19 8h4M21 6v4" stroke-width="2.2"/>'},
-        {'l': 'Documents Pending', 'v': str(base.filter(stage__in=['Lead Received', 'Documents Pending']).count()),
-         'ic': '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M12 11v4M12 18h.01"/>'},
+        {'l': 'Leads This Month', 'v': str(base.filter(created_at__date__gte=timezone.localdate().replace(day=1)).count()),
+         'ic': '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'},
         {'l': 'Pre-Approvals', 'v': str(base.filter(stage='Pre-Approved').count()),
          'ic': '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>'},
         {'l': 'Disbursements', 'v': str(kpis['disbursed']),
@@ -1651,6 +1663,12 @@ def lead_detail(request, pk):
         'risk_opts': [r[0] for r in Lead.RISK],
         # processing / queries (PRD §11)
         'bank_queries': lead.bank_queries.select_related('created_by'),
+        # manual escalation: who you can escalate to (management + the case's own advisor/manager)
+        'escalate_recipients': User.objects.filter(
+            is_active=True,
+            role__in=[Role.TEAM_LEADER, Role.OPS_MANAGER, Role.OPS_EXECUTIVE,
+                      Role.SALES_DIRECTOR, Role.COMPLIANCE, Role.CEO, Role.SUPER_ADMIN],
+        ).exclude(pk=request.user.pk).order_by('role', 'first_name', 'username'),
         'active_nav': 'Leads',
     })
 
@@ -2026,6 +2044,28 @@ def lead_assign(request, pk):
         messages.success(request, 'Advisor unassigned.')
     nxt = request.POST.get('next')
     return redirect(nxt) if nxt else redirect('lead_detail', pk=pk)
+
+
+@login_required
+@perm.module_required('Leads', 'edit')
+@require_POST
+def lead_escalate(request, pk):
+    """Manually escalate a case to one or more chosen recipients with a reason."""
+    lead = get_object_or_404(visible_leads(request.user), pk=pk)
+    reason = request.POST.get('reason', '').strip()
+    ids = request.POST.getlist('recipients')
+    recipients = list(User.objects.filter(pk__in=ids).exclude(pk=request.user.pk))
+    if not recipients:
+        messages.error(request, 'Select at least one person to escalate to.')
+        return redirect('lead_detail', pk=pk)
+    who = request.user.get_full_name() or request.user.username
+    txt = f'Escalation on "{lead.name}" by {who}' + (f': {reason}' if reason else '')
+    for u in recipients:
+        _notify(u, txt, f'/leads/{lead.pk}/', 'escalation')
+    names = ', '.join(u.get_full_name() or u.username for u in recipients)
+    _audit(lead, request.user, 'Case escalated', 'Escalation', '', f'to {names}' + (f' — {reason}' if reason else '')[:160])
+    messages.success(request, f'Escalated to {len(recipients)} person(s).')
+    return redirect('lead_detail', pk=pk)
 
 
 @login_required
@@ -2688,8 +2728,8 @@ def overdue_tasks(request):
 
     TYPE_COLORS = {
         'Documents': '#05448B', 'Bank Follow-up': '#2D6CB0', 'Valuation': '#BE185D',
-        'Customer Call': '#0F766E', 'FOL': '#6D28D9', 'Disbursement': '#16A34A',
-        'Application': '#B45309',
+        'Customer Call': '#0F766E', 'Follow-up': '#0891B2', 'FOL': '#6D28D9',
+        'Disbursement': '#16A34A', 'Application': '#B45309',
     }
 
     def esc_for(od):

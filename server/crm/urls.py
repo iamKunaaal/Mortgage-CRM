@@ -38,6 +38,7 @@ urlpatterns = [
     path('leads/<int:pk>/stage/', views.lead_stage_update, name='lead_stage_update'),
     path('leads/<int:pk>/kyc/', views.lead_kyc, name='lead_kyc'),
     path('leads/<int:pk>/nurture/', views.lead_nurture, name='lead_nurture'),
+    path('leads/<int:pk>/escalate/', views.lead_escalate, name='lead_escalate'),
     path('views/save/', views.saved_view_create, name='saved_view_create'),
     path('views/<int:pk>/delete/', views.saved_view_delete, name='saved_view_delete'),
     path('notification-prefs/', views.notification_prefs, name='notification_prefs'),
