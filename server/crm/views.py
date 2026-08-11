@@ -1147,6 +1147,132 @@ def web_to_lead(request):
     return JsonResponse({'ok': True, 'case_number': lead.case_number})
 
 
+@csrf_exempt
+def meta_leadgen(request):
+    """Meta (Facebook/Instagram) Lead Ads webhook (PRD §9.1 capture APIs).
+
+    GET  — webhook verification handshake (hub.challenge).
+    POST — a lead was submitted: fetch the full lead from the Graph API using the
+           leadgen_id + Page Access Token, map the answers and create a CRM lead
+           (source='Meta Ads') through the same pipeline as web-to-lead.
+
+    Config via env vars:
+      META_VERIFY_TOKEN        — any secret string; must match what you set in the Meta App webhook.
+      META_PAGE_ACCESS_TOKEN   — long-lived Page Access Token (to read the lead's answers).
+      META_APP_SECRET          — (optional) verifies the X-Hub-Signature-256 payload signature.
+      META_GRAPH_VERSION       — (optional) Graph API version, default v21.0.
+    """
+    import os
+    import json as _json
+    verify_token = os.environ.get('META_VERIFY_TOKEN', '')
+
+    # ---- verification handshake ----
+    if request.method == 'GET':
+        if (request.GET.get('hub.mode') == 'subscribe'
+                and verify_token and request.GET.get('hub.verify_token') == verify_token):
+            return HttpResponse(request.GET.get('hub.challenge', ''))
+        return HttpResponse('verification failed', status=403)
+
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+
+    raw = request.body
+
+    # ---- optional payload signature check ----
+    app_secret = os.environ.get('META_APP_SECRET', '')
+    if app_secret:
+        import hmac
+        import hashlib
+        sig = request.META.get('HTTP_X_HUB_SIGNATURE_256', '')
+        expected = 'sha256=' + hmac.new(app_secret.encode(), raw, hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(sig, expected):
+            return HttpResponse('bad signature', status=403)
+
+    page_token = os.environ.get('META_PAGE_ACCESS_TOKEN', '')
+    gv = os.environ.get('META_GRAPH_VERSION', 'v21.0')
+    try:
+        payload = _json.loads(raw.decode('utf-8') or '{}')
+    except ValueError:
+        return HttpResponse('ok')            # always 200 so Meta keeps the webhook alive
+
+    created = 0
+    for entry in payload.get('entry', []):
+        for change in entry.get('changes', []):
+            if change.get('field') != 'leadgen':
+                continue
+            value = change.get('value', {})
+            leadgen_id = value.get('leadgen_id')
+            if not leadgen_id:
+                continue
+            # de-dupe: Meta retries deliveries; skip if we already ingested this leadgen_id
+            if Lead.objects.filter(bank_notes__contains=f'[meta:{leadgen_id}]').exists():
+                continue
+            fields = _meta_fetch_lead(leadgen_id, page_token, gv)
+            if fields is None:
+                continue                     # fetch failed — logged inside helper
+            _meta_create_lead(leadgen_id, fields, value)
+            created += 1
+    return HttpResponse('ok')
+
+
+def _meta_fetch_lead(leadgen_id, page_token, gv):
+    """Read a single Lead Ads submission's answers via the Graph API. Returns
+    {question_name: answer} or None on failure (kept quiet so the webhook stays 200)."""
+    import json as _json
+    from urllib.request import urlopen, Request
+    from urllib.parse import urlencode
+    if not page_token:
+        print('[meta] no META_PAGE_ACCESS_TOKEN set — cannot fetch lead', leadgen_id)
+        return None
+    url = f'https://graph.facebook.com/{gv}/{leadgen_id}?' + urlencode({
+        'access_token': page_token, 'fields': 'field_data,created_time,form_id,ad_id,campaign_name'})
+    try:
+        with urlopen(Request(url), timeout=15) as resp:
+            data = _json.loads(resp.read().decode('utf-8'))
+    except Exception as e:                    # network / token / permission errors
+        print('[meta] fetch failed for', leadgen_id, '->', repr(e))
+        return None
+    out = {'_created_time': data.get('created_time'), '_form_id': data.get('form_id'),
+           '_campaign': data.get('campaign_name')}
+    for fd in data.get('field_data', []):
+        vals = fd.get('values') or []
+        out[fd.get('name', '')] = vals[0] if vals else ''
+    return out
+
+
+def _meta_create_lead(leadgen_id, fields, value):
+    """Map a Meta lead's answers onto a CRM Lead and run it through the standard pipeline."""
+    name = (fields.get('full_name')
+            or ' '.join(x for x in [fields.get('first_name', ''), fields.get('last_name', '')] if x).strip()
+            or 'Meta Lead')
+    mobile = fields.get('phone_number', '') or fields.get('phone', '')
+    email = fields.get('email', '') or fields.get('email_address', '')
+    # anything that isn't a standard contact field becomes a readable note
+    std = {'full_name', 'first_name', 'last_name', 'phone_number', 'phone',
+           'email', 'email_address', '_created_time', '_form_id', '_campaign'}
+    extras = [f'{k}: {v}' for k, v in fields.items() if k and k not in std and v]
+    note_bits = ['Meta Lead Ads']
+    if fields.get('_campaign'):
+        note_bits.append(f'Campaign: {fields["_campaign"]}')
+    if extras:
+        note_bits.append(' | '.join(extras))
+    note_bits.append(f'[meta:{leadgen_id}]')          # de-dupe marker (also survives as provenance)
+    lead = Lead(name=name.strip(), mobile=(mobile or '').strip(), email=(email or '').strip(),
+                source='Meta Ads', bank_notes='  '.join(note_bits), stage='Lead Received')
+    lead.advisor = _auto_assign_advisor(lead)
+    _coerce_lead_numbers(lead)
+    lead.score = lead.compute_score()
+    _compute_eligibility(lead)
+    _set_sla_due(lead)
+    lead.case_number = generate_case_number()
+    lead.save()
+    _link_client(lead)
+    _audit(lead, None, 'Lead created', 'Lead', '', 'Meta Lead Ads webhook')
+    if lead.advisor:
+        _notify(lead.advisor, f'New Meta lead assigned: "{lead.name}"', f'/leads/{lead.pk}/', 'lead')
+    return lead
+
+
 @login_required
 def my_day(request):
     """My Day landing screen (PRD §14.3): my tasks ordered by SLA risk → overdue → today → priority,

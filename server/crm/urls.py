@@ -8,6 +8,7 @@ urlpatterns = [
     path('search/', views.global_search, name='global_search'),
     path('my-day/', views.my_day, name='my_day'),
     path('api/web-to-lead/', views.web_to_lead, name='web_to_lead'),
+    path('api/meta/leadgen/', views.meta_leadgen, name='meta_leadgen'),
     path('calls/log/', views.log_call, name='log_call'),
     path('calls/history/', views.call_history, name='call_history'),
     path('calls/<int:pk>/edit/', views.call_edit, name='call_edit'),
