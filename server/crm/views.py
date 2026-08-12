@@ -1195,6 +1195,9 @@ def meta_leadgen(request):
     except ValueError:
         return HttpResponse('ok')            # always 200 so Meta keeps the webhook alive
 
+    # NEVER let an exception bubble up: Meta needs a 200 or it retries forever ("Pending").
+    # Any per-lead error is logged (visible in Railway logs) and swallowed.
+    import traceback
     created = 0
     for entry in payload.get('entry', []):
         for change in entry.get('changes', []):
@@ -1204,14 +1207,21 @@ def meta_leadgen(request):
             leadgen_id = value.get('leadgen_id')
             if not leadgen_id:
                 continue
-            # de-dupe: Meta retries deliveries; skip if we already ingested this leadgen_id
-            if Lead.objects.filter(bank_notes__contains=f'[meta:{leadgen_id}]').exists():
-                continue
-            fields = _meta_fetch_lead(leadgen_id, page_token, gv)
-            if fields is None:
-                continue                     # fetch failed — logged inside helper
-            _meta_create_lead(leadgen_id, fields, value)
-            created += 1
+            try:
+                # de-dupe: Meta retries deliveries; skip if we already ingested this leadgen_id
+                if Lead.objects.filter(bank_notes__contains=f'[meta:{leadgen_id}]').exists():
+                    print('[meta] duplicate delivery, skipping', leadgen_id)
+                    continue
+                fields = _meta_fetch_lead(leadgen_id, page_token, gv)
+                if fields is None:
+                    continue                 # fetch failed — logged inside helper
+                lead = _meta_create_lead(leadgen_id, fields, value)
+                created += 1
+                print(f'[meta] lead created pk={lead.pk} case={lead.case_number} name={lead.name!r}')
+            except Exception:
+                print('[meta] ERROR processing leadgen', leadgen_id)
+                traceback.print_exc()
+    print(f'[meta] webhook done, created={created}')
     return HttpResponse('ok')
 
 
