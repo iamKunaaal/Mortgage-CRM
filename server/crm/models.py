@@ -428,6 +428,28 @@ class Lead(models.Model):
         return self.name
 
 
+class MetaLead(models.Model):
+    """Staging record for a lead captured from Meta Lead Ads. Kept SEPARATE from the main
+    Lead pipeline so Meta leads don't appear in All Leads/dashboards — they're reviewed on the
+    'Meta Leads' page and (later) converted into a real Lead manually."""
+    leadgen_id = models.CharField(max_length=64, unique=True)
+    name = models.CharField(max_length=200, blank=True)
+    mobile = models.CharField(max_length=60, blank=True)
+    email = models.CharField(max_length=254, blank=True)
+    campaign = models.CharField(max_length=200, blank=True)
+    form_id = models.CharField(max_length=64, blank=True)
+    data = models.JSONField(null=True, blank=True)       # exact question -> answer, as submitted
+    created_at = models.DateTimeField(auto_now_add=True)
+    converted_lead = models.ForeignKey('Lead', on_delete=models.SET_NULL, null=True, blank=True,
+                                       related_name='+')
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.name or self.leadgen_id
+
+
 class Task(models.Model):
     PRIORITY = [('High', 'High'), ('Medium', 'Medium'), ('Low', 'Low')]
     STATUS = [('Pending', 'Pending'), ('In Progress', 'In Progress'),

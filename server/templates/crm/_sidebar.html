@@ -18,6 +18,7 @@
         <a class="nav-item {% if active_sub == 'lead_pipeline' %}active{% endif %}" href="{% url 'lead_pipeline' %}">Lead Pipeline</a>
         <a class="nav-item {% if active_sub == 'lead_sources' %}active{% endif %}" href="{% url 'lead_sources' %}">Lead Sources</a>
         <a class="nav-item {% if active_sub == 'lost_leads' %}active{% endif %}" href="{% url 'lost_leads' %}">Lost Leads</a>
+        <a class="nav-item {% if active_sub == 'meta_leads' %}active{% endif %}" href="{% url 'meta_leads' %}">Meta Leads</a>
         {% if is_ceo %}<a class="nav-item {% if active_sub == 'customization' %}active{% endif %}" href="{% url 'customization_list' %}">Monthly Disbursed Pipeline</a>
         <a class="nav-item" href="{% url 'recycle_bin' %}">Recycle Bin</a>{% endif %}
       </div>

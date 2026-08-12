@@ -31,6 +31,7 @@ urlpatterns = [
     path('leads/pipeline/', views.lead_pipeline, name='lead_pipeline'),
     path('leads/sources/', views.lead_sources, name='lead_sources'),
     path('leads/lost/', views.lost_leads, name='lost_leads'),
+    path('leads/meta/', views.meta_leads, name='meta_leads'),
     path('leads/<int:pk>/', views.lead_detail, name='lead_detail'),
     path('clients/<int:pk>/', views.client_360, name='client_360'),
     path('clients/<int:pk>/consent/', views.consent_update, name='consent_update'),

@@ -15,7 +15,7 @@ from django.core.exceptions import PermissionDenied
 from .models import (User, Lead, Bank, Task, ReferralPartner, Document, Role, STAGES, SOURCES,
                      BankApplication, generate_case_number, FollowUp,
                      Note, LeadSourceState, RolePermission, AppSetting, Customization, LeadAudit,
-                     CallLog, Notification, AuditEvent)
+                     CallLog, Notification, AuditEvent, MetaLead)
 from .forms import LoginForm, LeadForm, UserForm, PartnerForm, BankForm
 from . import permissions as perm
 
@@ -1208,16 +1208,16 @@ def meta_leadgen(request):
             if not leadgen_id:
                 continue
             try:
-                # de-dupe: Meta retries deliveries; skip if we already ingested this leadgen_id
-                if Lead.objects.filter(bank_notes__contains=f'[meta:{leadgen_id}]').exists():
+                # de-dupe: Meta retries deliveries; skip if we already stored this leadgen_id
+                if MetaLead.objects.filter(leadgen_id=leadgen_id).exists():
                     print('[meta] duplicate delivery, skipping', leadgen_id)
                     continue
                 fields = _meta_fetch_lead(leadgen_id, page_token, gv)
                 if fields is None:
                     continue                 # fetch failed — logged inside helper
-                lead = _meta_create_lead(leadgen_id, fields, value)
+                lead = _meta_store_lead(leadgen_id, fields, value)
                 created += 1
-                print(f'[meta] lead created pk={lead.pk} case={lead.case_number} name={lead.name!r}')
+                print(f'[meta] meta-lead stored pk={lead.pk} name={lead.name!r} leadgen={leadgen_id}')
             except Exception:
                 print('[meta] ERROR processing leadgen', leadgen_id)
                 traceback.print_exc()
@@ -1250,40 +1250,25 @@ def _meta_fetch_lead(leadgen_id, page_token, gv):
     return out
 
 
-def _meta_create_lead(leadgen_id, fields, value):
-    """Map a Meta lead's answers onto a CRM Lead and run it through the standard pipeline."""
+def _meta_store_lead(leadgen_id, fields, value):
+    """Store a Meta Lead Ads submission as a MetaLead staging record (kept out of the main
+    Lead pipeline). The 'Meta Leads' page shows these; conversion to a real Lead is manual."""
     name = (fields.get('full_name')
             or ' '.join(x for x in [fields.get('first_name', ''), fields.get('last_name', '')] if x).strip()
             or 'Meta Lead')
     mobile = fields.get('phone_number', '') or fields.get('phone', '')
     email = fields.get('email', '') or fields.get('email_address', '')
-    # anything that isn't a standard contact field becomes a readable note
-    std = {'full_name', 'first_name', 'last_name', 'phone_number', 'phone',
-           'email', 'email_address', '_created_time', '_form_id', '_campaign'}
-    extras = [f'{k}: {v}' for k, v in fields.items() if k and k not in std and v]
-    note_bits = ['Meta Lead Ads']
-    if fields.get('_campaign'):
-        note_bits.append(f'Campaign: {fields["_campaign"]}')
-    if extras:
-        note_bits.append(' | '.join(extras))
-    note_bits.append(f'[meta:{leadgen_id}]')          # de-dupe marker (also survives as provenance)
-    # DB column limits: name varchar(120), mobile varchar(30). Meta values can exceed these
-    # (e.g. phone with country prefix/formatting), so cap them to avoid an insert error.
-    lead = Lead(name=name.strip()[:120], mobile=(mobile or '').strip()[:30],
-                email=(email or '').strip()[:254],
-                source='Meta Ads', bank_notes='  '.join(note_bits), stage='Lead Received')
-    lead.advisor = _auto_assign_advisor(lead)
-    _coerce_lead_numbers(lead)
-    lead.score = lead.compute_score()
-    _compute_eligibility(lead)
-    _set_sla_due(lead)
-    lead.case_number = generate_case_number()
-    lead.save()
-    _link_client(lead)
-    _audit(lead, None, 'Lead created', 'Lead', '', 'Meta Lead Ads webhook')
-    if lead.advisor:
-        _notify(lead.advisor, f'New Meta lead assigned: "{lead.name}"', f'/leads/{lead.pk}/', 'lead')
-    return lead
+    # keep the EXACT form answers (question -> answer), skipping internal keys
+    exact = {k: v for k, v in fields.items() if k and not k.startswith('_')}
+    return MetaLead.objects.create(
+        leadgen_id=leadgen_id,
+        name=name.strip()[:200],
+        mobile=(mobile or '').strip()[:60],
+        email=(email or '').strip()[:254],
+        campaign=(fields.get('_campaign') or '')[:200],
+        form_id=(fields.get('_form_id') or value.get('form_id') or '')[:64],
+        data=exact,
+    )
 
 
 @login_required
@@ -2783,6 +2768,34 @@ def _monthly_trend(qs, months=6, field='created_at'):
         labels.append(f'{["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m-1]}')
         values.append(qs.filter(**{f'{field}__year': y, f'{field}__month': m}).count())
     return labels, values
+
+
+@login_required
+@perm.module_required('Leads')
+def meta_leads(request):
+    """'Meta Leads' page: leads captured from Meta Lead Ads, shown SEPARATELY from the main
+    pipeline (they are not created as real Leads). Displays the exact form answers as submitted."""
+    items = MetaLead.objects.all().order_by('-created_at')
+    rows = []
+    for m in items:
+        data = m.data or {}
+        answers = [{'q': k, 'a': v} for k, v in data.items() if not k.startswith('_')]
+        rows.append({
+            'id': m.pk,
+            'name': m.name or 'Meta Lead',
+            'mobile': m.mobile or '—',
+            'email': m.email or '—',
+            'created': timezone.localtime(m.created_at).strftime('%d %b %Y, %H:%M'),
+            'campaign': m.campaign,
+            'leadgen_id': m.leadgen_id,
+            'answers': answers,
+            'has_data': bool(answers),
+            'converted': bool(m.converted_lead_id),
+        })
+    return render(request, 'crm/meta_leads.html', {
+        'rows': rows, 'total': len(rows),
+        'active_nav': 'Leads', 'active_sub': 'meta_leads',
+    })
 
 
 @login_required
