@@ -1267,7 +1267,10 @@ def _meta_create_lead(leadgen_id, fields, value):
     if extras:
         note_bits.append(' | '.join(extras))
     note_bits.append(f'[meta:{leadgen_id}]')          # de-dupe marker (also survives as provenance)
-    lead = Lead(name=name.strip(), mobile=(mobile or '').strip(), email=(email or '').strip(),
+    # DB column limits: name varchar(120), mobile varchar(30). Meta values can exceed these
+    # (e.g. phone with country prefix/formatting), so cap them to avoid an insert error.
+    lead = Lead(name=name.strip()[:120], mobile=(mobile or '').strip()[:30],
+                email=(email or '').strip()[:254],
                 source='Meta Ads', bank_notes='  '.join(note_bits), stage='Lead Received')
     lead.advisor = _auto_assign_advisor(lead)
     _coerce_lead_numbers(lead)
