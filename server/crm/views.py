@@ -1253,11 +1253,21 @@ def _meta_fetch_lead(leadgen_id, page_token, gv):
 def _meta_store_lead(leadgen_id, fields, value):
     """Store a Meta Lead Ads submission as a MetaLead staging record (kept out of the main
     Lead pipeline). The 'Meta Leads' page shows these; conversion to a real Lead is manual."""
-    name = (fields.get('full_name')
-            or ' '.join(x for x in [fields.get('first_name', ''), fields.get('last_name', '')] if x).strip()
+    # Meta field keys vary ("full name" vs "full_name", casing, etc.) — normalise for lookup.
+    norm = {k.strip().lower().replace(' ', '_'): v for k, v in fields.items() if k}
+
+    def pick(*keys):
+        for k in keys:
+            v = norm.get(k)
+            if v:
+                return v
+        return ''
+
+    name = (pick('full_name', 'name', 'your_name', 'customer_name')
+            or ' '.join(x for x in [pick('first_name'), pick('last_name')] if x).strip()
             or 'Meta Lead')
-    mobile = fields.get('phone_number', '') or fields.get('phone', '')
-    email = fields.get('email', '') or fields.get('email_address', '')
+    mobile = pick('phone_number', 'phone', 'mobile', 'mobile_number', 'contact_number')
+    email = pick('email', 'email_address', 'e-mail')
     # keep the EXACT form answers (question -> answer), skipping internal keys
     exact = {k: v for k, v in fields.items() if k and not k.startswith('_')}
     return MetaLead.objects.create(
