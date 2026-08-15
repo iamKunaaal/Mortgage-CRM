@@ -343,6 +343,8 @@ canvas{display:block;width:100%}
         <p>Manage referral sources, track lead generation and monitor partner contribution.</p>
       </div>
       <div class="actions">
+        <form method="post" action="{% url 'partner_statements_generate' %}" style="display:inline">{% csrf_token %}<button class="btn btn-ghost" type="submit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg>Generate Statements</button></form>
+        <a class="btn btn-ghost" href="{% url 'partner_statements' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18M8 17V9M13 17V5M18 17v-4"/></svg>View Statements</a>
         <button class="btn btn-ghost" id="refreshBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>Refresh</button>
         <a class="btn btn-ghost" href="{% url 'partner_export' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export Partners</a>
         <a class="btn btn-primary" href="{% url 'partner_create' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Add Partner</a>

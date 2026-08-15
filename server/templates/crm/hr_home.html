@@ -1,0 +1,48 @@
+{% extends 'crm/base_p2.html' %}
+{% block title %}BITAR CRM — HR{% endblock %}
+{% block page_title %}HR{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>HR</h1><p>Attendance, leave and targets.</p></div></div>
+<div class="card" style="padding:16px;margin-bottom:18px">
+  <b>My attendance today</b>
+  <div style="display:flex;gap:10px;align-items:center;margin-top:10px">
+    {% if my_att.check_in %}<span style="font-size:13px">In: {{ my_att.check_in|date:"H:i" }}</span>{% else %}<form method="post" action="{% url 'attendance_checkin' %}">{% csrf_token %}<input type="hidden" name="geo" id="geo"><button class="btn btn-primary" onclick="navigator.geolocation&&navigator.geolocation.getCurrentPosition(p=>document.getElementById('geo').value=p.coords.latitude+','+p.coords.longitude)">Check in</button></form>{% endif %}
+    {% if my_att.check_in and not my_att.check_out %}<form method="post" action="{% url 'attendance_checkout' %}">{% csrf_token %}<button class="btn btn-ghost">Check out</button></form>{% endif %}
+    {% if my_att.check_out %}<span style="font-size:13px">Out: {{ my_att.check_out|date:"H:i" }}</span>{% endif %}
+  </div>
+</div>
+<div class="card" style="padding:16px;margin-bottom:18px">
+  <b>Request leave</b>
+  <form method="post" action="{% url 'leave_request' %}" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:10px">{% csrf_token %}
+    <select name="leave_type" style="padding:8px;border:1px solid var(--border);border-radius:8px">{% for t in leave_types %}<option value="{{ t.pk }}">{{ t.name }}</option>{% endfor %}</select>
+    <input type="date" name="start" required style="padding:8px;border:1px solid var(--border);border-radius:8px">
+    <input type="date" name="end" required style="padding:8px;border:1px solid var(--border);border-radius:8px">
+    <input name="reason" placeholder="Reason" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+    <button class="btn btn-primary" type="submit">Submit</button>
+  </form>
+</div>
+<div class="card" style="padding:16px;margin-bottom:18px">
+  <b>Leave requests</b>
+  {% for l in leaves %}<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-soft);font-size:13px">
+    <span>{{ l.user.get_full_name|default:l.user.username }} · {{ l.start }}→{{ l.end }} · {{ l.status }}</span>
+    {% if is_mgr and l.status == 'Pending' %}<span><form method="post" action="{% url 'leave_decide' l.pk %}" style="display:inline">{% csrf_token %}<button name="decision" value="approve" class="btn btn-ghost" style="padding:2px 8px">Approve</button><button name="decision" value="reject" class="btn btn-ghost" style="padding:2px 8px;color:var(--danger)">Reject</button></form></span>{% endif %}
+  </div>{% empty %}<p style="color:var(--text-3);font-size:13px;margin-top:8px">No leave requests.</p>{% endfor %}
+</div>
+{% if is_mgr %}
+<div class="card" style="padding:16px;margin-bottom:18px">
+  <b>Today's attendance ({{ att_rows|length }})</b>
+  {% for a in att_rows %}<div style="font-size:13px;padding:4px 0">{{ a.user.get_full_name|default:a.user.username }} — in {{ a.check_in|date:"H:i"|default:"—" }} / out {{ a.check_out|date:"H:i"|default:"—" }}</div>{% endfor %}
+</div>
+<div class="card" style="padding:16px">
+  <b>Set target</b>
+  <form method="post" action="{% url 'target_save' %}" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:10px">{% csrf_token %}
+    <select name="user" style="padding:8px;border:1px solid var(--border);border-radius:8px">{% for u in staff %}<option value="{{ u.pk }}">{{ u.get_full_name|default:u.username }}</option>{% endfor %}</select>
+    <select name="metric" style="padding:8px;border:1px solid var(--border);border-radius:8px"><option value="disbursed_value">Disbursed value</option><option value="leads">Leads</option></select>
+    <input name="period" placeholder="YYYY-MM" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+    <input name="target_value" type="number" placeholder="Target" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+    <button class="btn btn-primary" type="submit">Save</button>
+  </form>
+  {% for t in targets %}<div style="font-size:13px;padding:4px 0">{{ t.user.get_full_name|default:t.user.username }} · {{ t.metric }} · {{ t.period }} → {{ t.target_value|floatformat:0 }}</div>{% endfor %}
+</div>
+{% endif %}
+{% endblock %}

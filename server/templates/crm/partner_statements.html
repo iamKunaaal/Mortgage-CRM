@@ -1,0 +1,24 @@
+{% extends 'crm/base_p2.html' %}
+{% block title %}BITAR CRM — Partner Statements{% endblock %}
+{% block page_title %}Partner Statements{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Partner Statements</h1><p>Monthly commission summary per referral partner.</p></div>
+  <div class="actions"><form method="post" action="{% url 'partner_statements_generate' %}">{% csrf_token %}<button class="btn btn-primary" type="submit">Generate (this month)</button></form></div>
+</div>
+{% for r in rows %}
+<div class="card" style="padding:16px;margin-bottom:12px">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <div><b style="font-size:15px">{{ r.partner }}</b> <span style="color:var(--text-3);font-size:12px">· {{ r.period }}</span></div>
+    <div style="font-size:18px;font-weight:700">AED {{ r.total|floatformat:0 }}</div>
+  </div>
+  {% if r.lines %}
+  <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:10px">
+    <thead><tr style="text-align:left;border-bottom:1px solid var(--border-soft)"><th style="padding:6px 0">Detail</th><th style="text-align:right">Amount</th></tr></thead>
+    <tbody>{% for l in r.lines %}<tr><td style="padding:5px 0">{{ l.note }}</td><td style="text-align:right">AED {{ l.amount }}</td></tr>{% endfor %}</tbody>
+  </table>
+  {% else %}<p style="color:var(--text-3);font-size:13px;margin-top:8px">No commission entries this period.</p>{% endif %}
+</div>
+{% empty %}
+<div class="card" style="padding:40px;text-align:center;color:var(--text-3)">No statements yet. Click "Generate" above.</div>
+{% endfor %}
+{% endblock %}

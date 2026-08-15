@@ -1,0 +1,17 @@
+{% extends 'crm/base_p2.html' %}
+{% block title %}BITAR CRM — Report Builder{% endblock %}
+{% block page_title %}Report Builder{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Report Builder</h1><p>Group leads by a field.</p></div></div>
+<form method="get" style="display:flex;gap:8px;margin-bottom:16px">
+  <input type="hidden" name="entity" value="Lead">
+  <select name="group" style="padding:8px;border:1px solid var(--border);border-radius:8px">{% for f in fields %}<option value="{{ f }}" {% if f == field %}selected{% endif %}>{{ f }}</option>{% endfor %}</select>
+  <button class="btn btn-primary" type="submit">Run</button>
+</form>
+<div class="card" style="padding:0;overflow:auto">
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr style="text-align:left;border-bottom:1px solid var(--border)"><th style="padding:10px">{{ field }}</th><th>Count</th></tr></thead>
+    <tbody>{% for r in rows %}<tr style="border-bottom:1px solid var(--border-soft)"><td style="padding:10px">{{ r.key }}</td><td>{{ r.n }}</td></tr>{% empty %}<tr><td colspan="2" style="padding:20px;color:var(--text-3)">No data.</td></tr>{% endfor %}</tbody>
+  </table>
+</div>
+{% endblock %}

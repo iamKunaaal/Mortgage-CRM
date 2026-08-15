@@ -7,7 +7,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **opts):
         jobs = ['check_sla', 'check_silence', 'check_doc_expiry',
-                'check_integrity', 'check_nurture', 'check_buyouts', 'check_reminders']
+                'check_integrity', 'check_nurture', 'check_buyouts', 'check_reminders',
+                'check_receivables', 'check_ops_validity']
         for job in jobs:
             self.stdout.write(self.style.HTTP_INFO(f'→ {job}'))
             try:

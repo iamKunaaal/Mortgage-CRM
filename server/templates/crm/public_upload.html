@@ -1,0 +1,14 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Upload documents — BITAR</title>
+<style>body{font-family:system-ui,sans-serif;background:#F7F9FC;color:#0F172A;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}
+.card{background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:28px;max-width:420px;width:100%;box-shadow:0 4px 12px rgba(0,0,0,.06)}
+h1{font-size:18px;margin:0 0 6px}p{color:#64748B;font-size:14px}input[type=file]{margin:14px 0;width:100%}
+button{background:#05448B;color:#fff;border:none;border-radius:8px;padding:10px 16px;font-weight:600;cursor:pointer;width:100%}</style></head>
+<body><div class="card">
+  <h1>Upload your documents</h1>
+  <p>For: <b>{{ lead.name }}</b>. Max 15MB per file.</p>
+  <form method="post" enctype="multipart/form-data">
+    <input type="file" name="file" required>
+    <button type="submit">Upload</button>
+  </form>
+</div></body></html>

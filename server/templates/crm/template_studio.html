@@ -1,0 +1,26 @@
+{% extends 'crm/base_p2.html' %}
+{% block title %}BITAR CRM — Templates{% endblock %}
+{% block page_title %}Template Studio{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Template Studio</h1><p>Message & document templates. Publishing needs CEO approval.</p></div></div>
+<div class="card" style="padding:16px;margin-bottom:18px">
+  <b>New template</b>
+  <form method="post" action="{% url 'template_save' %}" style="display:grid;gap:10px;margin-top:10px;max-width:640px">{% csrf_token %}
+    <input name="name" placeholder="Template name" required style="padding:8px;border:1px solid var(--border);border-radius:8px">
+    <div style="display:flex;gap:8px">
+      <select name="kind" style="padding:8px;border:1px solid var(--border);border-radius:8px"><option value="inapp">In-app</option><option value="email">Email</option><option value="whatsapp">WhatsApp</option><option value="doc">Document</option></select>
+      <input name="milestone_stage" placeholder="Auto-send at stage (optional)" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px">
+      <label style="font-size:13px;white-space:nowrap"><input type="checkbox" name="auto_send"> Auto-send</label>
+    </div>
+    <input name="subject" placeholder="Subject" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+    <textarea name="body" rows="4" placeholder="Body — use {{name}} {{case}} {{stage}}" style="padding:8px;border:1px solid var(--border);border-radius:8px"></textarea>
+    <button class="btn btn-primary" type="submit" style="justify-self:start">Save</button>
+  </form>
+</div>
+<div class="card" style="padding:0;overflow:auto">
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr style="text-align:left;border-bottom:1px solid var(--border)"><th style="padding:10px">Name</th><th>Kind</th><th>Milestone</th><th>Auto</th><th>Published</th></tr></thead>
+    <tbody>{% for t in templates %}<tr style="border-bottom:1px solid var(--border-soft)"><td style="padding:10px;font-weight:600">{{ t.name }}</td><td>{{ t.get_kind_display }}</td><td>{{ t.milestone_stage|default:"—" }}</td><td>{% if t.auto_send %}✅{% else %}—{% endif %}</td><td>{% if t.published %}✅{% else %}⏳ pending{% endif %}</td></tr>{% empty %}<tr><td colspan="5" style="padding:20px;color:var(--text-3)">No templates yet.</td></tr>{% endfor %}</tbody>
+  </table>
+</div>
+{% endblock %}

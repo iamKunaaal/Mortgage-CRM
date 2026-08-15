@@ -1,7 +1,60 @@
 from django.urls import path
 from . import views
+from . import views_phase2 as vp2
 
 urlpatterns = [
+    # ---- Phase 2: Finance depth ----
+    path('finance-hub/', vp2.finance_hub, name='finance_hub'),
+    path('finance-hub/invoice/create/', vp2.invoice_create, name='invoice_create'),
+    path('finance-hub/invoice/<int:pk>/send/', vp2.invoice_send, name='invoice_send'),
+    path('finance-hub/invoice/<int:pk>/receipt/', vp2.receipt_add, name='receipt_add'),
+    path('finance-hub/invoice/<int:pk>/credit/', vp2.credit_note_add, name='credit_note_add'),
+    path('finance-hub/payout/create/', vp2.payout_run_create, name='payout_run_create'),
+    path('finance-hub/payout/<int:pk>/submit/', vp2.payout_run_submit, name='payout_run_submit'),
+    path('finance-hub/month/lock/', vp2.month_lock, name='month_lock'),
+    path('finance-hub/month/reopen/', vp2.month_reopen, name='month_reopen'),
+    path('finance-hub/incentive/save/', vp2.incentive_save, name='incentive_save'),
+    # ---- Phase 2: Operations subflows ----
+    path('leads/<int:pk>/ops/valuation/', vp2.ops_valuation_add, name='ops_valuation_add'),
+    path('leads/<int:pk>/ops/buyout/', vp2.ops_buyout_add, name='ops_buyout_add'),
+    path('leads/<int:pk>/ops/noc/', vp2.ops_noc_add, name='ops_noc_add'),
+    path('leads/<int:pk>/ops/transfer/', vp2.ops_transfer_add, name='ops_transfer_add'),
+    # ---- Phase 2: Partners depth ----
+    path('partners/<int:pk>/commission/', vp2.partner_commission_save, name='partner_commission_save'),
+    path('partners/statements/', vp2.partner_statements, name='partner_statements'),
+    path('partners/statements/generate/', vp2.partner_statements_generate, name='partner_statements_generate'),
+    # ---- Phase 2: Automation ----
+    path('automation/', vp2.automation_list, name='automation_list'),
+    path('automation/save/', vp2.automation_save, name='automation_save'),
+    path('automation/<int:pk>/toggle/', vp2.automation_toggle, name='automation_toggle'),
+    # ---- Phase 2: HR ----
+    path('hr/', vp2.hr_home, name='hr_home'),
+    path('hr/checkin/', vp2.attendance_checkin, name='attendance_checkin'),
+    path('hr/checkout/', vp2.attendance_checkout, name='attendance_checkout'),
+    path('hr/leave/', vp2.leave_request, name='leave_request'),
+    path('hr/leave/<int:pk>/decide/', vp2.leave_decide, name='leave_decide'),
+    path('hr/target/', vp2.target_save, name='target_save'),
+    # ---- Phase 2: Compliance/Admin depth ----
+    path('settings/retention/', vp2.retention_save, name='retention_save'),
+    path('custom-fields/', vp2.custom_fields_page, name='custom_fields_page'),
+    path('custom-fields/<int:pk>/toggle/', vp2.custom_field_toggle, name='custom_field_toggle'),
+    path('settings/custom-field/', vp2.custom_field_save, name='custom_field_save'),
+    # ---- Phase 2: Reporting ----
+    path('reports/forecast/view/', vp2.forecast, name='forecast'),
+    path('reports/builder/', vp2.report_builder, name='report_builder'),
+    # ---- Phase 2: scaffolded completions ----
+    path('templates/', vp2.template_studio, name='template_studio'),
+    path('templates/save/', vp2.template_save, name='template_save'),
+    path('access-review/', vp2.access_review, name='access_review'),
+    path('leads/<int:pk>/ubo/', vp2.ubo_add, name='ubo_add'),
+    path('leads/<int:pk>/referral/', vp2.client_referral_add, name='client_referral_add'),
+    path('leads/<int:pk>/dsr/export/', vp2.dsr_export, name='dsr_export'),
+    path('leads/<int:pk>/dsr/anonymize/', vp2.dsr_anonymize, name='dsr_anonymize'),
+    path('leads/<int:pk>/upload-link/', vp2.upload_token_create, name='upload_token_create'),
+    path('upload/<str:token>/', vp2.public_upload, name='public_upload'),
+    path('finance-hub/payout/<int:pk>/execute/', vp2.payout_execute, name='payout_execute'),
+    path('finance-hub/incentive/compute/', vp2.incentive_compute, name='incentive_compute'),
+
     path('login/', views.CRMLoginView.as_view(), name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('', views.dashboard, name='dashboard'),

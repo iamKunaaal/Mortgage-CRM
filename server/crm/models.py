@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -258,6 +259,7 @@ class Lead(models.Model):
     ltv = models.PositiveIntegerField(default=80)
     loan_amount = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     bank_notes = models.TextField(blank=True)
+    custom = models.JSONField(default=dict, blank=True)   # AD-05 custom-field values
     advisor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
                                 related_name='leads', limit_choices_to={'role': Role.ADVISOR})
     bank = models.ForeignKey(Bank, on_delete=models.SET_NULL, null=True, blank=True)
@@ -942,3 +944,420 @@ class NotificationPref(models.Model):
 
     def __str__(self):
         return f'{self.user} · {self.category} {"muted" if self.muted else "on"}'
+
+
+# ==========================================================================
+# PHASE 2 MODELS — all additive; nothing here is a hard dependency of the
+# core CRM. Features read config at runtime and degrade gracefully.
+# ==========================================================================
+
+# ---- Finance (FI-01,03-11) -------------------------------------------------
+class Invoice(models.Model):
+    STATUS = [('Draft', 'Draft'), ('Sent', 'Sent'), ('Part-Paid', 'Part-Paid'),
+              ('Paid', 'Paid'), ('Credited', 'Credited'), ('Void', 'Void')]
+    number = models.CharField(max_length=30, blank=True, db_index=True)
+    lead = models.ForeignKey(Lead, on_delete=models.SET_NULL, null=True, blank=True,
+                             related_name='invoices')
+    client_name = models.CharField(max_length=200, blank=True)
+    trn = models.CharField(max_length=30, blank=True)
+    subtotal = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    vat = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    total = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    status = models.CharField(max_length=12, choices=STATUS, default='Draft')
+    locked = models.BooleanField(default=False)              # true once Sent (FI-04)
+    notes = models.CharField(max_length=255, blank=True)
+    issued_at = models.DateField(null=True, blank=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    @property
+    def paid_amount(self):
+        return sum((r.amount for r in self.receipts.all()), Decimal('0'))
+
+    @property
+    def balance(self):
+        return (self.total or Decimal('0')) - self.paid_amount
+
+    def __str__(self):
+        return self.number or f'INV#{self.pk}'
+
+
+class CreditNote(models.Model):
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='credit_notes')
+    number = models.CharField(max_length=30, blank=True)
+    amount = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    reason = models.CharField(max_length=255, blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.number or f'CN#{self.pk}'
+
+
+class Receipt(models.Model):
+    METHOD = [('Bank Transfer', 'Bank Transfer'), ('Cheque', 'Cheque'),
+              ('Cash', 'Cash'), ('Card', 'Card'), ('Other', 'Other')]
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='receipts')
+    amount = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    method = models.CharField(max_length=20, choices=METHOD, default='Bank Transfer')
+    reference = models.CharField(max_length=120, blank=True)
+    received_at = models.DateField(null=True, blank=True)
+    note = models.CharField(max_length=255, blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-received_at', '-created_at']
+
+    def __str__(self):
+        return f'Receipt {self.amount} on {self.invoice}'
+
+
+class LedgerEntry(models.Model):
+    """Shared money spine for commission / incentive / clawback / variance (FI-07/09, PM-06)."""
+    KIND = [('commission', 'Commission'), ('incentive', 'Incentive'),
+            ('clawback', 'Clawback'), ('variance', 'Variance'), ('adjustment', 'Adjustment')]
+    payee = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                              related_name='ledger_entries')
+    partner = models.ForeignKey(ReferralPartner, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='ledger_entries')
+    kind = models.CharField(max_length=20, choices=KIND, default='commission')
+    amount = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    lead = models.ForeignKey(Lead, on_delete=models.SET_NULL, null=True, blank=True)
+    note = models.CharField(max_length=255, blank=True)
+    effective_date = models.DateField(null=True, blank=True)
+    payout_line = models.ForeignKey('PayoutLine', on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name='ledger_entries')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-effective_date', '-created_at']
+
+    def __str__(self):
+        return f'{self.kind} {self.amount}'
+
+
+class PayoutRun(models.Model):
+    STATUS = [('Draft', 'Draft'), ('Pending Approval', 'Pending Approval'),
+              ('Approved', 'Approved'), ('Paid', 'Paid'), ('Cancelled', 'Cancelled')]
+    period = models.CharField(max_length=7)                  # YYYY-MM
+    status = models.CharField(max_length=20, choices=STATUS, default='Draft')
+    total = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    approval = models.ForeignKey(ApprovalRequest, on_delete=models.SET_NULL, null=True, blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-period', '-created_at']
+
+    def __str__(self):
+        return f'Payout {self.period} ({self.status})'
+
+
+class PayoutLine(models.Model):
+    run = models.ForeignKey(PayoutRun, on_delete=models.CASCADE, related_name='lines')
+    payee_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    payee_partner = models.ForeignKey(ReferralPartner, on_delete=models.SET_NULL, null=True, blank=True)
+    amount = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    reference = models.CharField(max_length=120, blank=True)
+
+    def __str__(self):
+        return f'{self.amount} to {self.payee_user or self.payee_partner}'
+
+
+class IncentiveScheme(models.Model):
+    """Per-employee incentive rules (FI-09). rules JSON is interpreted by the finance engine."""
+    name = models.CharField(max_length=120)
+    rules = models.JSONField(default=dict, blank=True)
+    active = models.BooleanField(default=True)
+    effective_from = models.DateField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+
+class MonthLock(models.Model):
+    """Finance month-end lock with CEO reopen (FI-11)."""
+    period = models.CharField(max_length=7, unique=True)     # YYYY-MM
+    locked = models.BooleanField(default=True)
+    locked_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    locked_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.period} {"locked" if self.locked else "open"}'
+
+
+# ---- Operations subflows (OPS-08,10,11,12) ---------------------------------
+class ValuationRecord(models.Model):
+    lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='valuations')
+    bank = models.ForeignKey(Bank, on_delete=models.SET_NULL, null=True, blank=True)
+    valued_amount = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    purchase_price = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    valued_on = models.DateField(null=True, blank=True)
+    note = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def shortfall(self):
+        if self.purchase_price and self.valued_amount:
+            return max(self.purchase_price - self.valued_amount, Decimal('0'))
+        return Decimal('0')
+
+    def __str__(self):
+        return f'Valuation {self.valued_amount} for {self.lead_id}'
+
+
+class BuyoutRecord(models.Model):
+    lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='buyouts')
+    current_bank = models.CharField(max_length=120, blank=True)
+    liability_amount = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    liability_letter_date = models.DateField(null=True, blank=True)
+    liability_valid_until = models.DateField(null=True, blank=True)
+    note = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'Buyout for {self.lead_id}'
+
+
+class NOCRecord(models.Model):
+    lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='nocs')
+    developer = models.CharField(max_length=160, blank=True)
+    fee = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    requested_on = models.DateField(null=True, blank=True)
+    received_on = models.DateField(null=True, blank=True)
+    receipt_ref = models.CharField(max_length=120, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'NOC for {self.lead_id}'
+
+
+class TransferBooking(models.Model):
+    lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='transfers')
+    trustee_office = models.CharField(max_length=160, blank=True)
+    booked_for = models.DateField(null=True, blank=True)
+    cheques = models.JSONField(default=list, blank=True)     # [{payee, amount, bank, no}]
+    note = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'Transfer for {self.lead_id}'
+
+
+# ---- Channel Partners depth (PM-02,06,07) ----------------------------------
+class PartnerCommissionModel(models.Model):
+    partner = models.ForeignKey(ReferralPartner, on_delete=models.CASCADE, related_name='commission_models')
+    model = models.JSONField(default=dict, blank=True)       # {type: pct|slab|flat, value, ...}
+    effective_from = models.DateField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-effective_from']
+
+    def __str__(self):
+        return f'Commission model for {self.partner_id}'
+
+
+class PartnerStatement(models.Model):
+    partner = models.ForeignKey(ReferralPartner, on_delete=models.CASCADE, related_name='statements')
+    period = models.CharField(max_length=7)                  # YYYY-MM
+    lines = models.JSONField(default=list, blank=True)
+    total = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-period']
+        unique_together = ('partner', 'period')
+
+    def __str__(self):
+        return f'{self.partner_id} statement {self.period}'
+
+
+# ---- Automation (NA-05,06) -------------------------------------------------
+class AutomationRule(models.Model):
+    name = models.CharField(max_length=120)
+    trigger = models.CharField(max_length=60)                # event key, e.g. 'lead.stage_changed'
+    conditions = models.JSONField(default=list, blank=True)  # [{field, op, value}]
+    actions = models.JSONField(default=list, blank=True)     # [{type, ...}]
+    active = models.BooleanField(default=True)
+    run_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+
+class AutomationRun(models.Model):
+    rule = models.ForeignKey(AutomationRule, on_delete=models.CASCADE, related_name='runs')
+    target_model = models.CharField(max_length=40, blank=True)
+    target_id = models.PositiveIntegerField(null=True, blank=True)
+    status = models.CharField(max_length=20, default='ok')   # ok|error|simulated|skipped
+    log = models.CharField(max_length=500, blank=True)
+    simulated = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+
+# ---- HR (HR-02..09) --------------------------------------------------------
+class Attendance(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='attendances')
+    date = models.DateField(db_index=True)
+    check_in = models.DateTimeField(null=True, blank=True)
+    check_out = models.DateTimeField(null=True, blank=True)
+    geo = models.CharField(max_length=120, blank=True)       # "lat,lng"
+    selfie = models.CharField(max_length=255, blank=True)
+    note = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        unique_together = ('user', 'date')
+        ordering = ['-date']
+
+    def __str__(self):
+        return f'{self.user} {self.date}'
+
+
+class LeaveType(models.Model):
+    name = models.CharField(max_length=60)
+    days_per_year = models.PositiveIntegerField(default=0)
+    active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+
+
+class LeaveRequest(models.Model):
+    STATUS = [('Pending', 'Pending'), ('Approved', 'Approved'), ('Rejected', 'Rejected')]
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='leave_requests')
+    leave_type = models.ForeignKey(LeaveType, on_delete=models.SET_NULL, null=True, blank=True)
+    start = models.DateField()
+    end = models.DateField()
+    reason = models.CharField(max_length=255, blank=True)
+    status = models.CharField(max_length=10, choices=STATUS, default='Pending')
+    approval = models.ForeignKey(ApprovalRequest, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.user} leave {self.start}..{self.end}'
+
+
+class Target(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='targets')
+    metric = models.CharField(max_length=40)                 # e.g. 'disbursed_value', 'leads'
+    period = models.CharField(max_length=7)                  # YYYY-MM
+    target_value = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+
+    class Meta:
+        unique_together = ('user', 'metric', 'period')
+
+    def __str__(self):
+        return f'{self.user} {self.metric} {self.period}'
+
+
+# ---- Compliance / Admin depth (CO-08, AD-05) -------------------------------
+class RetentionPolicy(models.Model):
+    record_class = models.CharField(max_length=60, unique=True)   # e.g. 'Lead', 'Document'
+    years = models.PositiveIntegerField(default=7)                # OD-6 default
+    active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f'{self.record_class}: {self.years}y'
+
+
+class CustomField(models.Model):
+    TYPES = [('text', 'Text'), ('number', 'Number'), ('date', 'Date'),
+             ('select', 'Select'), ('checkbox', 'Checkbox')]
+    model = models.CharField(max_length=40)                  # e.g. 'Lead'
+    key = models.CharField(max_length=40)
+    label = models.CharField(max_length=120)
+    field_type = models.CharField(max_length=12, choices=TYPES, default='text')
+    options = models.JSONField(default=list, blank=True)
+    role_visibility = models.JSONField(default=list, blank=True)  # roles that can see; [] = all
+    active = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ('model', 'key')
+
+    def __str__(self):
+        return f'{self.model}.{self.key}'
+
+
+# ==========================================================================
+# PHASE 2 — scaffolded items completion
+# ==========================================================================
+class MessageTemplate(models.Model):
+    """Template studio + milestone messaging + doc templates (AD-07, CL-03, DM-09)."""
+    KIND = [('inapp', 'In-app'), ('email', 'Email'), ('whatsapp', 'WhatsApp'), ('doc', 'Document')]
+    name = models.CharField(max_length=120)
+    kind = models.CharField(max_length=12, choices=KIND, default='inapp')
+    subject = models.CharField(max_length=200, blank=True)
+    body = models.TextField(blank=True)                      # supports {{name}}, {{case}}, {{stage}}
+    milestone_stage = models.CharField(max_length=40, blank=True)   # auto-send when a case hits this stage
+    auto_send = models.BooleanField(default=False)
+    published = models.BooleanField(default=False)
+    approval = models.ForeignKey(ApprovalRequest, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+
+class UBO(models.Model):
+    """Ultimate beneficial owner for corporate borrowers (CO-04)."""
+    lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='ubos')
+    name = models.CharField(max_length=160)
+    share_pct = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    id_number = models.CharField(max_length=60, blank=True)
+    nationality = models.CharField(max_length=60, blank=True)
+    is_pep = models.BooleanField(default=False)
+    screened = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.name} ({self.share_pct}%)'
+
+
+class ClientReferral(models.Model):
+    """Client referral capture + advocacy (CL-06)."""
+    referrer_lead = models.ForeignKey(Lead, on_delete=models.SET_NULL, null=True, blank=True,
+                                      related_name='referrals_made')
+    referred_name = models.CharField(max_length=160)
+    referred_mobile = models.CharField(max_length=60, blank=True)
+    note = models.CharField(max_length=255, blank=True)
+    converted_lead = models.ForeignKey(Lead, on_delete=models.SET_NULL, null=True, blank=True,
+                                       related_name='+')
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.referred_name} (by {self.referrer_lead_id})'
+
+
+class UploadToken(models.Model):
+    """Secure tokenized client upload link (DM-08)."""
+    lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='upload_tokens')
+    token = models.CharField(max_length=64, unique=True, db_index=True)
+    expires_at = models.DateTimeField()
+    used_count = models.PositiveIntegerField(default=0)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_valid(self):
+        from django.utils import timezone as _tz
+        return _tz.now() < self.expires_at
+
+    def __str__(self):
+        return f'UploadToken for {self.lead_id}'

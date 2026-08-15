@@ -918,8 +918,12 @@ def lead_not_interested(request, pk):
     """Mark a lead Not Interested from its detail page → Lost Leads + advisor loses access (#3)."""
     lead = get_object_or_404(visible_leads(request.user), pk=pk)
     lead.lost_reason = request.POST.get('reason', '').strip() or 'Not Interested'
+    note = request.POST.get('note', '').strip()
     _decline_not_interested(lead, request.user)
-    messages.success(request, f'"{lead.name}" marked Not Interested and moved to Lost Leads.')
+    if note:
+        Note.objects.create(lead=lead, author=request.user,
+                            text=f'Lost — {lead.lost_reason}: {note}')
+    messages.success(request, f'"{lead.name}" marked as Lost ({lead.lost_reason}).')
     return redirect('lead_list')
 
 
@@ -1631,6 +1635,11 @@ def lead_create(request):
             elif lead.advisor is None and not is_draft:
                 lead.advisor = _auto_assign_advisor(lead)   # rules engine + round-robin
             lead.is_draft = is_draft
+            try:
+                from .views_phase2 import apply_custom_fields
+                apply_custom_fields(request, lead)
+            except Exception:
+                pass
             _coerce_lead_numbers(lead)
             lead.score = lead.compute_score(); _compute_eligibility(lead)
             if not is_draft:
@@ -1651,6 +1660,12 @@ def lead_create(request):
             if not is_draft and lead.advisor:
                 _auto_task(lead, f'First contact — {lead.name}', 'Customer Call', days=1,
                            actor=request.user)
+            if not is_draft:
+                try:
+                    from .views_phase2 import run_automations
+                    run_automations('lead.created', lead=lead, actor=request.user)
+                except Exception:
+                    pass
             messages.success(request, f'Draft "{lead.name}" saved.' if is_draft
                              else f'Lead "{lead.name}" created.')
             return redirect('lead_detail', pk=lead.pk)
@@ -1658,7 +1673,17 @@ def lead_create(request):
     return render(request, 'crm/lead_form.html', {
         'form': form, 'title': 'Create Lead', 'submit_label': 'Create Lead',
         'data': data, 'active_nav': 'Leads',
+        'custom_fields': _custom_fields('Lead', request.user), 'custom_values': {},
         'own_scope': perm.is_own_scope(request.user, 'Leads')})
+
+
+def _custom_fields(model, user):
+    """Thin wrapper so views.py can pass admin-defined custom fields to the lead form."""
+    try:
+        from .views_phase2 import custom_fields_for
+        return custom_fields_for(model, user)
+    except Exception:
+        return []
 
 
 @login_required
@@ -2146,6 +2171,12 @@ def lead_stage_update(request, pk):
         lead.save()
         if old != stage:
             _audit(lead, request.user, 'Stage changed', 'Stage', old, stage)
+            try:
+                from .views_phase2 import run_automations, send_milestone_messages
+                run_automations('lead.stage_changed', lead=lead, actor=request.user)
+                send_milestone_messages(lead)
+            except Exception:
+                pass
         if stage != 'Lead Received':
             _mark_contacted(lead)
         if lead.client_id:
@@ -2170,6 +2201,11 @@ def lead_assign(request, pk):
         _audit(lead, request.user, 'Advisor assigned', 'Advisor', old_adv, str(advisor))
         _notify(advisor, f'You were assigned lead "{lead.name}"', f'/leads/{lead.pk}/',
                 'lead', actor=request.user)
+        try:
+            from .views_phase2 import run_automations
+            run_automations('lead.assigned', lead=lead, actor=request.user)
+        except Exception:
+            pass
         messages.success(request, f'Assigned to {advisor.get_full_name() or advisor.username}.')
     else:
         lead.advisor = None
@@ -3178,6 +3214,11 @@ def lead_edit(request, pk):
         if perm.is_own_scope(request.user, 'Leads') and not lead.advisor_id:
             lead.advisor_id = orig_advisor_id or request.user.id
         lead.is_draft = is_draft   # normal save finalizes; Save Draft keeps it a draft
+        try:
+            from .views_phase2 import apply_custom_fields
+            apply_custom_fields(request, lead)
+        except Exception:
+            pass
         _coerce_lead_numbers(lead)
         lead.score = lead.compute_score(); _compute_eligibility(lead)
         lead.save()
@@ -3212,6 +3253,7 @@ def lead_edit(request, pk):
     return render(request, 'crm/lead_form.html', {
         'form': form, 'title': 'Edit Lead', 'submit_label': 'Save Changes',
         'data': data, 'active_nav': 'Leads',
+        'custom_fields': _custom_fields('Lead', request.user), 'custom_values': lead.custom or {},
         'own_scope': perm.is_own_scope(request.user, 'Leads')})
 
 

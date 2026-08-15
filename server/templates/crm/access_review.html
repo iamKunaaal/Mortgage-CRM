@@ -1,0 +1,12 @@
+{% extends 'crm/base_p2.html' %}
+{% block title %}BITAR CRM — Access Review{% endblock %}
+{% block page_title %}Access Review{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Access Review</h1><p>Quarterly review — dormant = no login in 90 days.</p></div></div>
+<div class="card" style="padding:0;overflow:auto">
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr style="text-align:left;border-bottom:1px solid var(--border)"><th style="padding:10px">User</th><th>Role</th><th>Status</th><th>Last login</th><th>Flag</th></tr></thead>
+    <tbody>{% for r in rows %}<tr style="border-bottom:1px solid var(--border-soft)"><td style="padding:10px;font-weight:600">{{ r.name }}</td><td>{{ r.role }}</td><td>{{ r.status }}</td><td>{{ r.last_login|date:"d M Y H:i"|default:"never" }}</td><td>{% if r.dormant %}<span style="color:var(--warning)">⚠ dormant</span>{% else %}✅ active{% endif %}</td></tr>{% endfor %}</tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends 'crm/base_p2.html' %}
+{% block title %}BITAR CRM — Forecast{% endblock %}
+{% block page_title %}Forecast{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Weighted Forecast</h1><p>Pipeline value × per‑stage probability.</p></div></div>
+<div class="card" style="padding:16px;margin-bottom:18px"><div style="font-size:12px;color:var(--text-2)">Weighted pipeline</div><div style="font-size:26px;font-weight:700">AED {{ weighted_total|floatformat:0 }}</div></div>
+<div class="card" style="padding:0;overflow:auto">
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr style="text-align:left;border-bottom:1px solid var(--border)"><th style="padding:10px">Stage</th><th>Count</th><th>Value</th><th>Prob</th><th>Weighted</th></tr></thead>
+    <tbody>{% for r in rows %}<tr style="border-bottom:1px solid var(--border-soft)"><td style="padding:10px;font-weight:600">{{ r.stage }}</td><td>{{ r.count }}</td><td>AED {{ r.value|floatformat:0 }}</td><td>{{ r.prob }}%</td><td>AED {{ r.weighted|floatformat:0 }}</td></tr>{% empty %}<tr><td colspan="5" style="padding:20px;color:var(--text-3)">No active pipeline.</td></tr>{% endfor %}</tbody>
+  </table>
+</div>
+{% endblock %}

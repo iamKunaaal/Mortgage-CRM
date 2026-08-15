@@ -497,10 +497,11 @@ const REASONS=[
   {name:'Property Issue',col:'#0F766E'},
   {name:'Customer Changed Mind',col:'#7FA6CF'},
   {name:'Budget Issue',col:'#A21CAF'},
+  {name:'Not Interested',col:'#EA580C'},
   {name:'Other',col:'#94A3B8'}
 ];
 const REASON_COL=Object.fromEntries(REASONS.map(r=>[r.name,r.col]));
-const REASON_TINT={'Competitor Chosen':'#FEE2E2','No Response':'#FEF3E2','Documents Not Provided':'#FEF3E2','Not Eligible':'#EDE9FE','Interest Rate Too High':'#E0F2FE','Bank Rejected':'#FCE7F3','Property Issue':'#CCFBF1','Customer Changed Mind':'#F0F5FB','Budget Issue':'#FAE8FF','Other':'#F1F5F9'};
+const REASON_TINT={'Competitor Chosen':'#FEE2E2','No Response':'#FEF3E2','Documents Not Provided':'#FEF3E2','Not Eligible':'#EDE9FE','Interest Rate Too High':'#E0F2FE','Bank Rejected':'#FCE7F3','Property Issue':'#CCFBF1','Customer Changed Mind':'#F0F5FB','Budget Issue':'#FAE8FF','Not Interested':'#FFEDD5','Other':'#F1F5F9'};
 const ADVISORS=D.advisors;
 const BANKS=D.banks;
 const SOURCES=D.sources;
@@ -614,7 +615,7 @@ function renderTable(){
     <td>${l.advisor}</td>
     <td><span class="tag">${l.source}</span></td>
     <td>${l.stage}</td>
-    <td><span class="reason-badge" style="background:${REASON_TINT[l.reason]};color:${REASON_COL[l.reason]}">${l.reason}</span></td>
+    <td><span class="reason-badge" style="background:${REASON_TINT[l.reason]||REASON_TINT['Other']};color:${REASON_COL[l.reason]||REASON_COL['Other']}">${l.reason}</span></td>
     <td class="mut" style="color:var(--text-3)">${fmtD(l.lostDate)}</td>
     <td class="r num" style="color:var(--danger)">${fmtAED(l.revLost)}</td>
     <td><button class="kebab" data-id="${l.id}" aria-label="Actions"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button></td>
@@ -651,7 +652,7 @@ $('#rowMenu').addEventListener('click',e=>{
 /* ---------- reason analytics ---------- */
 function reasonStats(){
   const m={};REASONS.forEach(r=>m[r.name]={count:0,rev:0});
-  LEADS.forEach(l=>{m[l.reason].count++;m[l.reason].rev+=l.revLost;});
+  LEADS.forEach(l=>{const k=m[l.reason]?l.reason:'Other';m[k].count++;m[k].rev+=l.revLost;});
   return REASONS.map(r=>({name:r.name,col:r.col,count:m[r.name].count,rev:m[r.name].rev})).sort((a,b)=>b.count-a.count);
 }
 function buildReasons(){

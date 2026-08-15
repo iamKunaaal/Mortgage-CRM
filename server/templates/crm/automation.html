@@ -1,0 +1,115 @@
+{% extends 'crm/base_p2.html' %}
+{% block title %}BITAR CRM — Automation{% endblock %}
+{% block page_title %}Automation{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Automation</h1><p>Set simple rules — no coding. Choose when, choose what, save.</p></div></div>
+
+<div class="card" style="padding:18px;margin-bottom:18px;max-width:680px">
+  <b>Create a rule</b>
+  <form method="post" action="{% url 'automation_save' %}" id="autoForm" style="display:grid;gap:14px;margin-top:14px">{% csrf_token %}
+
+    <div>
+      <label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">1. Rule name</label>
+      <input name="name" required placeholder="e.g. Follow up new leads" style="width:100%;padding:9px;border:1px solid var(--border);border-radius:8px">
+    </div>
+
+    <div>
+      <label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">2. WHEN this happens…</label>
+      <select name="trigger" style="width:100%;padding:9px;border:1px solid var(--border);border-radius:8px">
+        <option value="lead.created">A new lead is created</option>
+        <option value="lead.stage_changed">A lead's stage changes</option>
+        <option value="lead.assigned">A lead is assigned to an advisor</option>
+      </select>
+    </div>
+
+    <div>
+      <label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">3. ONLY IF (optional condition)</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="condField" style="flex:1;padding:9px;border:1px solid var(--border);border-radius:8px">
+          <option value="">— any lead (no condition) —</option>
+          <option value="stage">Stage</option>
+          <option value="source">Source</option>
+          <option value="priority">Priority</option>
+        </select>
+        <select id="condOp" style="padding:9px;border:1px solid var(--border);border-radius:8px"><option value="==">is</option><option value="!=">is not</option><option value="contains">contains</option><option value="&gt;">greater than</option><option value="&lt;">less than</option></select>
+        <input id="condValue" placeholder="e.g. Pre-Approved" style="flex:1;padding:9px;border:1px solid var(--border);border-radius:8px">
+      </div>
+    </div>
+
+    <div>
+      <label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">4. THEN do this…</label>
+      <select id="actType" onchange="toggleAct()" style="width:100%;padding:9px;border:1px solid var(--border);border-radius:8px">
+        <option value="task">Create a task</option>
+        <option value="notify">Notify the advisor</option>
+        <option value="notify_role">Notify a role (team)</option>
+        <option value="set_priority">Set the lead priority</option>
+        <option value="add_note">Add a note to the lead</option>
+        <option value="escalate">Escalate to managers</option>
+        <option value="send_template">Send a message template</option>
+      </select>
+    </div>
+
+    <div id="taskBox" style="display:grid;gap:8px;padding:12px;background:var(--blue-50,#F0F5FB);border-radius:8px">
+      <input id="taskTitle" placeholder="Task title — e.g. Call the customer" style="padding:9px;border:1px solid var(--border);border-radius:8px">
+      <label style="font-size:12px">Due in <input id="taskDays" type="number" value="1" min="0" style="width:60px;padding:6px;border:1px solid var(--border);border-radius:8px"> day(s)</label>
+    </div>
+    <div id="notifyBox" style="display:none;padding:12px;background:var(--blue-50,#F0F5FB);border-radius:8px">
+      <input id="notifyText" placeholder="Message — e.g. This lead is pre-approved, follow up" style="width:100%;padding:9px;border:1px solid var(--border);border-radius:8px">
+    </div>
+    <div id="roleBox" style="display:none;padding:12px;background:var(--blue-50,#F0F5FB);border-radius:8px;display:none">
+      <select id="roleSel" style="width:100%;padding:9px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px"><option value="TEAM_LEADER">Team Leader</option><option value="OPS_MANAGER">Ops Manager</option><option value="SALES_DIRECTOR">Sales Director</option><option value="CEO">CEO</option></select>
+      <input id="roleText" placeholder="Message" style="width:100%;padding:9px;border:1px solid var(--border);border-radius:8px">
+    </div>
+    <div id="prioBox" style="display:none;padding:12px;background:var(--blue-50,#F0F5FB);border-radius:8px">
+      <select id="prioSel" style="width:100%;padding:9px;border:1px solid var(--border);border-radius:8px"><option>High</option><option>Medium</option><option>Low</option></select>
+    </div>
+    <div id="noteBox" style="display:none;padding:12px;background:var(--blue-50,#F0F5FB);border-radius:8px">
+      <input id="noteText" placeholder="Note text" style="width:100%;padding:9px;border:1px solid var(--border);border-radius:8px">
+    </div>
+    <div id="escBox2" style="display:none;padding:12px;background:var(--blue-50,#F0F5FB);border-radius:8px">
+      <input id="escText" placeholder="Escalation message" style="width:100%;padding:9px;border:1px solid var(--border);border-radius:8px">
+    </div>
+    <div id="tplBox" style="display:none;padding:12px;background:var(--blue-50,#F0F5FB);border-radius:8px">
+      <input id="tplName" placeholder="Template name (must be published)" style="width:100%;padding:9px;border:1px solid var(--border);border-radius:8px">
+    </div>
+
+    <label style="font-size:13px"><input type="checkbox" name="active" checked> Turn this rule ON</label>
+
+    <!-- hidden JSON the server reads; filled automatically -->
+    <input type="hidden" name="conditions" id="conditionsJson" value="[]">
+    <input type="hidden" name="actions" id="actionsJson" value="[]">
+
+    <button class="btn btn-primary" type="submit" style="justify-self:start" onclick="return buildJson()">Save rule</button>
+  </form>
+</div>
+
+<div class="card" style="padding:0;overflow:auto;margin-bottom:18px">
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr style="text-align:left;border-bottom:1px solid var(--border)"><th style="padding:10px">Rule</th><th>Trigger</th><th>Runs</th><th>Active</th><th></th></tr></thead>
+    <tbody>{% for r in rules %}<tr style="border-bottom:1px solid var(--border-soft)"><td style="padding:10px;font-weight:600">{{ r.name }}</td><td>{{ r.trigger }}</td><td>{{ r.run_count }}</td><td>{% if r.active %}✅ ON{% else %}⏸ OFF{% endif %}</td><td><form method="post" action="{% url 'automation_toggle' r.pk %}" style="display:inline">{% csrf_token %}<button class="btn btn-ghost" style="padding:3px 10px">Toggle</button></form></td></tr>{% empty %}<tr><td colspan="5" style="padding:20px;color:var(--text-3)">No rules yet.</td></tr>{% endfor %}</tbody>
+  </table>
+</div>
+<div class="card" style="padding:16px"><b>Recent activity</b>{% for run in runs %}<div style="font-size:12px;padding:5px 0;border-bottom:1px solid var(--border-soft)">{{ run.created_at|date:"d M H:i" }} · {{ run.rule.name }} · {{ run.status }} {% if run.log %}— {{ run.log }}{% endif %}</div>{% empty %}<p style="color:var(--text-3);font-size:13px;margin-top:8px">Nothing yet.</p>{% endfor %}</div>
+
+<script>
+var ACT_BOXES={task:'taskBox',notify:'notifyBox',notify_role:'roleBox',set_priority:'prioBox',add_note:'noteBox',escalate:'escBox2',send_template:'tplBox'};
+function toggleAct(){
+  var t=document.getElementById('actType').value;
+  for(var k in ACT_BOXES){var el=document.getElementById(ACT_BOXES[k]); if(el) el.style.display=(k===t)?(k==='task'?'grid':'block'):'none';}
+}
+function buildJson(){
+  var f=document.getElementById('condField').value, op=document.getElementById('condOp').value, v=document.getElementById('condValue').value.trim();
+  document.getElementById('conditionsJson').value = (f && v) ? JSON.stringify([{field:f,op:op,value:v}]) : '[]';
+  var t=document.getElementById('actType').value, act={type:t};
+  if(t==='task'){act.title=(document.getElementById('taskTitle').value.trim()||'Follow up');act.days=parseInt(document.getElementById('taskDays').value||'1',10);}
+  else if(t==='notify'){act.text=(document.getElementById('notifyText').value.trim()||'Please review this lead');}
+  else if(t==='notify_role'){act.role=document.getElementById('roleSel').value;act.text=(document.getElementById('roleText').value.trim()||'Please review this lead');}
+  else if(t==='set_priority'){act.value=document.getElementById('prioSel').value;}
+  else if(t==='add_note'){act.text=(document.getElementById('noteText').value.trim()||'Auto note');}
+  else if(t==='escalate'){act.text=(document.getElementById('escText').value.trim()||'Escalation');}
+  else if(t==='send_template'){act.template=document.getElementById('tplName').value.trim();}
+  document.getElementById('actionsJson').value = JSON.stringify([act]);
+  return true;
+}
+</script>
+{% endblock %}

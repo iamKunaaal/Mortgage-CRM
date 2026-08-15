@@ -505,7 +505,8 @@ const PRIORITIES=['High','Medium','Low'];
 const LEADS=D.leads.map(l=>({...l,created:new Date(l.created)}));
 
 /* ---------- filters ---------- */
-const state={search:'',stage:null,advisor:null,bank:null,source:null,priority:null,range:null,view:'All Leads',sortK:'created',sortDir:-1,page:1,per:25,selected:new Set()};
+const state={search:'',stage:new Set(),advisor:new Set(),bank:new Set(),source:new Set(),priority:new Set(),range:null,view:'All Leads',sortK:'created',sortDir:-1,page:1,per:25,selected:new Set()};
+const MULTI_FILTERS=['stage','advisor','bank','source','priority'];
 
 /* saved views */
 const ME=D.me;
@@ -535,17 +536,24 @@ $$('.f-dd').forEach(dd=>{
   btn.addEventListener('click',e=>{e.stopPropagation();const was=dd.classList.contains('open');$$('.f-dd.open').forEach(o=>o.classList.remove('open'));dd.classList.toggle('open',!was);});
   dd.querySelectorAll('.f-dd-menu>button').forEach(ob=>ob.addEventListener('click',(e)=>{
     const v=ob.dataset.v;
-    if(k==='range'&&v==='Custom'){
-      e.stopPropagation();dd.classList.remove('open');openCustomRange(dd,btn,def);
+    if(k==='range'){
+      if(v==='Custom'){e.stopPropagation();dd.classList.remove('open');openCustomRange(dd,btn,def);return;}
+      const same=state.range===v;
+      state.range=same?null:v;state.customFrom=null;state.customTo=null;
+      dd.querySelectorAll('.f-dd-menu>button').forEach(x=>x.classList.toggle('sel',x.dataset.v===state.range));
+      btn.classList.toggle('on',!!state.range);
+      btn.querySelector('.lbl').textContent=state.range||def.label;
+      dd.classList.remove('open');state.page=1;render();
       return;
     }
-    const same=state[k]===v;
-    state[k]=same?null:v;
-    if(k==='range'){state.customFrom=null;state.customTo=null;}
-    dd.querySelectorAll('.f-dd-menu>button').forEach(x=>x.classList.toggle('sel',x.dataset.v===state[k]));
-    btn.classList.toggle('on',!!state[k]);
-    btn.querySelector('.lbl').textContent=state[k]||def.label;
-    dd.classList.remove('open');state.page=1;render();
+    /* multi-select: toggle value in the set, keep dropdown open */
+    e.stopPropagation();
+    const set=state[k];
+    if(set.has(v))set.delete(v);else set.add(v);
+    ob.classList.toggle('sel',set.has(v));
+    btn.classList.toggle('on',set.size>0);
+    btn.querySelector('.lbl').textContent=set.size?`${def.label} (${set.size})`:def.label;
+    state.page=1;render();
   }));
 });
 
@@ -610,8 +618,9 @@ function clearAll(){
   state.search='';$('#tblSearch').value='';
   state.customFrom=null;state.customTo=null;
   ['stage','advisor','bank','source','priority','range'].forEach(k=>{
-    state[k]=null;
+    state[k]=MULTI_FILTERS.includes(k)?new Set():null;
     const dd=document.querySelector(`.f-dd[data-filter=${k}]`);
+    if(!dd)return;
     dd.querySelector('.f-dd-btn').classList.remove('on');
     dd.querySelector('.lbl').textContent=FILTER_DEFS[k].label;
     dd.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));
@@ -669,11 +678,11 @@ function filtered(){
   return LEADS.filter(l=>{
     if(!VIEWS[state.view](l))return false;
     if(state.search&&![l.name,l.id,l.mobile,l.bank,l.advisor,l.nat,l.stage,l.source].join(' ').toLowerCase().includes(state.search))return false;
-    if(state.stage&&l.stage!==state.stage)return false;
-    if(state.advisor&&l.advisor!==state.advisor)return false;
-    if(state.bank&&l.bank!==state.bank)return false;
-    if(state.source&&l.source!==state.source)return false;
-    if(state.priority&&l.priority!==state.priority)return false;
+    if(state.stage.size&&!state.stage.has(l.stage))return false;
+    if(state.advisor.size&&!state.advisor.has(l.advisor))return false;
+    if(state.bank.size&&!state.bank.has(l.bank))return false;
+    if(state.source.size&&!state.source.has(l.source))return false;
+    if(state.priority.size&&!state.priority.has(l.priority))return false;
     if(!inRange(l.created))return false;
     return true;
   }).sort((a,b)=>{

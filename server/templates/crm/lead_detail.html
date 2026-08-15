@@ -398,7 +398,8 @@ a{color:inherit;text-decoration:none}
           <form id="nurtureBox" method="post" action="{% url 'lead_nurture' lead.pk %}" style="display:none;gap:6px;align-items:center">{% csrf_token %}<input type="date" name="until" required style="padding:7px;border:1px solid var(--border);border-radius:8px"><button type="submit" class="btn btn-ghost">Set</button></form>
           {% endif %}
           <button type="button" class="btn btn-ghost" style="border-color:#F5C4C0;color:var(--warning)" onclick="document.getElementById('escModal').classList.add('show')">⤴ Escalate</button>
-          <form method="post" action="{% url 'lead_not_interested' lead.pk %}" style="display:inline" onsubmit="return confirm('Mark Not Interested? This moves the lead to Lost Leads and removes it from the advisor.')">{% csrf_token %}<button type="submit" class="btn btn-ghost" style="border-color:#FCA5A5;color:#DC2626">Not Interested</button></form>
+          <button type="button" class="btn btn-ghost" onclick="document.getElementById('opsModal').classList.add('show')">⚙ Ops</button>
+          <button type="button" class="btn btn-ghost" style="border-color:#FCA5A5;color:#DC2626" onclick="document.getElementById('niModal').classList.add('show')">Not Interested</button>
           <button type="button" class="btn btn-primary" onclick="document.getElementById('stageModal').classList.add('show')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20v-6M6 20V10M18 20V4"/></svg>Update Stage</button>{% endif %}
         </div>
       </div>
@@ -872,6 +873,111 @@ a{color:inherit;text-decoration:none}
       <div class="td-foot">
         <button class="btn btn-ghost" type="button" onclick="document.getElementById('stageModal').classList.remove('show')">Cancel</button>
         <button class="btn btn-primary" type="submit">Save Stage</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- OPS SUBFLOWS MODAL (Phase 2) -->
+<div class="td-scrim" id="opsModal">
+  <div class="td-modal" role="dialog" aria-modal="true" style="max-width:560px">
+    <div class="td-h">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></span>
+      <div><b>Operations subflows</b><span>Valuation · Buyout · NOC · Transfer</span></div>
+      <button class="x" type="button" onclick="document.getElementById('opsModal').classList.remove('show')" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="td-body" style="max-height:70vh;overflow:auto">
+      <details open><summary style="font-weight:600;cursor:pointer;padding:6px 0">Valuation</summary>
+        <form method="post" action="{% url 'ops_valuation_add' lead.pk %}" style="display:grid;gap:8px;margin:8px 0 14px">{% csrf_token %}
+          <input name="valued_amount" type="number" step="0.01" placeholder="Valued amount (AED)" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+          <input name="purchase_price" type="number" step="0.01" placeholder="Purchase price (AED)" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+          <input type="date" name="valued_on" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+          <button class="btn btn-primary" type="submit" style="justify-self:start">Save valuation</button>
+        </form></details>
+      <details><summary style="font-weight:600;cursor:pointer;padding:6px 0">Buyout</summary>
+        <form method="post" action="{% url 'ops_buyout_add' lead.pk %}" style="display:grid;gap:8px;margin:8px 0 14px">{% csrf_token %}
+          <input name="current_bank" placeholder="Current bank" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+          <input name="liability_amount" type="number" step="0.01" placeholder="Liability amount (AED)" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+          <label style="font-size:12px">Liability letter date</label><input type="date" name="liability_letter_date" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+          <label style="font-size:12px">Valid until</label><input type="date" name="liability_valid_until" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+          <button class="btn btn-primary" type="submit" style="justify-self:start">Save buyout</button>
+        </form></details>
+      <details><summary style="font-weight:600;cursor:pointer;padding:6px 0">NOC</summary>
+        <form method="post" action="{% url 'ops_noc_add' lead.pk %}" style="display:grid;gap:8px;margin:8px 0 14px">{% csrf_token %}
+          <input name="developer" placeholder="Developer" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+          <input name="fee" type="number" step="0.01" placeholder="Fee (AED)" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+          <label style="font-size:12px">Requested on</label><input type="date" name="requested_on" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+          <label style="font-size:12px">Received on</label><input type="date" name="received_on" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+          <input name="receipt_ref" placeholder="Receipt ref" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+          <button class="btn btn-primary" type="submit" style="justify-self:start">Save NOC</button>
+        </form></details>
+      <details><summary style="font-weight:600;cursor:pointer;padding:6px 0">Transfer booking</summary>
+        <form method="post" action="{% url 'ops_transfer_add' lead.pk %}" style="display:grid;gap:8px;margin:8px 0 14px">{% csrf_token %}
+          <input name="trustee_office" placeholder="Trustee office" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+          <label style="font-size:12px">Booked for</label><input type="date" name="booked_for" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+          <div style="font-size:12px;color:var(--text-2)">Cheque list (up to 3)</div>
+          {% for i in "123" %}<div style="display:flex;gap:6px"><input name="cheque_payee_{{ forloop.counter }}" placeholder="Payee" style="flex:1;padding:7px;border:1px solid var(--border);border-radius:8px"><input name="cheque_amount_{{ forloop.counter }}" placeholder="Amount" style="width:110px;padding:7px;border:1px solid var(--border);border-radius:8px"></div>{% endfor %}
+          <button class="btn btn-primary" type="submit" style="justify-self:start">Save transfer</button>
+        </form></details>
+      <details><summary style="font-weight:600;cursor:pointer;padding:6px 0">UBO (corporate borrower)</summary>
+        <form method="post" action="{% url 'ubo_add' lead.pk %}" style="display:grid;gap:8px;margin:8px 0 14px">{% csrf_token %}
+          <input name="name" placeholder="UBO name" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+          <div style="display:flex;gap:6px"><input name="share_pct" type="number" step="0.01" placeholder="Share %" style="width:110px;padding:8px;border:1px solid var(--border);border-radius:8px"><input name="nationality" placeholder="Nationality" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px"></div>
+          <input name="id_number" placeholder="ID number" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+          <label style="font-size:13px"><input type="checkbox" name="is_pep"> PEP</label>
+          <button class="btn btn-primary" type="submit" style="justify-self:start">Save UBO</button>
+        </form></details>
+      <details><summary style="font-weight:600;cursor:pointer;padding:6px 0">Capture referral</summary>
+        <form method="post" action="{% url 'client_referral_add' lead.pk %}" style="display:grid;gap:8px;margin:8px 0 14px">{% csrf_token %}
+          <input name="referred_name" placeholder="Referred person name" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+          <input name="referred_mobile" placeholder="Mobile" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+          <input name="note" placeholder="Note" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+          <button class="btn btn-primary" type="submit" style="justify-self:start">Save referral</button>
+        </form></details>
+      <details><summary style="font-weight:600;cursor:pointer;padding:6px 0">Client upload link · DSR</summary>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 14px">
+          <form method="post" action="{% url 'upload_token_create' lead.pk %}">{% csrf_token %}<button class="btn btn-ghost" type="submit">Generate upload link</button></form>
+          <a class="btn btn-ghost" href="{% url 'dsr_export' lead.pk %}">DSR export</a>
+          <form method="post" action="{% url 'dsr_anonymize' lead.pk %}" onsubmit="return confirm('Anonymize this lead\'s PII? This cannot be undone.')">{% csrf_token %}<button class="btn btn-ghost" type="submit" style="color:var(--danger)">Anonymize (DSR)</button></form>
+        </div></details>
+    </div>
+    <div class="td-foot"><button class="btn btn-ghost" type="button" onclick="document.getElementById('opsModal').classList.remove('show')">Close</button></div>
+  </div>
+</div>
+
+<!-- NOT INTERESTED MODAL -->
+<div class="td-scrim" id="niModal">
+  <div class="td-modal" role="dialog" aria-modal="true">
+    <div class="td-h">
+      <span class="ic" style="background:#FEF2F2;color:#DC2626"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg></span>
+      <div><b>Mark Not Interested</b><span>Choose why this lead is being lost</span></div>
+      <button class="x" type="button" onclick="document.getElementById('niModal').classList.remove('show')" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <form method="post" action="{% url 'lead_not_interested' lead.pk %}">
+      {% csrf_token %}
+      <div class="td-body">
+        <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px">Lost Reason <span style="color:#DC2626">*</span></label>
+        <select name="reason" class="fld-input" required style="width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:9px">
+          <option value="">Select a reason…</option>
+          <option>Not Interested</option>
+          <option>Competitor Chosen</option>
+          <option>No Response</option>
+          <option>Documents Not Provided</option>
+          <option>Not Eligible</option>
+          <option>Interest Rate Too High</option>
+          <option>Bank Rejected</option>
+          <option>Property Issue</option>
+          <option>Customer Changed Mind</option>
+          <option>Budget Issue</option>
+          <option>Other</option>
+        </select>
+        <label style="display:block;font-size:12px;font-weight:600;margin:14px 0 6px">Note (optional)</label>
+        <textarea name="note" rows="2" placeholder="Any extra detail…" style="width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:9px;resize:vertical"></textarea>
+        <p style="font-size:12px;color:var(--text-3);margin-top:10px">This moves the lead to <b>Lost Leads</b> and removes it from the advisor.</p>
+      </div>
+      <div class="td-foot">
+        <button class="btn btn-ghost" type="button" onclick="document.getElementById('niModal').classList.remove('show')">Cancel</button>
+        <button class="btn btn-primary" type="submit" style="background:#DC2626;border-color:#DC2626">Mark Not Interested</button>
       </div>
     </form>
   </div>

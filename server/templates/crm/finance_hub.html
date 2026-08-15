@@ -1,0 +1,63 @@
+{% extends 'crm/base_p2.html' %}
+{% block title %}BITAR CRM — Finance{% endblock %}
+{% block page_title %}Finance{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Finance</h1><p>Invoices, receipts, payouts, incentives and month‑end — all in‑system.</p></div></div>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px">
+  <div class="card" style="padding:16px"><div style="font-size:12px;color:var(--text-2)">Invoiced</div><div style="font-size:22px;font-weight:700">AED {{ kpis.invoiced|floatformat:0 }}</div></div>
+  <div class="card" style="padding:16px"><div style="font-size:12px;color:var(--text-2)">Received</div><div style="font-size:22px;font-weight:700">AED {{ kpis.received|floatformat:0 }}</div></div>
+  <div class="card" style="padding:16px"><div style="font-size:12px;color:var(--text-2)">Outstanding</div><div style="font-size:22px;font-weight:700;color:var(--warning)">AED {{ kpis.outstanding|floatformat:0 }}</div></div>
+</div>
+
+{% if can_edit %}
+<div class="card" style="padding:16px;margin-bottom:18px">
+  <b>New invoice</b>
+  <form method="post" action="{% url 'invoice_create' %}" style="display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-top:10px">{% csrf_token %}
+    <div><label style="font-size:12px;display:block">Lead</label><select name="lead" style="padding:8px;border:1px solid var(--border);border-radius:8px;min-width:200px"><option value="">— none —</option>{% for l in leads %}<option value="{{ l.pk }}">{{ l.name }}</option>{% endfor %}</select></div>
+    <div><label style="font-size:12px;display:block">Client name</label><input name="client_name" style="padding:8px;border:1px solid var(--border);border-radius:8px"></div>
+    <div><label style="font-size:12px;display:block">Subtotal (AED)</label><input name="subtotal" type="number" step="0.01" style="padding:8px;border:1px solid var(--border);border-radius:8px"></div>
+    <button class="btn btn-primary" type="submit">Create (VAT {{ cfg.vat_pct }}%)</button>
+  </form>
+</div>
+{% endif %}
+
+<div class="card" style="padding:0;overflow:auto;margin-bottom:18px">
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr style="text-align:left;border-bottom:1px solid var(--border)">
+      <th style="padding:10px">Invoice</th><th>Client</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th><th>Issued</th>{% if can_edit %}<th>Actions</th>{% endif %}</tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr style="border-bottom:1px solid var(--border-soft)">
+        <td style="padding:10px;font-weight:600">{{ r.number }}</td><td>{{ r.client }}</td>
+        <td>AED {{ r.total|floatformat:0 }}</td><td>AED {{ r.paid|floatformat:0 }}</td>
+        <td>AED {{ r.balance|floatformat:0 }}</td><td>{{ r.status }}</td><td>{{ r.issued }}</td>
+        {% if can_edit %}<td style="white-space:nowrap">
+          {% if r.status == 'Draft' %}<form method="post" action="{% url 'invoice_send' r.id %}" style="display:inline">{% csrf_token %}<button class="btn btn-ghost" style="padding:4px 8px">Send</button></form>{% endif %}
+          <form method="post" action="{% url 'receipt_add' r.id %}" style="display:inline-flex;gap:4px">{% csrf_token %}<input name="amount" type="number" step="0.01" placeholder="Receipt AED" style="width:110px;padding:4px;border:1px solid var(--border);border-radius:6px"><button class="btn btn-ghost" style="padding:4px 8px">Add</button></form>
+        </td>{% endif %}
+      </tr>
+    {% empty %}<tr><td colspan="8" style="padding:20px;color:var(--text-3)">No invoices yet.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+  <div class="card" style="padding:16px">
+    <b>Payout runs</b>
+    {% if can_edit %}<form method="post" action="{% url 'payout_run_create' %}" style="display:flex;gap:8px;margin:10px 0">{% csrf_token %}<input name="period" placeholder="YYYY-MM" style="padding:6px;border:1px solid var(--border);border-radius:8px"><button class="btn btn-primary" style="padding:6px 12px">Create run</button></form>{% endif %}
+    {% for p in payouts %}<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-soft);font-size:13px"><span>{{ p.period }} · AED {{ p.total|floatformat:0 }}</span><span>{{ p.status }} {% if can_edit and p.status == 'Draft' %}<form method="post" action="{% url 'payout_run_submit' p.pk %}" style="display:inline">{% csrf_token %}<button class="btn btn-ghost" style="padding:2px 8px">Submit</button></form>{% endif %}</span></div>{% empty %}<p style="color:var(--text-3);font-size:13px">No payout runs.</p>{% endfor %}
+  </div>
+  <div class="card" style="padding:16px">
+    <b>Month‑end lock</b>
+    {% if can_edit %}<div style="display:flex;gap:8px;margin:10px 0">
+      <form method="post" action="{% url 'month_lock' %}" style="display:flex;gap:6px">{% csrf_token %}<input name="period" placeholder="YYYY-MM" style="padding:6px;border:1px solid var(--border);border-radius:8px"><button class="btn btn-ghost" style="padding:6px 10px">Lock</button></form>
+      <form method="post" action="{% url 'month_reopen' %}" style="display:flex;gap:6px">{% csrf_token %}<input name="period" placeholder="YYYY-MM" style="padding:6px;border:1px solid var(--border);border-radius:8px"><button class="btn btn-ghost" style="padding:6px 10px">Reopen</button></form>
+    </div>{% endif %}
+    {% for l in locks %}<div style="font-size:13px;padding:4px 0">{{ l.period }} — {% if l.locked %}🔒 locked{% else %}open{% endif %}</div>{% empty %}<p style="color:var(--text-3);font-size:13px">No months locked.</p>{% endfor %}
+    <b style="display:block;margin-top:14px">Incentive schemes</b>
+    {% if can_edit %}<form method="post" action="{% url 'incentive_save' %}" style="display:flex;gap:6px;margin-top:8px">{% csrf_token %}<input name="name" placeholder="Scheme name" style="padding:6px;border:1px solid var(--border);border-radius:8px"><input name="pct" type="number" placeholder="%" style="width:70px;padding:6px;border:1px solid var(--border);border-radius:8px"><button class="btn btn-ghost" style="padding:6px 10px">Add</button></form>{% endif %}
+    {% for s in schemes %}<div style="font-size:13px;padding:4px 0">{{ s.name }}</div>{% endfor %}
+  </div>
+</div>
+{% endblock %}
