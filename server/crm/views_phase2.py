@@ -1044,7 +1044,16 @@ def meta_import(request):
         except UnicodeDecodeError:
             text = raw.decode('latin-1')
         rows = list(csv.DictReader(io.StringIO(text)))
-        created = skipped_dup = skipped_test = 0
+        # optional cutoff: import ONLY rows created strictly AFTER this named lead
+        after_name = (request.POST.get('after_name') or '').strip().lower()
+        cutoff_time = ''
+        if after_name:
+            for r in rows:
+                nm = (r.get('full name') or r.get('full_name') or '').strip().lower()
+                if nm == after_name:
+                    cutoff_time = (r.get('created_time') or '').strip()
+                    break
+        created = skipped_dup = skipped_test = skipped_before = 0
         errors = 0
         names_added = []
         for r in rows:
@@ -1053,6 +1062,10 @@ def meta_import(request):
                 name = (r.get('full name') or r.get('full_name') or '').strip()
                 if not name or name.startswith('<test lead') or 'dummy data' in name:
                     skipped_test += 1
+                    continue
+                # cutoff: skip anything at/before the named lead's timestamp
+                if cutoff_time and (r.get('created_time') or '').strip() <= cutoff_time:
+                    skipped_before += 1
                     continue
                 if not leadgen_id:
                     # fall back to a synthetic key so re-imports still dedupe
@@ -1079,7 +1092,8 @@ def meta_import(request):
             except Exception:
                 errors += 1
         result = {'created': created, 'dup': skipped_dup, 'test': skipped_test,
-                  'errors': errors, 'total': len(rows), 'names': names_added[:50]}
+                  'before': skipped_before, 'cutoff': cutoff_time, 'after_name': after_name,
+                  'errors': errors, 'total': len(rows), 'names': names_added[:60]}
         _audit_event(request, 'Meta leads imported (CSV)',
                      f'{created} created, {skipped_dup} dup, {skipped_test} test skipped')
     return render(request, 'crm/meta_import.html', {
