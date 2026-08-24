@@ -399,7 +399,7 @@ def role_dashboard(request):
         kpi('Escalated', esc, '7+ days silent')
         kpi('Warnings', warn, '3+ days silent')
         kpi('KYC Pending', leads.filter(kyc_status='Pending').count(), 'awaiting check')
-        docs = Document.objects.filter(status='Pending', is_current=True, is_deleted=False).select_related('lead')[:10]
+        docs = Document.objects.filter(status='Pending Review', is_current=True, is_deleted=False).select_related('lead')[:10]
         panels.append({'title': 'Documents Awaiting Verification',
                        'cols': ['Document', 'Lead', 'Uploaded'],
                        'rows': [[d.name or d.doc_type, d.lead.name, d.created_at.strftime('%d %b %Y')] for d in docs],
@@ -411,7 +411,7 @@ def role_dashboard(request):
                        'rows': esc_rows, 'link': ('/ops/', 'Ops Queue')})
 
     elif u.role == Role.ACCOUNTANT:
-        _cz = list(Customization.objects.select_related('lead'))
+        _cz = list(Customization.objects.filter(lead__is_deleted=False).select_related('lead'))
         revenue = sum(c.actual_revenue for c in _cz)
         net = sum(c.final_revenue for c in _cz)
         vat = sum(c.vat for c in _cz)
@@ -494,6 +494,28 @@ def _f(v):
     return float(v or 0)
 
 
+# --- single source of truth for finance rates (was hardcoded & inconsistent across pages) ---
+def finance_rates():
+    """Commission rates used everywhere, editable in Settings via AppSetting('finance').
+    Percentages are of REVENUE (net commission), not of loan volume."""
+    r = {'adv_comm_pct': 15.0, 'ref_comm_pct': 8.0, 'vat_pct': 5.0}
+    try:
+        s = AppSetting.objects.filter(key='finance').first()
+        if s and isinstance(s.value, dict):
+            for k in r:
+                if s.value.get(k) is not None:
+                    r[k] = float(s.value[k])
+    except Exception:
+        pass
+    return r
+
+
+# Stages that count as "approved" (Pre-Approved onward, still in pipeline). One definition, used everywhere.
+APPROVAL_STAGES = ['Pre-Approved', 'Valuation', 'Valuation Received', 'FOL Initiated',
+                   'FOL Issued', 'FOL Signing Fixed', 'FOL Signed', 'Under Disbursement']
+DISBURSED_ALL = ['Disbursed', 'Property Transfer Scheduled', 'Property Transfer', 'Property Transferred']
+
+
 def _spark(current, n=12):
     """Build a 12-point ramp ending at the current value (no historical store)."""
     current = _f(current)
@@ -519,18 +541,25 @@ def management_dashboard(request):
     pipeline_val = _f(active.aggregate(v=Sum('loan_amount'))['v'])
     # Revenue & Net Profit come straight from the Monthly Disbursed Pipeline (Customization) sheet:
     #   Revenue = sum of Actual Revenue,  Net Profit = sum of Final Revenue.
-    _cz = list(Customization.objects.only('slab', 'broker_pct', 'broker_slab', 'vat_override', 'lead')
+    #   Exclude soft-deleted leads so headline totals aren't inflated.
+    _cz = list(Customization.objects.filter(lead__is_deleted=False)
+               .only('slab', 'broker_pct', 'broker_slab', 'vat_override', 'lead')
                .select_related('lead'))
     revenue = sum(c.actual_revenue for c in _cz)
     net_profit = sum(c.final_revenue for c in _cz)
     n_total = leads.count()
     n_disbursed = leads.filter(stage__in=DISB).count()
 
-    # --- "This Month at a Glance": scope the KPI cards to the current calendar month ---
+    # --- "This Month at a Glance" ---
+    # Money/disbursal metrics are scoped by DISBURSAL month (disbursed_at) so they match the
+    # Monthly Disbursed Pipeline page. Lead-count metrics use the current calendar month.
     _mstart = date.today().replace(day=1)
-    mleads = leads.filter(created_at__date__gte=_mstart)
-    m_disbursed_val = _f(mleads.filter(stage__in=DISB).aggregate(v=Sum('loan_amount'))['v'])
-    _mcz = [c for c in _cz if c.lead and c.lead.created_at and c.lead.created_at.date() >= _mstart]
+    _y, _mo = _mstart.year, _mstart.month
+    mleads = leads.filter(created_at__date__gte=_mstart)              # leads CREATED this month
+    m_disb = leads.filter(disbursed_at__year=_y, disbursed_at__month=_mo)  # DISBURSED this month
+    m_disbursed_val = _f(m_disb.aggregate(v=Sum('loan_amount'))['v'])
+    _mcz = [c for c in _cz if c.lead and c.lead.disbursed_at
+            and c.lead.disbursed_at.year == _y and c.lead.disbursed_at.month == _mo]
     m_revenue = sum(c.actual_revenue for c in _mcz)
     m_net_profit = sum(c.final_revenue for c in _mcz)
 
@@ -538,12 +567,12 @@ def management_dashboard(request):
     kpi_defs = [
         ('Leads This Month', mleads.count(), '', '', 'created this month'),
         ('New Leads Today', leads.filter(created_at__date=date.today()).count(), '', '', 'since midnight'),
-        ('Applications Submitted', mleads.filter(stage__in=submitted_stages).count(), '', '', 'in progress'),
-        ('Pre-Approval', mleads.filter(stage='Pre-Approved').count(), '', '', 'awaiting final'),
-        ('Loan Disbursed', mleads.filter(stage__in=DISB).count(), '', '', f'AED {m_disbursed_val:,.0f} value'),
-        ('Pending Title Deed', mleads.filter(stage__in=['Disbursed', 'Property Transfer Scheduled', 'Property Transfer']).count(), '', '', 'awaiting transfer'),
-        ('Revenue This Month', round(m_revenue), '', 'AED ', 'net commission · excl VAT'),
-        ('Net Profit', round(m_net_profit), '', 'AED ', 'final revenue'),
+        ('Applications Submitted', leads.filter(stage__in=submitted_stages).count(), '', '', 'in progress now'),
+        ('Pre-Approval', leads.filter(stage='Pre-Approved').count(), '', '', 'awaiting final'),
+        ('Loan Disbursed', m_disb.count(), '', '', f'AED {m_disbursed_val:,.0f} this month'),
+        ('Pending Title Deed', leads.filter(stage__in=['Disbursed', 'Property Transfer Scheduled', 'Property Transfer']).count(), '', '', 'awaiting transfer'),
+        ('Revenue This Month', round(m_revenue), '', 'AED ', 'disbursed this month · excl VAT'),
+        ('Net Profit', round(m_net_profit), '', 'AED ', 'disbursed this month'),
     ]
     kpis_js = [
         {'label': lbl, 'val': val, 'suf': suf, 'pre': pre, 'ic': IC[i],
@@ -576,17 +605,30 @@ def management_dashboard(request):
     ]
     series_q = [{'n': s['n'], 'c': s['c'], 'v': [0, 0, 0, s['v'][-1]]} for s in series_m]
 
+    # revenue attribution maps (real commission revenue from the Customization sheet, not a guess)
+    rates = finance_rates()
+    _adv_ok = rates['adv_comm_pct'] / 100.0
+    rev_by_advisor, rev_by_bank, rev_by_source = {}, {}, {}
+    for c in _cz:
+        l = c.lead
+        if l.advisor_id:
+            rev_by_advisor[l.advisor_id] = rev_by_advisor.get(l.advisor_id, 0) + c.actual_revenue
+        if l.bank_id:
+            rev_by_bank[l.bank_id] = rev_by_bank.get(l.bank_id, 0) + c.actual_revenue
+        if l.source:
+            rev_by_source[l.source] = rev_by_source.get(l.source, 0) + c.actual_revenue
+
     # ---- advisor leaderboard ----
     advisors_js = []
     for u in User.objects.filter(role=Role.ADVISOR):
         al = leads.filter(advisor=u)
         cnt = al.count()
-        appr = al.filter(stage__in=['Pre-Approved'] + submitted_stages + DISB).count()
-        rev = _f(al.filter(stage__in=DISB).aggregate(v=Sum('loan_amount'))['v']) * 0.011
+        appr = al.filter(stage__in=approval_stages + DISB).count()
+        rev = rev_by_advisor.get(u.id, 0)
         advisors_js.append({
             'n': u.get_full_name() or u.username, 'i': u.initials,
             'rev': f'{rev/1000:.0f}K', 'conv': al.filter(stage__in=DISB).count(),
-            'rate': round(appr / cnt * 100) if cnt else 0, 'comm': f'{rev*0.15/1000:.0f}K',
+            'rate': round(appr / cnt * 100) if cnt else 0, 'comm': f'{rev*_adv_ok/1000:.0f}K',
             '_r': rev,
         })
     advisors_js.sort(key=lambda a: a['_r'], reverse=True)
@@ -597,8 +639,8 @@ def management_dashboard(request):
     for b in Bank.objects.all():
         bl = leads.filter(bank=b)
         apps = bl.count()
-        appr = bl.filter(stage__in=['Pre-Approved'] + submitted_stages + DISB).count()
-        rev = _f(bl.filter(stage__in=DISB).aggregate(v=Sum('loan_amount'))['v']) * 0.011
+        appr = bl.filter(stage__in=approval_stages + DISB).count()
+        rev = rev_by_bank.get(b.id, 0)
         banks_js.append({
             'n': b.name, 'i': b.name[:2].upper(), 'apps': apps, 'appr': appr,
             'ratio': round(appr / apps * 100) if apps else 0, 'days': 0,
@@ -614,7 +656,7 @@ def management_dashboard(request):
         sl = leads.filter(source=src)
         cnt = sl.count()
         max_src = max(max_src, cnt)
-        rev = _f(sl.filter(stage__in=DISB).aggregate(v=Sum('loan_amount'))['v']) * 0.011
+        rev = rev_by_source.get(src, 0)
         disb = sl.filter(stage__in=DISB).count()
         sources_js.append({
             'n': src, 'leads': cnt, 'rev': f'{rev/1000:.0f}K',
@@ -624,13 +666,19 @@ def management_dashboard(request):
         s['w'] = round(s['_c'] / max_src * 100)
     sources_js.sort(key=lambda x: x['_c'], reverse=True)
 
-    # ---- referral partners ----
+    # ---- referral partners (real numbers via the lead → referral_partner link) ----
     partners_js = []
     for p in ReferralPartner.objects.all()[:5]:
-        pl = leads.filter(source='Referral Partner')  # coarse: company referral leads
+        pl = leads.filter(referral_partner=p)
+        ref_cnt = pl.count()
+        disb_cnt = pl.filter(stage__in=DISB).count()
+        pipe_val = _f(pl.exclude(stage__in=DISB + ['Declined']).aggregate(v=Sum('loan_amount'))['v'])
+        p_rev = sum(c.actual_revenue for c in _cz if c.lead.referral_partner_id == p.id)
         partners_js.append({
             'n': p.name, 't': p.partner_type, 'i': p.name[:2].upper(),
-            'pipe': '0', 'ref': 0, 'conv': '0%', 'due': '0', 'paid': '0',
+            'pipe': f'{pipe_val/1000:.0f}K', 'ref': ref_cnt,
+            'conv': f'{round(disb_cnt/ref_cnt*100)}%' if ref_cnt else '0%',
+            'due': f'{p_rev*rates["ref_comm_pct"]/100/1000:.0f}K', 'paid': '0',
         })
 
     # ---- finance summary (all derived from the Monthly Disbursed Pipeline sheet) ----
@@ -640,7 +688,8 @@ def management_dashboard(request):
         'revenue': f'{revenue:,.0f}',                   # net commission, excl. VAT
         'vat': f'{vat_total:,.0f}',
         'invoice': f'{invoice_total:,.0f}',             # incl. VAT
-        'adv_comm': f'{revenue*0.159:,.0f}', 'ref_comm': f'{revenue*0.086:,.0f}',
+        'adv_comm': f'{revenue*rates["adv_comm_pct"]/100:,.0f}',
+        'ref_comm': f'{revenue*rates["ref_comm_pct"]/100:,.0f}',
         'net': f'{net_profit:,.0f}', 'projected': f'{revenue*1.1:,.0f}',
     }
     profit_bars = [0] * 11 + [round(net_profit)]
@@ -940,7 +989,8 @@ def lead_list(request):
         'active': base.exclude(stage__in=disbursed_stages + ['Declined']).count(),
         'disbursed': base.filter(stage__in=disbursed_stages).count(),
         'lost': base.filter(stage='Declined').count(),
-        'value': base.aggregate(s=Sum('loan_amount'))['s'] or 0,
+        # Pipeline Value = only active leads (exclude disbursed + declined)
+        'value': base.exclude(stage__in=disbursed_stages + ['Declined']).aggregate(s=Sum('loan_amount'))['s'] or 0,
     }
     leads = base
     if q:
@@ -978,6 +1028,12 @@ def lead_list(request):
     banks = [b.name for b in Bank.objects.all()]
     me = request.user.get_full_name() or request.user.username
     total_val = _f(kpis['value'])
+    # This-month revenue = actual commission revenue for leads DISBURSED this month (from the sheet)
+    _tm = timezone.localdate()
+    _cz_month = Customization.objects.filter(
+        lead__is_deleted=False, lead__disbursed_at__year=_tm.year,
+        lead__disbursed_at__month=_tm.month).select_related('lead')
+    month_revenue = sum(c.actual_revenue for c in _cz_month)
     kpis_js = [
         {'l': 'Total Leads', 'v': str(kpis['total']),
          'ic': '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>'},
@@ -993,7 +1049,7 @@ def lead_list(request):
          'ic': '<circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/>'},
         {'l': 'Pipeline Value', 'v': 'AED ' + (f'{total_val/1e6:.0f}M' if total_val >= 1e6 else f'{total_val/1e3:.0f}K'),
          'ic': '<path d="M3 3v18h18"/><path d="m7 14 4-4 4 3 5-6"/>'},
-        {'l': 'This Month Revenue', 'v': 'AED ' + f'{_f(base.filter(stage__in=disbursed_stages).aggregate(v=Sum("loan_amount"))["v"])*0.011:,.0f}',
+        {'l': 'This Month Revenue', 'v': 'AED ' + f'{month_revenue:,.0f}',
          'ic': '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/>'},
     ]
     customized_ids = list(Customization.objects.values_list('lead_id', flat=True)) \
@@ -3007,13 +3063,18 @@ def overdue_tasks(request):
 def finance(request):
     leads = Lead.objects.filter(is_deleted=False)
     disbursed = leads.filter(stage__in=DISBURSED_STAGES)
-    revenue = float(disbursed.aggregate(s=Sum('loan_amount'))['s'] or 0)
+    rates = finance_rates()
+    # Revenue = real commission revenue from the Monthly Disbursed Pipeline (Customization) sheet
+    _cz = list(Customization.objects.filter(lead__is_deleted=False).select_related('lead'))
+    revenue = sum(c.actual_revenue for c in _cz)
+    net_profit = sum(c.final_revenue for c in _cz)
+    vat = sum(c.vat for c in _cz)
     kpis = {
         'revenue': revenue,
-        'commission': revenue * 0.006,
-        'referral': revenue * 0.003,
-        'vat': revenue * 0.006 * 0.05,
-        'net': revenue * 0.006 - revenue * 0.003,
+        'commission': revenue * rates['adv_comm_pct'] / 100,
+        'referral': revenue * rates['ref_comm_pct'] / 100,
+        'vat': vat,
+        'net': net_profit,
         'disbursed_loans': disbursed.count(),
     }
     return render(request, 'crm/finance.html', {'kpis': kpis, 'active_nav': 'Finance'})
@@ -3094,7 +3155,7 @@ def _build_report(key, user):
         return ['_pk', 'Case', 'Client', 'Stage', 'Silence', 'Idle (days)'], rows, 0
 
     if key == 'docs-pending':
-        docs = Document.objects.filter(status='Pending', is_current=True, lead__in=leads, is_deleted=False).select_related('lead')
+        docs = Document.objects.filter(status='Pending Review', is_current=True, lead__in=leads, is_deleted=False).select_related('lead')
         rows = [[d.lead_id, d.name or d.doc_type, d.doc_type, d.lead.name,
                  d.created_at.strftime('%d %b %Y')] for d in docs]
         return ['_pk', 'Document', 'Type', 'Client', 'Uploaded'], rows, 0
@@ -3494,7 +3555,7 @@ def bank_delete(request, pk):
 @perm.module_required('Advisors')
 def advisor_list(request):
     DISB = ['Disbursed', 'Property Transfer Scheduled', 'Property Transfer', 'Property Transferred']
-    APPROVED_STAGES = ['Pre-Approved', 'Disbursed', 'FOL Signed', 'Under Disbursement']
+    APPROVED_STAGES = APPROVAL_STAGES + DISB       # unified: Pre-Approved onward incl. disbursed
     _nd = Q(leads__is_deleted=False)
     advisors = User.objects.filter(role=Role.ADVISOR).annotate(
         lead_count=Count('leads', filter=_nd),

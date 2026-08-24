@@ -155,9 +155,14 @@ def receipt_add(request, pk):
     bal = _f(inv.balance)
     inv.status = 'Paid' if bal <= 0 else 'Part-Paid'
     inv.save(update_fields=['status'])
-    # commission booked on receipt (OD-5 default)
+    # commission booked on receipt (OD-5 default) — on the VAT-EXCLUSIVE portion, at the config rate
     if finance_config().get('commission_trigger') == 'on_receipt' and inv.lead and inv.lead.advisor:
-        LedgerEntry.objects.create(payee=inv.lead.advisor, kind='commission', amount=amt * Decimal('0.15'),
+        from .views import finance_rates
+        adv_pct = Decimal(str(finance_rates()['adv_comm_pct'])) / Decimal('100')
+        # strip the VAT share from this receipt before applying commission
+        net_amt = amt / (Decimal('1') + Decimal(str(finance_rates()['vat_pct'])) / Decimal('100'))
+        LedgerEntry.objects.create(payee=inv.lead.advisor, kind='commission',
+                                   amount=(net_amt * adv_pct).quantize(Decimal('0.01')),
                                    lead=inv.lead, note=f'Commission on {inv.number}',
                                    effective_date=timezone.localdate())
     _audit_event(request, 'Receipt recorded', f'{inv.number} · AED {amt}')
@@ -186,9 +191,20 @@ def credit_note_add(request, pk):
 def payout_run_create(request):
     period = request.POST.get('period') or timezone.localdate().strftime('%Y-%m')
     run = PayoutRun.objects.create(period=period, created_by=request.user, status='Draft')
-    # build lines from unpaid ledger entries in the period
+    # build lines from all unpaid ledger entries up to the END of the selected period
+    # (period-bounded, but never orphans older unpaid entries)
+    from datetime import timedelta
     total = Decimal('0')
-    ledger = LedgerEntry.objects.filter(payout_line__isnull=True)
+    cutoff = None
+    try:
+        py, pm = int(period[:4]), int(period[5:7])
+        cutoff = date(py + (pm // 12), (pm % 12) + 1, 1) - timedelta(days=1)  # last day of period
+    except (ValueError, IndexError):
+        pass
+    base_q = {'payout_line__isnull': True}
+    if cutoff:
+        base_q['effective_date__lte'] = cutoff
+    ledger = LedgerEntry.objects.filter(**base_q)
     by_user, by_partner = {}, {}
     for e in ledger:
         if e.payee_id:
@@ -197,11 +213,11 @@ def payout_run_create(request):
             by_partner[e.partner_id] = by_partner.get(e.partner_id, Decimal('0')) + _num(e.amount)
     for uid, amt in by_user.items():
         line = PayoutLine.objects.create(run=run, payee_user_id=uid, amount=amt)
-        LedgerEntry.objects.filter(payee_id=uid, payout_line__isnull=True).update(payout_line=line)
+        LedgerEntry.objects.filter(payee_id=uid, **base_q).update(payout_line=line)
         total += amt
     for pid, amt in by_partner.items():
         line = PayoutLine.objects.create(run=run, payee_partner_id=pid, amount=amt)
-        LedgerEntry.objects.filter(partner_id=pid, payout_line__isnull=True).update(payout_line=line)
+        LedgerEntry.objects.filter(partner_id=pid, **base_q).update(payout_line=line)
         total += amt
     run.total = total
     run.save(update_fields=['total'])
@@ -749,7 +765,8 @@ def forecast(request):
 def _stage_probs():
     default = {'Lead Received': 5, 'Documents Pending': 10, 'Documents Complete': 20,
                'Logged In': 30, 'Under Review': 40, 'Pre-Approved': 60, 'Valuation': 70,
-               'FOL Issued': 85, 'FOL Signed': 90, 'Under Disbursement': 95}
+               'Valuation Received': 75, 'FOL Initiated': 80, 'FOL Issued': 85,
+               'FOL Signing Fixed': 88, 'FOL Signed': 90, 'Under Disbursement': 95}
     try:
         s = AppSetting.objects.filter(key='stage_probs').first()
         if s and isinstance(s.value, dict):
@@ -951,17 +968,29 @@ def payout_execute(request, pk):
 def incentive_compute(request):
     """Compute incentive ledger entries from active schemes on the period's disbursed value."""
     period = request.POST.get('period') or timezone.localdate().strftime('%Y-%m')
+    try:
+        py, pm = int(period[:4]), int(period[5:7])
+    except (ValueError, IndexError):
+        messages.error(request, 'Enter period as YYYY-MM.')
+        return redirect('finance_hub')
     schemes = IncentiveScheme.objects.filter(active=True)
     n = 0
     DISB = ['Disbursed', 'Property Transfer Scheduled', 'Property Transfer', 'Property Transferred']
     for u in User.objects.filter(role=Role.ADVISOR, status='Active'):
-        disbursed = Lead.objects.filter(advisor=u, stage__in=DISB).aggregate(s=Sum('loan_amount'))['s'] or 0
+        # only THIS period's disbursed value (by disbursal date), excluding deleted leads
+        disbursed = Lead.objects.filter(advisor=u, is_deleted=False, stage__in=DISB,
+                                        disbursed_at__year=py, disbursed_at__month=pm
+                                        ).aggregate(s=Sum('loan_amount'))['s'] or 0
         for s in schemes:
+            # idempotent: skip if this scheme's incentive for this period already booked
+            note = f'{s.name} {period}'
+            if LedgerEntry.objects.filter(payee=u, kind='incentive', note=note).exists():
+                continue
             pct = Decimal(str((s.rules or {}).get('pct', 0)))
             amt = (Decimal(str(disbursed)) * pct / Decimal(100)).quantize(Decimal('0.01'))
             if amt > 0:
                 LedgerEntry.objects.create(payee=u, kind='incentive', amount=amt,
-                                           note=f'{s.name} {period}', effective_date=timezone.localdate())
+                                           note=note, effective_date=timezone.localdate())
                 n += 1
     _audit_event(request, 'Incentives computed', f'{period} · {n} entries')
     messages.success(request, f'{n} incentive ledger entries created for {period}.')

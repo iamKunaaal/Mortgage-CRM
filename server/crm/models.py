@@ -406,7 +406,8 @@ class Lead(models.Model):
     def silence_status(self):
         """Ops silence rule: warn after 3 days, escalate after 7 days of no activity.
         Only applies to open cases (not Disbursed / Declined / drafts)."""
-        if self.is_draft or self.stage in ('Disbursed', 'Property Transferred', 'Declined'):
+        if self.is_draft or self.stage in ('Disbursed', 'Property Transfer Scheduled',
+                                            'Property Transfer', 'Property Transferred', 'Declined'):
             return 'closed'
         if self.ops_hold:
             return 'closed'          # PRD §17.4 — clock pauses while On Hold
