@@ -1,0 +1,31 @@
+{% extends 'crm/base_p2.html' %}
+{% block title %}BITAR CRM — Import Meta Leads{% endblock %}
+{% block page_title %}Import Meta Leads{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Import Meta Leads (one-time)</h1><p>Upload the Meta Ads CSV export. Already-imported leads are skipped automatically.</p></div></div>
+
+{% if result %}
+<div class="card" style="padding:18px;margin-bottom:18px;border-left:4px solid var(--success,#16A34A)">
+  <b style="font-size:15px">Import done ✅</b>
+  <div style="display:flex;gap:24px;margin-top:12px;flex-wrap:wrap">
+    <div><div style="font-size:12px;color:var(--text-2)">Newly added</div><div style="font-size:22px;font-weight:700;color:var(--success,#16A34A)">{{ result.created }}</div></div>
+    <div><div style="font-size:12px;color:var(--text-2)">Already in CRM (skipped)</div><div style="font-size:22px;font-weight:700">{{ result.dup }}</div></div>
+    <div><div style="font-size:12px;color:var(--text-2)">Test rows skipped</div><div style="font-size:22px;font-weight:700">{{ result.test }}</div></div>
+    <div><div style="font-size:12px;color:var(--text-2)">Total rows in file</div><div style="font-size:22px;font-weight:700">{{ result.total }}</div></div>
+  </div>
+  {% if result.errors %}<p style="color:var(--warning);margin-top:10px">{{ result.errors }} row(s) had errors and were skipped.</p>{% endif %}
+  {% if result.names %}<details style="margin-top:12px"><summary style="cursor:pointer;font-weight:600">Added leads ({{ result.created }})</summary>
+    <div style="margin-top:8px;font-size:13px;color:var(--text-2)">{% for n in result.names %}{{ n }}{% if not forloop.last %} · {% endif %}{% endfor %}</div></details>{% endif %}
+  <a class="btn btn-primary" href="{% url 'meta_leads' %}" style="margin-top:14px;display:inline-block">Go to Meta Leads →</a>
+</div>
+{% endif %}
+
+<div class="card" style="padding:18px;max-width:560px">
+  <b>Upload CSV</b>
+  <form method="post" enctype="multipart/form-data" style="margin-top:12px">{% csrf_token %}
+    <input type="file" name="csv" accept=".csv" required style="display:block;margin-bottom:14px">
+    <button class="btn btn-primary" type="submit">Import</button>
+  </form>
+  <p style="font-size:12px;color:var(--text-3);margin-top:12px">Duplicates are detected by the Meta lead id, so it's safe to upload the full sheet — only new leads are added.</p>
+</div>
+{% endblock %}

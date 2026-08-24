@@ -1020,3 +1020,67 @@ def report_builder(request):
     return render(request, 'crm/report_builder.html', {
         'entity': entity, 'field': field, 'rows': rows,
         'fields': ['stage', 'source', 'priority', 'kyc_status'], 'active_nav': 'Reports'})
+
+
+# ==========================================================================
+# ONE-TIME: import historical Meta leads from a CSV (CEO/Super Admin only)
+# ==========================================================================
+@login_required
+def meta_import(request):
+    """CEO-only page to import Meta Lead Ads leads from a CSV export (one-time backfill).
+    Dedupes by leadgen_id (the CSV 'id' column) so already-present leads are skipped.
+    Cleans a 'p:' prefix on phone numbers and skips Meta's dummy test rows."""
+    from django.core.exceptions import PermissionDenied
+    if request.user.role not in (Role.CEO, Role.SUPER_ADMIN):
+        raise PermissionDenied
+    result = None
+    if request.method == 'POST' and request.FILES.get('csv'):
+        import csv
+        import io
+        from .models import MetaLead
+        raw = request.FILES['csv'].read()
+        try:
+            text = raw.decode('utf-8-sig')
+        except UnicodeDecodeError:
+            text = raw.decode('latin-1')
+        rows = list(csv.DictReader(io.StringIO(text)))
+        created = skipped_dup = skipped_test = 0
+        errors = 0
+        names_added = []
+        for r in rows:
+            try:
+                leadgen_id = (r.get('id') or '').strip()
+                name = (r.get('full name') or r.get('full_name') or '').strip()
+                if not name or name.startswith('<test lead') or 'dummy data' in name:
+                    skipped_test += 1
+                    continue
+                if not leadgen_id:
+                    # fall back to a synthetic key so re-imports still dedupe
+                    leadgen_id = 'csv-' + (r.get('phone_number') or name)[:50]
+                if MetaLead.objects.filter(leadgen_id=leadgen_id).exists():
+                    skipped_dup += 1
+                    continue
+                mobile = (r.get('phone_number') or '').strip()
+                if mobile.lower().startswith('p:'):
+                    mobile = mobile[2:].strip()
+                email = (r.get('email') or '').strip()
+                # exact answers = everything except pure meta plumbing columns
+                skip_cols = {'id', 'ad_id', 'adset_id', 'campaign_id', 'form_id',
+                             'is_organic', 'platform', 'created_time', 'ad_name',
+                             'adset_name', 'lead_status'}
+                exact = {k: v for k, v in r.items()
+                         if k and k not in skip_cols and (v or '').strip()}
+                MetaLead.objects.create(
+                    leadgen_id=leadgen_id[:64], name=name[:200], mobile=mobile[:60],
+                    email=email[:254], campaign=(r.get('campaign_name') or '')[:200],
+                    form_id=(r.get('form_id') or '')[:64], data=exact)
+                created += 1
+                names_added.append(name)
+            except Exception:
+                errors += 1
+        result = {'created': created, 'dup': skipped_dup, 'test': skipped_test,
+                  'errors': errors, 'total': len(rows), 'names': names_added[:50]}
+        _audit_event(request, 'Meta leads imported (CSV)',
+                     f'{created} created, {skipped_dup} dup, {skipped_test} test skipped')
+    return render(request, 'crm/meta_import.html', {
+        'result': result, 'active_nav': 'Leads', 'active_sub': 'meta_leads'})
