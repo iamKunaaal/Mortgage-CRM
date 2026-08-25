@@ -755,13 +755,14 @@ def dashboard_drill(request, metric):
                           base.filter(disbursed_at__year=y, disbursed_at__month=mo)),
     }
     title, qs = specs.get(metric, ('Leads', base.none()))
-    qs = qs.select_related('advisor', 'bank').order_by('-disbursed_at', '-created_at')[:500]
-    # revenue this-month: attach the sheet revenue per lead
-    rev_map = {}
-    if metric == 'revenue_month':
-        for c in Customization.objects.filter(lead__is_deleted=False,
-                                              lead__disbursed_at__year=y, lead__disbursed_at__month=mo):
-            rev_map[c.lead_id] = c.actual_revenue
+    leads_list = list(qs.select_related('advisor', 'bank').order_by('-disbursed_at', '-created_at')[:500])
+    show_sheet = metric in ('disbursed_month', 'revenue_month')
+    # sheet membership + revenue, keyed by lead — one Customization row per lead = "in the sheet"
+    cz_by_lead = {}
+    if show_sheet:
+        ids = [l.pk for l in leads_list]
+        for c in Customization.objects.filter(lead_id__in=ids).select_related('lead'):
+            cz_by_lead[c.lead_id] = c
     rows = [{
         'id': l.pk, 'case': l.case_number or f'#{l.pk}', 'name': l.name,
         'stage': l.stage, 'loan': _f(l.loan_amount),
@@ -769,13 +770,13 @@ def dashboard_drill(request, metric):
         'bank': l.bank.name if l.bank else '—',
         'disbursed': l.disbursed_at.strftime('%d %b %Y') if l.disbursed_at else '—',
         'created': l.created_at.strftime('%d %b %Y'),
-        'rev': rev_map.get(l.pk),
-        'in_sheet': l.pk in rev_map if metric in ('disbursed_month', 'revenue_month') else None,
-    } for l in qs]
+        'rev': cz_by_lead[l.pk].actual_revenue if l.pk in cz_by_lead else None,
+        'in_sheet': (l.pk in cz_by_lead) if show_sheet else None,
+    } for l in leads_list]
     return render(request, 'crm/dashboard_drill.html', {
         'title': title, 'metric': metric, 'rows': rows, 'count': len(rows),
         'total_loan': sum(r['loan'] for r in rows),
-        'total_rev': sum(v for v in rev_map.values()) if rev_map else None,
+        'total_rev': sum(c.actual_revenue for c in cz_by_lead.values()) if cz_by_lead else None,
         'active_nav': 'Dashboard',
     })
 
