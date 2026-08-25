@@ -321,6 +321,14 @@ canvas{display:block;width:100%}
 </div>
 <script>
 document.getElementById('hamburger')?.addEventListener('click',()=>document.getElementById('sidebar')?.classList.toggle('open'));
+// collapsible sidebar nav groups (Leads / Tasks / Banks / …) — same behaviour as the main pages
+document.querySelectorAll('[data-toggle]').forEach(function(b){
+  b.addEventListener('click',function(){
+    var g=b.closest('.nav-group'), was=g.classList.contains('open');
+    document.querySelectorAll('.nav-group.open').forEach(function(o){ if(o!==g) o.classList.remove('open'); });
+    g.classList.toggle('open', !was);
+  });
+});
 </script>
 {% block extra_js %}{% endblock %}
 </body>
