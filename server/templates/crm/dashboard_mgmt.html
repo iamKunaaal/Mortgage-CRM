@@ -502,16 +502,19 @@ function spark(data,id){
     <path d="${line}" fill="none" stroke="#05448B" stroke-width="1.7" stroke-linecap="round"/>
     <circle cx="${pts.at(-1)[0]}" cy="${pts.at(-1)[1]}" r="2.3" fill="#05448B"/></svg>`;
 }
-$('#kpiGrid').innerHTML=KPIS.map((k,i)=>`
-  <article class="kpi">
+$('#kpiGrid').innerHTML=KPIS.map((k,i)=>{
+  const inner=`
     <div class="kpi-top"><label>${k.label}</label><span class="kpi-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${IC[k.ic]}</svg></span></div>
     <div class="val">${k.pre?`<small>${k.pre}</small>`:''}<span class="count" data-v="${k.val}">0</span>${k.suf?`<small>${k.suf}</small>`:''}</div>
     <div class="kpi-foot">
       <div>${k.d?`<span class="delta ${k.pos?'pos':'neg'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="${k.pos?'M7 14l5-5 5 5':'M7 10l5 5 5-5'}"/></svg>${k.d}</span>`:''}
       <div class="delta-note">${k.note}</div></div>
       ${spark(k.s,i)}
-    </div>
-  </article>`).join('');
+    </div>`;
+  return k.link
+    ? `<a class="kpi" href="${k.link}" style="text-decoration:none;color:inherit;cursor:pointer">${inner}</a>`
+    : `<article class="kpi">${inner}</article>`;
+}).join('');
 
 const io=new IntersectionObserver(es=>es.forEach(e=>{
   if(!e.isIntersecting)return;io.unobserve(e.target);

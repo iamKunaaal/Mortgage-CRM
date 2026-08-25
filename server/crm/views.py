@@ -564,20 +564,21 @@ def management_dashboard(request):
     m_net_profit = sum(c.final_revenue for c in _mcz)
 
     IC = ['users', 'plus', 'file', 'shield', 'home', 'file', 'cash', 'trend']
+    _dr = '/dashboard/drill/'
     kpi_defs = [
-        ('Leads This Month', mleads.count(), '', '', 'created this month'),
-        ('New Leads Today', leads.filter(created_at__date=date.today()).count(), '', '', 'since midnight'),
-        ('Applications Submitted', leads.filter(stage__in=submitted_stages).count(), '', '', 'in progress now'),
-        ('Pre-Approval', leads.filter(stage='Pre-Approved').count(), '', '', 'awaiting final'),
-        ('Loan Disbursed', m_disb.count(), '', '', f'AED {m_disbursed_val:,.0f} this month'),
-        ('Pending Title Deed', leads.filter(stage__in=['Disbursed', 'Property Transfer Scheduled', 'Property Transfer']).count(), '', '', 'awaiting transfer'),
-        ('Revenue This Month', round(m_revenue), '', 'AED ', 'disbursed this month · excl VAT'),
-        ('Net Profit', round(m_net_profit), '', 'AED ', 'disbursed this month'),
+        ('Leads This Month', mleads.count(), '', '', 'created this month', _dr + 'leads_month/'),
+        ('New Leads Today', leads.filter(created_at__date=date.today()).count(), '', '', 'since midnight', _dr + 'new_today/'),
+        ('Applications Submitted', leads.filter(stage__in=submitted_stages).count(), '', '', 'in progress now', _dr + 'applications/'),
+        ('Pre-Approval', leads.filter(stage='Pre-Approved').count(), '', '', 'awaiting final', _dr + 'pre_approval/'),
+        ('Loan Disbursed', m_disb.count(), '', '', f'AED {m_disbursed_val:,.0f} this month', _dr + 'disbursed_month/'),
+        ('Pending Title Deed', leads.filter(stage__in=['Disbursed', 'Property Transfer Scheduled', 'Property Transfer']).count(), '', '', 'awaiting transfer', _dr + 'pending_title/'),
+        ('Revenue This Month', round(m_revenue), '', 'AED ', 'disbursed this month · excl VAT', _dr + 'revenue_month/'),
+        ('Net Profit', round(m_net_profit), '', 'AED ', 'disbursed this month', _dr + 'revenue_month/'),
     ]
     kpis_js = [
         {'label': lbl, 'val': val, 'suf': suf, 'pre': pre, 'ic': IC[i],
-         'd': '', 'pos': True, 'note': note, 's': _spark(val)}
-        for i, (lbl, val, suf, pre, note) in enumerate(kpi_defs)
+         'd': '', 'pos': True, 'note': note, 's': _spark(val), 'link': link}
+        for i, (lbl, val, suf, pre, note, link) in enumerate(kpi_defs)
     ]
 
     # ---- funnel (cumulative reach across ordered stages) ----
@@ -726,6 +727,55 @@ def management_dashboard(request):
     }
     return render(request, 'crm/dashboard_mgmt.html', {
         'dash': dash, 'greet_name': request.user.first_name or request.user.username,
+        'active_nav': 'Dashboard',
+    })
+
+
+@login_required
+@perm.module_required('Leads')
+def dashboard_drill(request, metric):
+    """Drill-down: show the actual leads behind a dashboard KPI so numbers can be verified."""
+    from datetime import date
+    base = visible_leads(request.user)
+    _m = date.today().replace(day=1)
+    y, mo = _m.year, _m.month
+    DISB = ['Disbursed', 'Property Transfer Scheduled', 'Property Transfer', 'Property Transferred']
+    submitted = ['Logged In', 'Under Review', 'Pre-Approved', 'Valuation', 'Valuation Received',
+                 'FOL Initiated', 'FOL Issued', 'FOL Signing Fixed', 'FOL Signed', 'Under Disbursement']
+    specs = {
+        'leads_month': ('Leads created this month', base.filter(created_at__date__gte=_m)),
+        'new_today': ('New leads today', base.filter(created_at__date=date.today())),
+        'applications': ('Applications submitted (in progress)', base.filter(stage__in=submitted)),
+        'pre_approval': ('Pre-approved leads', base.filter(stage='Pre-Approved')),
+        'disbursed_month': ('Loans disbursed this month',
+                            base.filter(disbursed_at__year=y, disbursed_at__month=mo)),
+        'pending_title': ('Pending title deed',
+                          base.filter(stage__in=['Disbursed', 'Property Transfer Scheduled', 'Property Transfer'])),
+        'revenue_month': ('Revenue leads (disbursed this month)',
+                          base.filter(disbursed_at__year=y, disbursed_at__month=mo)),
+    }
+    title, qs = specs.get(metric, ('Leads', base.none()))
+    qs = qs.select_related('advisor', 'bank').order_by('-disbursed_at', '-created_at')[:500]
+    # revenue this-month: attach the sheet revenue per lead
+    rev_map = {}
+    if metric == 'revenue_month':
+        for c in Customization.objects.filter(lead__is_deleted=False,
+                                              lead__disbursed_at__year=y, lead__disbursed_at__month=mo):
+            rev_map[c.lead_id] = c.actual_revenue
+    rows = [{
+        'id': l.pk, 'case': l.case_number or f'#{l.pk}', 'name': l.name,
+        'stage': l.stage, 'loan': _f(l.loan_amount),
+        'advisor': (l.advisor.get_full_name() or l.advisor.username) if l.advisor else 'Unassigned',
+        'bank': l.bank.name if l.bank else '—',
+        'disbursed': l.disbursed_at.strftime('%d %b %Y') if l.disbursed_at else '—',
+        'created': l.created_at.strftime('%d %b %Y'),
+        'rev': rev_map.get(l.pk),
+        'in_sheet': l.pk in rev_map if metric in ('disbursed_month', 'revenue_month') else None,
+    } for l in qs]
+    return render(request, 'crm/dashboard_drill.html', {
+        'title': title, 'metric': metric, 'rows': rows, 'count': len(rows),
+        'total_loan': sum(r['loan'] for r in rows),
+        'total_rev': sum(v for v in rev_map.values()) if rev_map else None,
         'active_nav': 'Dashboard',
     })
 

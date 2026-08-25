@@ -58,6 +58,7 @@ urlpatterns = [
     path('login/', views.CRMLoginView.as_view(), name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('', views.dashboard, name='dashboard'),
+    path('dashboard/drill/<str:metric>/', views.dashboard_drill, name='dashboard_drill'),
     path('search/', views.global_search, name='global_search'),
     path('my-day/', views.my_day, name='my_day'),
     path('api/web-to-lead/', views.web_to_lead, name='web_to_lead'),

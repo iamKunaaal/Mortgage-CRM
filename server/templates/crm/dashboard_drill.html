@@ -1,0 +1,33 @@
+{% extends 'crm/base_p2.html' %}
+{% block title %}BITAR CRM — {{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>{{ title }} <span style="font-size:14px;color:var(--text-3);font-weight:600">({{ count }})</span></h1>
+  <p>AED {{ total_loan|floatformat:0 }} total loan{% if total_rev %} · AED {{ total_rev|floatformat:0 }} revenue{% endif %}</p></div>
+  <div class="actions"><a class="btn btn-ghost" href="{% url 'dashboard' %}">← Dashboard</a></div>
+</div>
+{% if metric == 'disbursed_month' or metric == 'revenue_month' %}
+<div class="rule-note" style="margin-bottom:14px"><span class="rn-ic">i</span><p>Rows marked <b>not in sheet</b> are disbursed but not yet added to the Monthly Disbursed Pipeline, so their revenue isn't counted yet.</p></div>
+{% endif %}
+<div class="card" style="padding:0;overflow:auto">
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr style="text-align:left;border-bottom:1px solid var(--border)">
+      <th style="padding:10px">Case</th><th>Name</th><th>Stage</th><th>Loan</th>
+      {% if metric == 'revenue_month' %}<th>Revenue</th>{% endif %}
+      <th>Advisor</th><th>Bank</th><th>Disbursed</th>
+      {% if metric == 'disbursed_month' or metric == 'revenue_month' %}<th>In sheet?</th>{% endif %}</tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr style="border-bottom:1px solid var(--border-soft)">
+        <td style="padding:10px"><a href="{% url 'lead_detail' r.id %}" style="color:var(--primary);font-weight:600">{{ r.case }}</a></td>
+        <td style="font-weight:600">{{ r.name }}</td><td>{{ r.stage }}</td>
+        <td>AED {{ r.loan|floatformat:0 }}</td>
+        {% if metric == 'revenue_month' %}<td>{% if r.rev %}AED {{ r.rev|floatformat:0 }}{% else %}<span style="color:var(--text-3)">—</span>{% endif %}</td>{% endif %}
+        <td>{{ r.advisor }}</td><td>{{ r.bank }}</td><td>{{ r.disbursed }}</td>
+        {% if metric == 'disbursed_month' or metric == 'revenue_month' %}<td>{% if r.in_sheet %}✅{% else %}<span style="color:var(--warning)">not in sheet</span>{% endif %}</td>{% endif %}
+      </tr>
+    {% empty %}<tr><td colspan="9" style="padding:24px;color:var(--text-3)">No leads.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
