@@ -55,9 +55,13 @@ body{font-family:var(--font);background:#525659;color:var(--text)}
 <div class="modal" id="sigModal">
   <div class="card">
     <h3>Add your signature</h3>
-    <p>Draw below, or type your name.</p>
+    <p>Draw below, type your name, or upload an image.</p>
     <canvas id="pad" width="360" height="170"></canvas>
-    <div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-ghost" id="clearPad" style="flex:1;justify-content:center">Clear</button></div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn btn-ghost" id="clearPad" style="flex:1;justify-content:center">Clear</button>
+      <button class="btn btn-ghost" id="uploadBtn" type="button" style="flex:1;justify-content:center">Upload image</button>
+    </div>
+    <input type="file" id="sigUpload" accept="image/*" style="display:none">
     <input class="inp" id="typedName" placeholder="or type full name to sign">
     <div style="display:flex;gap:8px;margin-top:6px">
       <button class="btn btn-ghost" id="cancelSig" style="flex:1;justify-content:center">Cancel</button>
@@ -118,14 +122,35 @@ pad.addEventListener('mousemove',e=>{if(!drawing)return;const p=P(e);ctx.beginPa
 window.addEventListener('mouseup',()=>drawing=false);
 pad.addEventListener('touchstart',e=>{drawing=true;last=P(e);e.preventDefault();});
 pad.addEventListener('touchmove',e=>{if(!drawing)return;const p=P(e);ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke();last=p;dirty=true;e.preventDefault();});
-document.getElementById('clearPad').addEventListener('click',()=>{ctx.clearRect(0,0,pad.width,pad.height);dirty=false;});
+document.getElementById('clearPad').addEventListener('click',()=>{ctx.clearRect(0,0,pad.width,pad.height);dirty=false;uploadedSig=null;});
+/* upload signature image */
+let uploadedSig=null;
+document.getElementById('uploadBtn').addEventListener('click',()=>document.getElementById('sigUpload').click());
+document.getElementById('sigUpload').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  if(f.size>3*1024*1024){alert('Image too large (max 3MB).');return;}
+  const rd=new FileReader();
+  rd.onload=()=>{
+    const im=new Image();
+    im.onload=()=>{
+      ctx.clearRect(0,0,pad.width,pad.height);
+      // fit the uploaded signature onto the pad, keeping aspect ratio
+      const r=Math.min(pad.width/im.width,pad.height/im.height);
+      const w=im.width*r,h=im.height*r;
+      ctx.drawImage(im,(pad.width-w)/2,(pad.height-h)/2,w,h);
+      uploadedSig=pad.toDataURL('image/png');dirty=true;
+    };
+    im.src=rd.result;
+  };
+  rd.readAsDataURL(f);
+});
 function openModal(){modal.style.display='flex';}
 document.getElementById('cancelSig').addEventListener('click',()=>modal.style.display='none');
 document.getElementById('applySig').addEventListener('click',()=>{
   const typed=document.getElementById('typedName').value.trim();
   if(!dirty&&typed){ctx.clearRect(0,0,pad.width,pad.height);ctx.font='46px "Segoe Script",cursive';ctx.fillStyle='#0F172A';ctx.fillText(typed,14,105);dirty=true;}
-  if(!dirty){alert('Please draw or type your signature.');return;}
-  captured=pad.toDataURL('image/png');
+  if(!dirty){alert('Please draw, type, or upload your signature.');return;}
+  captured=uploadedSig||pad.toDataURL('image/png');
   sigBoxes.forEach(b=>{b.innerHTML='<img src="'+captured+'">';b.style.animation='none';b.dataset.signed='1';});
   modal.style.display='none';
   document.getElementById('sigData').value=captured;

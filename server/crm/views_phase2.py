@@ -114,6 +114,16 @@ def invoice_create(request):
     cfg = finance_config()
     lead_id = request.POST.get('lead') or None
     lead = Lead.objects.filter(pk=lead_id).first() if lead_id else None
+    # Client rule: an invoice can only be generated once the Title Deed is on file.
+    if lead:
+        docs = lead.documents.filter(is_deleted=False, is_current=True)
+        has_deed = (docs.filter(name__icontains='deed').exists()
+                    or docs.filter(doc_type__icontains='deed').exists()
+                    or bool((lead.title_deed_number or '').strip()))
+        if not has_deed:
+            messages.error(request, 'Cannot create invoice yet — upload the Title Deed document '
+                           '(or enter the title deed number) for this lead first.')
+            return redirect('finance_hub')
     subtotal = _num(request.POST.get('subtotal'))
     vat = (subtotal * Decimal(cfg['vat_pct']) / Decimal(100)).quantize(Decimal('0.01'))
     seq = Invoice.objects.count() + 1
