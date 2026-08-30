@@ -50,8 +50,19 @@ def _num(v):
 
 def finance_config():
     """Finance tunables (VAT %, TRN, invoice format, commission trigger — OD-5)."""
-    cfg = {'vat_pct': 5, 'trn': '', 'invoice_format': 'INV-{yyyy}-{seq:04d}',
-           'commission_trigger': 'on_receipt'}
+    cfg = {'vat_pct': 5, 'trn': '105037697700003', 'invoice_format': 'MF-{seq:04d}',
+           'commission_trigger': 'on_receipt',
+           # Company / invoice branding (from client sample; override via Settings → finance)
+           'company_name': 'Marker Finance Mortgage Broker',
+           'company_address': "701, 7th Floor Al Saqr Business Tower, Dubai, UAE",
+           'default_description': 'Mortgage Service Fee',
+           'bank_account_holder': 'MARKER FINANCING BROKER L.L.C',
+           'bank_iban': 'AE430860000009891404934',
+           'bank_bic': 'WIOBAEADXXX',
+           'bank_address': 'Etihad Airways Centre 5th Floor, Abu Dhabi, UAE',
+           'payment_terms': 'Immediate',
+           'signatory_name': 'Kaushal Jha',
+           'logo_url': ''}
     try:
         s = AppSetting.objects.filter(key='finance').first()
         if s and isinstance(s.value, dict):
@@ -146,6 +157,18 @@ def invoice_create(request):
     _audit_event(request, 'Invoice created', f'{inv.number} · AED {inv.total}')
     messages.success(request, f'Invoice {inv.number} created (Draft).')
     return redirect('finance_hub')
+
+
+@login_required
+@perm.module_required('Finance')
+def invoice_pdf(request, pk):
+    """Printable invoice matching the Marker Finance layout (Print → Save as PDF)."""
+    inv = get_object_or_404(Invoice.objects.select_related('lead'), pk=pk)
+    cfg = finance_config()
+    return render(request, 'crm/invoice_pdf.html', {
+        'inv': inv, 'cfg': cfg,
+        'description': (inv.notes or cfg.get('default_description', 'Mortgage Service Fee')),
+        'vat_pct': cfg.get('vat_pct', 5)})
 
 
 @login_required

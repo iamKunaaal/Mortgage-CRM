@@ -7,6 +7,7 @@ urlpatterns = [
     # ---- Phase 2: Finance depth ----
     path('finance-hub/', vp2.finance_hub, name='finance_hub'),
     path('finance-hub/invoice/create/', vp2.invoice_create, name='invoice_create'),
+    path('finance-hub/invoice/<int:pk>/pdf/', vp2.invoice_pdf, name='invoice_pdf'),
     path('finance-hub/invoice/<int:pk>/send/', vp2.invoice_send, name='invoice_send'),
     path('finance-hub/invoice/<int:pk>/receipt/', vp2.receipt_add, name='receipt_add'),
     path('finance-hub/invoice/<int:pk>/credit/', vp2.credit_note_add, name='credit_note_add'),

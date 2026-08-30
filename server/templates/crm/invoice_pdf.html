@@ -1,0 +1,82 @@
+{% load humanize static %}<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Invoice {{ inv.number }}</title>
+<style>
+  :root{--navy:#1F3D6B;--navy-d:#1B3560;--line:#D8DEE9}
+  *{box-sizing:border-box}
+  body{font-family:Arial,Helvetica,sans-serif;color:#1a1a1a;background:#E9EDF2;margin:0;padding:26px}
+  .sheet{max-width:820px;margin:0 auto;background:#fff;padding:46px 54px 60px;box-shadow:0 6px 26px rgba(0,0,0,.12)}
+  .logo{text-align:center;margin-bottom:26px}
+  .logo svg{height:92px}
+  h1.title{text-align:center;color:var(--navy);font-size:30px;letter-spacing:1px;margin:8px 0 28px}
+  .meta{display:flex;border:1px solid var(--navy);border-radius:2px}
+  .meta .l{flex:1.4;padding:12px 16px;border-right:1px solid var(--navy);font-size:12.5px;line-height:1.55}
+  .meta .l b{font-size:13px}
+  .meta .r{flex:1;padding:12px 16px;font-size:13px;line-height:1.8}
+  .billto{color:var(--navy);font-size:18px;font-weight:700;margin:26px 0 16px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  .items th{background:var(--navy);color:#fff;text-align:left;padding:9px 14px;font-weight:600}
+  .items th.r,.items td.r{text-align:right}
+  .items td{padding:10px 14px;border:1px solid var(--line)}
+  .totals{margin-top:14px}
+  .totals td{padding:9px 14px;border:1px solid var(--line);font-size:13px}
+  .totals td.r{text-align:right}
+  .totals tr.total td{background:var(--navy);color:#fff;font-weight:700;border-color:var(--navy)}
+  .bank{margin-top:30px;font-size:12.5px;line-height:1.65}
+  .bank b{font-size:13px}
+  .terms{margin-top:22px;font-size:12.5px}
+  .sign{margin-top:44px;font-size:12.5px}
+  .sign b{display:block;font-size:13px}
+  .actions{max-width:820px;margin:16px auto 0;text-align:right}
+  .btn{padding:10px 18px;border-radius:8px;background:var(--navy);color:#fff;border:0;font-size:13px;cursor:pointer;text-decoration:none}
+  @media print{body{background:#fff;padding:0}.actions{display:none}.sheet{box-shadow:none;padding:40px 48px}}
+</style></head>
+<body>
+<div class="sheet">
+  <div class="logo">
+    <img src="{{ cfg.logo_url|default:'' }}{% if not cfg.logo_url %}{% static 'img/mf_logo.png' %}{% endif %}" style="height:120px" alt="Marker Finance">
+  </div>
+
+  <h1 class="title">INVOICE</h1>
+
+  <div class="meta">
+    <div class="l">
+      <b>{{ cfg.company_name }}</b><br>
+      {{ cfg.company_address }}<br>
+      TRN: {{ inv.trn|default:cfg.trn }}
+    </div>
+    <div class="r">
+      <b>Invoice No:</b> {{ inv.number }}<br>
+      <b>Date:</b> {{ inv.issued_at|date:"d-m-Y" }}
+    </div>
+  </div>
+
+  <div class="billto">Bill To: {{ inv.client_name|default:"—" }}</div>
+
+  <table class="items">
+    <tr><th>Description</th><th class="r">Amount (AED)</th></tr>
+    <tr><td>{{ description }}</td><td class="r">{{ inv.subtotal|floatformat:0|intcomma }}</td></tr>
+  </table>
+
+  <table class="totals">
+    <tr><td>Subtotal</td><td class="r">{{ inv.subtotal|floatformat:0|intcomma }}</td></tr>
+    <tr><td>VAT ({{ vat_pct }}%)</td><td class="r">{{ inv.vat|floatformat:0|intcomma }}</td></tr>
+    <tr class="total"><td>Total</td><td class="r">{{ inv.total|floatformat:0|intcomma }}</td></tr>
+  </table>
+
+  <div class="bank">
+    <b>Bank Details:</b><br>
+    Account Holder: {{ cfg.bank_account_holder }}<br>
+    IBAN: {{ cfg.bank_iban }}<br>
+    BIC: {{ cfg.bank_bic }}<br>
+    Bank Address: {{ cfg.bank_address }}
+  </div>
+
+  <div class="terms">Payment Terms: {{ cfg.payment_terms }}</div>
+
+  <div class="sign">
+    <b>Authorized Signatory</b>
+    {{ cfg.signatory_name }}
+  </div>
+</div>
+<div class="actions"><a class="btn" href="#" onclick="window.print();return false">Print / Save as PDF</a></div>
+</body></html>

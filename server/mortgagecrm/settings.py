@@ -17,6 +17,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'crm',
     'esign',   # e-Signature module (removable: delete this line + esign/ folder + urls include + sidebar block)
 ]

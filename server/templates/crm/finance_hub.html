@@ -30,7 +30,7 @@
     <tbody>
     {% for r in rows %}
       <tr style="border-bottom:1px solid var(--border-soft)">
-        <td style="padding:10px;font-weight:600">{{ r.number }}</td><td>{{ r.client }}</td>
+        <td style="padding:10px;font-weight:600"><a href="{% url 'invoice_pdf' r.id %}" target="_blank" style="color:var(--primary)">{{ r.number }}</a></td><td>{{ r.client }}</td>
         <td>AED {{ r.total|floatformat:0 }}</td><td>AED {{ r.paid|floatformat:0 }}</td>
         <td>AED {{ r.balance|floatformat:0 }}</td><td>{{ r.status }}</td><td>{{ r.issued }}</td>
         {% if can_edit %}<td style="white-space:nowrap">
