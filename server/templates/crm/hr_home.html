@@ -2,15 +2,55 @@
 {% block title %}BITAR CRM — HR{% endblock %}
 {% block page_title %}HR{% endblock %}
 {% block content %}
-<div class="page-head"><div><h1>HR</h1><p>Attendance, leave and targets.</p></div></div>
-<div class="card" style="padding:16px;margin-bottom:18px">
-  <b>My attendance today</b>
-  <div style="display:flex;gap:10px;align-items:center;margin-top:10px">
-    {% if my_att.check_in %}<span style="font-size:13px">In: {{ my_att.check_in|date:"H:i" }}</span>{% else %}<form method="post" action="{% url 'attendance_checkin' %}">{% csrf_token %}<input type="hidden" name="geo" id="geo"><button class="btn btn-primary" onclick="navigator.geolocation&&navigator.geolocation.getCurrentPosition(p=>document.getElementById('geo').value=p.coords.latitude+','+p.coords.longitude)">Check in</button></form>{% endif %}
-    {% if my_att.check_in and not my_att.check_out %}<form method="post" action="{% url 'attendance_checkout' %}">{% csrf_token %}<button class="btn btn-ghost">Check out</button></form>{% endif %}
-    {% if my_att.check_out %}<span style="font-size:13px">Out: {{ my_att.check_out|date:"H:i" }}</span>{% endif %}
+<div class="page-head"><div><h1>Human Resources</h1><p>Your attendance, leave and payslips — all in one place.</p></div>
+  {% if is_mgr %}<div class="actions" style="display:flex;gap:8px">
+    <a class="btn btn-ghost" href="{% url 'hr_employees' %}">Employees</a>
+    <a class="btn btn-ghost" href="{% url 'hr_calendar' %}">Calendar</a>
+    <a class="btn btn-primary" href="{% url 'hr_salary' %}">Salary &amp; Payroll</a>
+  </div>{% endif %}
+</div>
+
+{% if is_mgr %}
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:18px">
+  <div class="card" style="padding:16px"><div style="font-size:12px;color:var(--text-3)">Active staff</div><div style="font-size:26px;font-weight:800">{{ staff_count }}</div></div>
+  <div class="card" style="padding:16px"><div style="font-size:12px;color:var(--text-3)">Present today</div><div style="font-size:26px;font-weight:800;color:#16A34A">{{ att_rows|length }}</div></div>
+  <div class="card" style="padding:16px"><div style="font-size:12px;color:var(--text-3)">Pending leaves</div><div style="font-size:26px;font-weight:800;color:#B45309">{{ pending_leaves }}</div></div>
+</div>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px">
+  <div class="card" style="padding:16px">
+    <b>My attendance today</b>
+    <div style="display:flex;gap:10px;align-items:center;margin-top:12px">
+      {% if my_att.check_in %}<span style="font-size:13px;color:#16A34A;font-weight:600">✔ In: {{ my_att.check_in|date:"H:i" }}</span>{% else %}<form method="post" action="{% url 'attendance_checkin' %}">{% csrf_token %}<input type="hidden" name="geo" id="geo"><button class="btn btn-primary" onclick="navigator.geolocation&&navigator.geolocation.getCurrentPosition(p=>document.getElementById('geo').value=p.coords.latitude+','+p.coords.longitude)">Check in</button></form>{% endif %}
+      {% if my_att.check_in and not my_att.check_out %}<form method="post" action="{% url 'attendance_checkout' %}">{% csrf_token %}<button class="btn btn-ghost">Check out</button></form>{% endif %}
+      {% if my_att.check_out %}<span style="font-size:13px">Out: {{ my_att.check_out|date:"H:i" }}</span>{% endif %}
+    </div>
+    {% if my_profile %}<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border-soft);font-size:12.5px;color:var(--text-2)">
+      {{ my_profile.designation|default:request.user.role_label }}{% if my_profile.department %} · {{ my_profile.department }}{% endif %}
+      {% if my_profile.employee_code %}<br>Code: {{ my_profile.employee_code }}{% endif %}
+    </div>{% endif %}
+  </div>
+
+  <div class="card" style="padding:16px">
+    <b>My leave balance</b>
+    <div style="margin-top:10px">
+    {% for b in my_balances %}<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid var(--border-soft)">
+      <span>{{ b.leave_type.name }}</span><span><b>{{ b.remaining }}</b> left <span style="color:var(--text-3)">({{ b.used }}/{{ b.allocated }})</span></span></div>
+    {% empty %}<p style="color:var(--text-3);font-size:13px">No balances set yet.</p>{% endfor %}
+    </div>
   </div>
 </div>
+
+{% if my_payslips %}
+<div class="card" style="padding:16px;margin-bottom:18px">
+  <b>My payslips</b>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+    {% for p in my_payslips %}<a class="btn btn-ghost" href="{% url 'payslip_view' p.pk %}" target="_blank">{{ p.period }} · AED {{ p.net }}</a>{% endfor %}
+  </div>
+</div>
+{% endif %}
+
 <div class="card" style="padding:16px;margin-bottom:18px">
   <b>Request leave</b>
   <form method="post" action="{% url 'leave_request' %}" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:10px">{% csrf_token %}
@@ -21,28 +61,38 @@
     <button class="btn btn-primary" type="submit">Submit</button>
   </form>
 </div>
+
 <div class="card" style="padding:16px;margin-bottom:18px">
   <b>Leave requests</b>
   {% for l in leaves %}<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-soft);font-size:13px">
-    <span>{{ l.user.get_full_name|default:l.user.username }} · {{ l.start }}→{{ l.end }} · {{ l.status }}</span>
-    {% if is_mgr and l.status == 'Pending' %}<span><form method="post" action="{% url 'leave_decide' l.pk %}" style="display:inline">{% csrf_token %}<button name="decision" value="approve" class="btn btn-ghost" style="padding:2px 8px">Approve</button><button name="decision" value="reject" class="btn btn-ghost" style="padding:2px 8px;color:var(--danger)">Reject</button></form></span>{% endif %}
+    <span>{{ l.user.get_full_name|default:l.user.username }} · {{ l.start }}→{{ l.end }} · <b>{{ l.status }}</b></span>
+    {% if is_mgr and l.status == 'Pending' %}<span><form method="post" action="{% url 'leave_decide' l.pk %}" style="display:inline">{% csrf_token %}<button name="decision" value="approve" class="btn btn-ghost" style="padding:2px 8px;color:#16A34A">Approve</button><button name="decision" value="reject" class="btn btn-ghost" style="padding:2px 8px;color:var(--danger)">Reject</button></form></span>{% endif %}
   </div>{% empty %}<p style="color:var(--text-3);font-size:13px;margin-top:8px">No leave requests.</p>{% endfor %}
 </div>
+
 {% if is_mgr %}
-<div class="card" style="padding:16px;margin-bottom:18px">
-  <b>Today's attendance ({{ att_rows|length }})</b>
-  {% for a in att_rows %}<div style="font-size:13px;padding:4px 0">{{ a.user.get_full_name|default:a.user.username }} — in {{ a.check_in|date:"H:i"|default:"—" }} / out {{ a.check_out|date:"H:i"|default:"—" }}</div>{% endfor %}
-</div>
-<div class="card" style="padding:16px">
-  <b>Set target</b>
-  <form method="post" action="{% url 'target_save' %}" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:10px">{% csrf_token %}
-    <select name="user" style="padding:8px;border:1px solid var(--border);border-radius:8px">{% for u in staff %}<option value="{{ u.pk }}">{{ u.get_full_name|default:u.username }}</option>{% endfor %}</select>
-    <select name="metric" style="padding:8px;border:1px solid var(--border);border-radius:8px"><option value="disbursed_value">Disbursed value</option><option value="leads">Leads</option></select>
-    <input name="period" placeholder="YYYY-MM" style="padding:8px;border:1px solid var(--border);border-radius:8px">
-    <input name="target_value" type="number" placeholder="Target" style="padding:8px;border:1px solid var(--border);border-radius:8px">
-    <button class="btn btn-primary" type="submit">Save</button>
-  </form>
-  {% for t in targets %}<div style="font-size:13px;padding:4px 0">{{ t.user.get_full_name|default:t.user.username }} · {{ t.metric }} · {{ t.period }} → {{ t.target_value|floatformat:0 }}</div>{% endfor %}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+  <div class="card" style="padding:16px">
+    <b>Set / adjust leave balance</b>
+    <form method="post" action="{% url 'leave_balance_save' %}" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:10px">{% csrf_token %}
+      <select name="user" style="padding:8px;border:1px solid var(--border);border-radius:8px">{% for u in staff %}<option value="{{ u.pk }}">{{ u.get_full_name|default:u.username }}</option>{% endfor %}</select>
+      <select name="leave_type" style="padding:8px;border:1px solid var(--border);border-radius:8px">{% for t in leave_types %}<option value="{{ t.pk }}">{{ t.name }}</option>{% endfor %}</select>
+      <input name="allocated" type="number" step="0.5" placeholder="Allocated" style="width:100px;padding:8px;border:1px solid var(--border);border-radius:8px">
+      <input name="used" type="number" step="0.5" placeholder="Used" style="width:90px;padding:8px;border:1px solid var(--border);border-radius:8px">
+      <button class="btn btn-primary" type="submit">Save</button>
+    </form>
+  </div>
+  <div class="card" style="padding:16px">
+    <b>Set target</b>
+    <form method="post" action="{% url 'target_save' %}" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:10px">{% csrf_token %}
+      <select name="user" style="padding:8px;border:1px solid var(--border);border-radius:8px">{% for u in staff %}<option value="{{ u.pk }}">{{ u.get_full_name|default:u.username }}</option>{% endfor %}</select>
+      <select name="metric" style="padding:8px;border:1px solid var(--border);border-radius:8px"><option value="disbursed_value">Disbursed value</option><option value="leads">Leads</option></select>
+      <input name="period" placeholder="YYYY-MM" style="width:110px;padding:8px;border:1px solid var(--border);border-radius:8px">
+      <input name="target_value" type="number" placeholder="Target" style="width:110px;padding:8px;border:1px solid var(--border);border-radius:8px">
+      <button class="btn btn-primary" type="submit">Save</button>
+    </form>
+    {% for t in targets %}<div style="font-size:12.5px;padding:4px 0;color:var(--text-2)">{{ t.user.get_full_name|default:t.user.username }} · {{ t.metric }} · {{ t.period }} → {{ t.target_value|floatformat:0 }}</div>{% endfor %}
+  </div>
 </div>
 {% endif %}
 {% endblock %}

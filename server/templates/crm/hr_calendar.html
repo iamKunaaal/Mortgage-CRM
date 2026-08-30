@@ -1,0 +1,52 @@
+{% extends 'crm/base_p2.html' %}
+{% block title %}BITAR CRM — Attendance Calendar{% endblock %}
+{% block page_title %}Attendance Calendar{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Attendance — {{ month_name }} {{ year }}</h1>
+    <p>P=Present · A=Absent · H=Half Day · L=Leave · O=Holiday. Blank = not marked.</p></div>
+  <div class="actions" style="display:flex;gap:8px">
+    <a class="btn btn-ghost" href="?m={{ prev_m }}">← Prev</a>
+    <a class="btn btn-ghost" href="?m={{ next_m }}">Next →</a>
+  </div>
+</div>
+
+<div class="card" style="padding:0;overflow:auto">
+  <table style="border-collapse:collapse;font-size:12px;white-space:nowrap">
+    <thead><tr style="border-bottom:1px solid var(--border)">
+      <th style="padding:8px 10px;text-align:left;position:sticky;left:0;background:var(--surface,#fff)">Employee</th>
+      {% for d in days %}<th style="padding:6px 4px;min-width:22px">{{ d }}</th>{% endfor %}
+      <th style="padding:8px">Worked</th><th style="padding:8px">Paid</th>
+    </tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr style="border-bottom:1px solid var(--border-soft)">
+        <td style="padding:8px 10px;font-weight:600;position:sticky;left:0;background:var(--surface,#fff)">{{ r.user.get_full_name|default:r.user.username }}</td>
+        {% for c in r.cells %}
+          <td title="{{ c.status }}" style="text-align:center;padding:4px;font-weight:700;color:{% if c.code == 'P' %}#16A34A{% elif c.code == 'A' %}#DC2626{% elif c.code == 'H' %}#B45309{% elif c.code == 'L' %}#2563EB{% else %}var(--text-3){% endif %}">{{ c.code }}</td>
+        {% endfor %}
+        <td style="text-align:center;padding:6px;font-weight:700">{{ r.worked }}</td>
+        <td style="text-align:center;padding:6px;font-weight:700">{{ r.paid }}</td>
+      </tr>
+    {% empty %}<tr><td colspan="40" style="padding:20px;color:var(--text-3)">No staff.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if is_mgr %}
+<div class="card" style="padding:16px;margin-top:18px">
+  <b>Mark / override attendance</b>
+  <form method="post" action="{% url 'attendance_manual' %}" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:10px">{% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <select name="user" required style="padding:8px;border:1px solid var(--border);border-radius:8px">{% for u in staff %}<option value="{{ u.pk }}">{{ u.get_full_name|default:u.username }}</option>{% endfor %}</select>
+    <input type="date" name="date" required style="padding:8px;border:1px solid var(--border);border-radius:8px">
+    <select name="status" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+      <option value="">Auto (from check-in)</option>
+      {% for s in statuses %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+    </select>
+    <input name="note" placeholder="Note (optional)" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+    <button class="btn btn-primary" type="submit">Save</button>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

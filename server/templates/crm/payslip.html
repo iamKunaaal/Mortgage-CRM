@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Payslip — {{ slip.user.get_full_name|default:slip.user.username }} — {{ slip.period }}</title>
+<style>
+  body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#0F172A;background:#F1F5F9;margin:0;padding:30px}
+  .slip{max-width:640px;margin:0 auto;background:#fff;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.08);overflow:hidden}
+  .head{background:#0F172A;color:#fff;padding:22px 26px;display:flex;justify-content:space-between;align-items:center}
+  .head h1{margin:0;font-size:19px}.head .p{font-size:12px;opacity:.8;margin-top:3px}
+  .body{padding:26px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;font-size:13px;margin-bottom:22px}
+  .grid div span{color:#64748B}.grid div b{float:right}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:9px 4px;text-align:left;border-bottom:1px solid #E2E8F0}
+  td.r,th.r{text-align:right}
+  .net{background:#DCFCE7;font-weight:800;font-size:15px}
+  .actions{max-width:640px;margin:14px auto 0;text-align:right}
+  .btn{padding:9px 16px;border-radius:9px;background:#0F172A;color:#fff;border:0;font-size:13px;cursor:pointer;text-decoration:none}
+  @media print{body{background:#fff;padding:0}.actions{display:none}.slip{box-shadow:none}}
+</style></head>
+<body>
+<div class="slip">
+  <div class="head">
+    <div><h1>{{ company_name|default:"BITAR Mortgage" }}</h1><div class="p">Salary Slip</div></div>
+    <div style="text-align:right"><div style="font-size:15px;font-weight:700">{{ slip.period }}</div></div>
+  </div>
+  <div class="body">
+    <div class="grid">
+      <div><span>Employee</span><b>{{ slip.user.get_full_name|default:slip.user.username }}</b></div>
+      <div><span>Code</span><b>{{ prof.employee_code|default:"—" }}</b></div>
+      <div><span>Designation</span><b>{{ prof.designation|default:"—" }}</b></div>
+      <div><span>Department</span><b>{{ prof.department|default:"—" }}</b></div>
+      <div><span>Working days</span><b>{{ slip.working_days }}</b></div>
+      <div><span>Paid days</span><b>{{ slip.paid_days }}</b></div>
+    </div>
+    <table>
+      <tr><th>Earnings</th><th class="r">Amount</th></tr>
+      <tr><td>Gross (prorated by attendance)</td><td class="r">{{ earned }}</td></tr>
+      <tr><th>Deductions</th><th class="r"></th></tr>
+      <tr><td>Total deductions</td><td class="r">− {{ slip.deductions }}</td></tr>
+      <tr class="net"><td>Net Pay</td><td class="r">AED {{ slip.net }}</td></tr>
+    </table>
+    <p style="font-size:11px;color:#94A3B8;margin-top:18px">Generated {{ slip.generated_at|date:"d M Y H:i" }}. This is a system-generated payslip.</p>
+  </div>
+</div>
+<div class="actions"><a class="btn" href="#" onclick="window.print();return false">Print / Save PDF</a></div>
+</body></html>

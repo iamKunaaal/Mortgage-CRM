@@ -1,0 +1,48 @@
+{% extends 'crm/base_p2.html' %}
+{% block title %}BITAR CRM — Employees{% endblock %}
+{% block page_title %}Employees{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Employees</h1><p>Employee directory and profiles.</p></div>
+  <form method="get" class="actions"><input name="q" value="{{ q }}" placeholder="Search employee…" style="padding:9px 12px;border:1px solid var(--border);border-radius:9px"></form>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px">
+{% for u in staff %}
+  <div class="card" style="padding:16px">
+    <div style="display:flex;justify-content:space-between;align-items:start">
+      <div>
+        <div style="font-weight:700;font-size:15px">{{ u.get_full_name|default:u.username }}</div>
+        <div style="font-size:12.5px;color:var(--text-2)">{{ u.profile.designation|default:u.role_label }}{% if u.profile.department %} · {{ u.profile.department }}{% endif %}</div>
+      </div>
+      <button class="btn btn-ghost" type="button" onclick="var d=document.getElementById('ef{{ u.pk }}');d.style.display=d.style.display=='block'?'none':'block'">Edit</button>
+    </div>
+    <div style="font-size:12.5px;color:var(--text-3);margin-top:10px;display:grid;gap:3px">
+      {% if u.profile.employee_code %}<div>Code: <b style="color:var(--text-2)">{{ u.profile.employee_code }}</b></div>{% endif %}
+      {% if u.profile.joining_date %}<div>Joined: {{ u.profile.joining_date }}</div>{% endif %}
+      {% if u.profile.reporting_manager %}<div>Manager: {{ u.profile.reporting_manager.get_full_name|default:u.profile.reporting_manager.username }}</div>{% endif %}
+      {% if u.profile.phone %}<div>📞 {{ u.profile.phone }}</div>{% endif %}
+      {% if u.profile.emergency_contact %}<div>Emergency: {{ u.profile.emergency_contact }}</div>{% endif %}
+    </div>
+    <div id="ef{{ u.pk }}" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-soft)">
+      <form method="post" action="{% url 'employee_save' %}" style="display:grid;gap:8px">{% csrf_token %}
+        <input type="hidden" name="user" value="{{ u.pk }}">
+        <input name="employee_code" value="{{ u.profile.employee_code|default:'' }}" placeholder="Employee code" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+        <input name="designation" value="{{ u.profile.designation|default:'' }}" placeholder="Designation" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+        <input name="department" value="{{ u.profile.department|default:'' }}" placeholder="Department" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+        <label style="font-size:11px;color:var(--text-3)">Joining date<input type="date" name="joining_date" value="{{ u.profile.joining_date|date:'Y-m-d' }}" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px"></label>
+        <label style="font-size:11px;color:var(--text-3)">Date of birth<input type="date" name="dob" value="{{ u.profile.dob|date:'Y-m-d' }}" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px"></label>
+        <select name="reporting_manager" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+          <option value="">Reporting manager…</option>
+          {% for m in managers %}<option value="{{ m.pk }}" {% if u.profile.reporting_manager_id == m.pk %}selected{% endif %}>{{ m.get_full_name|default:m.username }}</option>{% endfor %}
+        </select>
+        <input name="phone" value="{{ u.profile.phone|default:'' }}" placeholder="Phone" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+        <input name="emergency_contact" value="{{ u.profile.emergency_contact|default:'' }}" placeholder="Emergency contact" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+        <input name="address" value="{{ u.profile.address|default:'' }}" placeholder="Address" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+        <button class="btn btn-primary" type="submit">Save profile</button>
+      </form>
+    </div>
+  </div>
+{% empty %}<div class="card" style="padding:30px;text-align:center;color:var(--text-3)">No employees.</div>{% endfor %}
+</div>
+{% endblock %}

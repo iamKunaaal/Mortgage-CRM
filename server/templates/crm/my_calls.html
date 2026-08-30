@@ -1,0 +1,47 @@
+{% extends 'crm/base_p2.html' %}
+{% block title %}BITAR CRM — My Call List{% endblock %}
+{% block page_title %}My Call List{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>My Call List</h1>
+  <p>Call each contact and log the outcome. {{ total }} total assigned.</p></div></div>
+
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+  {% for c in chips %}<a class="btn {% if status == c.key %}btn-primary{% else %}btn-ghost{% endif %}" href="?status={{ c.key }}">{{ c.key }} ({{ c.count }})</a>{% endfor %}
+  <a class="btn {% if status == 'all' %}btn-primary{% else %}btn-ghost{% endif %}" href="?status=all">All ({{ total }})</a>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px">
+{% for it in items %}
+  <div class="card" style="padding:14px 16px">
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:start">
+      <div>
+        <div style="font-weight:700;font-size:15px">{{ it.name|default:"(no name)" }}
+          <span style="font-size:11px;font-weight:700;margin-left:8px;padding:2px 8px;border-radius:20px;background:{% if it.status == 'Pending' %}#FEF3E2;color:#B45309{% elif it.status == 'Interested' %}#DCFCE7;color:#16A34A{% elif it.status == 'Not Interested' %}#FEE2E2;color:#DC2626{% else %}var(--border-soft);color:var(--text-3){% endif %}">{{ it.status }}</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-2);margin-top:4px">
+          {% if it.phone %}<a href="tel:{{ it.phone }}" style="color:var(--primary);font-weight:600">📞 {{ it.phone }}</a>{% endif %}
+          {% if it.email %} · {{ it.email }}{% endif %}
+        </div>
+        {% if it.notes %}<div style="font-size:12px;color:var(--text-3);margin-top:4px">{{ it.notes }}</div>{% endif %}
+        {% if it.lead %}<div style="font-size:12px;margin-top:4px">✔ <a href="{% url 'lead_detail' it.lead.pk %}">Converted to lead</a></div>{% endif %}
+      </div>
+    </div>
+    <form method="post" action="{% url 'call_item_log' it.pk %}" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-soft)">{% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <div><label style="font-size:11px;color:var(--text-3);display:block">Outcome</label>
+        <select name="status" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+          {% for s in statuses %}<option value="{{ s }}" {% if it.status == s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+        </select></div>
+      <div><label style="font-size:11px;color:var(--text-3);display:block">Follow-up</label>
+        <input type="date" name="follow_up_date" style="padding:8px;border:1px solid var(--border);border-radius:8px"></div>
+      <div style="flex:1;min-width:180px"><label style="font-size:11px;color:var(--text-3);display:block">Remarks</label>
+        <input name="remarks" value="{{ it.remarks }}" placeholder="Call notes" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px"></div>
+      {% if not it.lead %}<label style="font-size:12px;display:flex;align-items:center;gap:5px;margin-bottom:8px"><input type="checkbox" name="create_lead" value="1">Create lead</label>{% endif %}
+      <button class="btn btn-primary" type="submit">Save call</button>
+    </form>
+  </div>
+{% empty %}
+  <div class="card" style="padding:30px;text-align:center;color:var(--text-3)">No calls in this view.</div>
+{% endfor %}
+</div>
+{% endblock %}

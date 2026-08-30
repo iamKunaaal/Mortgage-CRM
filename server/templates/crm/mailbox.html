@@ -1,0 +1,69 @@
+{% extends 'crm/base_p2.html' %}
+{% block title %}BITAR CRM — Mailbox{% endblock %}
+{% block page_title %}Mailbox{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Mailbox</h1><p>Your Outlook inbox — read and send email without leaving the CRM.</p></div>
+  {% if connected %}<div class="actions" style="display:flex;gap:8px;align-items:center">
+    <span style="font-size:12px;color:var(--text-3)">Connected: <b>{{ acct.ms_email }}</b></span>
+    <form method="post" action="{% url 'outlook_disconnect' %}">{% csrf_token %}<button class="btn btn-ghost" type="submit">Disconnect</button></form>
+  </div>{% endif %}
+</div>
+
+{% if not configured %}
+  <div class="card" style="padding:22px;max-width:640px">
+    <b>Outlook not set up yet</b>
+    <p style="font-size:13px;color:var(--text-2);margin:8px 0 0">To turn this on, your Microsoft 365 admin registers one Azure app and enters its details below.</p>
+    {% if is_admin %}
+      <form method="post" action="{% url 'outlook_settings_save' %}" style="display:grid;gap:10px;margin-top:16px">{% csrf_token %}
+        <input type="hidden" name="next" value="{% url 'mailbox' %}">
+        <input name="client_id" placeholder="Application (client) ID" required style="padding:9px;border:1px solid var(--border);border-radius:9px">
+        <input name="client_secret" placeholder="Client secret value" required style="padding:9px;border:1px solid var(--border);border-radius:9px">
+        <input name="tenant_id" placeholder="Directory (tenant) ID" style="padding:9px;border:1px solid var(--border);border-radius:9px">
+        <button class="btn btn-primary" type="submit">Save Outlook settings</button>
+      </form>
+      <p style="font-size:11.5px;color:var(--text-3);margin-top:12px">Redirect URI to add in Azure: <code>{{ request.scheme }}://{{ request.get_host }}/outlook/callback/</code><br>API permissions (delegated): Mail.Read, Mail.Send, Calendars.ReadWrite, User.Read, offline_access.</p>
+    {% else %}
+      <p style="font-size:12.5px;color:var(--text-3);margin-top:10px">Please ask an administrator (CEO / Super Admin) to configure Outlook.</p>
+    {% endif %}
+  </div>
+
+{% elif not connected %}
+  <div class="card" style="padding:30px;text-align:center;max-width:520px;margin:0 auto">
+    <div style="font-size:40px">📧</div>
+    <b style="display:block;margin-top:8px;font-size:16px">Connect your Outlook</b>
+    <p style="font-size:13px;color:var(--text-2);margin:8px 0 18px">Sign in once with your Microsoft account. After that, all your email lives right here.</p>
+    <a class="btn btn-primary" href="{% url 'outlook_connect' %}">Connect Outlook</a>
+  </div>
+
+{% else %}
+  {% if error %}<div class="card" style="padding:12px 16px;margin-bottom:14px;background:#FEE2E2;color:#DC2626;font-size:13px">{{ error }} <a href="{% url 'outlook_connect' %}" style="font-weight:700">Reconnect</a></div>{% endif %}
+  <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:18px">
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:14px 16px;font-weight:700;border-bottom:1px solid var(--border)">Inbox</div>
+      <div style="max-height:600px;overflow:auto">
+      {% for m in messages_list %}
+        <a href="{{ m.webLink }}" target="_blank" style="display:block;padding:12px 16px;border-bottom:1px solid var(--border-soft);text-decoration:none;color:inherit;{% if not m.isRead %}background:#F0F7FF{% endif %}">
+          <div style="display:flex;justify-content:space-between;gap:10px">
+            <b style="font-size:13px">{{ m.from.emailAddress.name|default:m.from.emailAddress.address }}</b>
+            <span style="font-size:11px;color:var(--text-3);white-space:nowrap">{{ m.receivedDateTime|slice:":10" }}</span>
+          </div>
+          <div style="font-size:13px;font-weight:600;margin-top:2px">{{ m.subject|default:"(no subject)" }}</div>
+          <div style="font-size:12px;color:var(--text-3);margin-top:2px">{{ m.bodyPreview|truncatechars:110 }}</div>
+        </a>
+      {% empty %}<div style="padding:24px;text-align:center;color:var(--text-3)">Inbox is empty.</div>{% endfor %}
+      </div>
+    </div>
+
+    <div class="card" style="padding:16px;align-self:start">
+      <b>Compose</b>
+      <form method="post" action="{% url 'mail_send' %}" style="display:grid;gap:10px;margin-top:12px">{% csrf_token %}
+        <input type="hidden" name="next" value="{% url 'mailbox' %}">
+        <input name="to" placeholder="To (comma-separated)" required style="padding:9px;border:1px solid var(--border);border-radius:9px">
+        <input name="subject" placeholder="Subject" style="padding:9px;border:1px solid var(--border);border-radius:9px">
+        <textarea name="body" rows="8" placeholder="Write your message…" style="padding:9px;border:1px solid var(--border);border-radius:9px;resize:vertical"></textarea>
+        <button class="btn btn-primary" type="submit">Send from Outlook</button>
+      </form>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

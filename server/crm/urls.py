@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from . import views_phase2 as vp2
+from . import views_outlook as vo
 
 urlpatterns = [
     # ---- Phase 2: Finance depth ----
@@ -34,6 +35,15 @@ urlpatterns = [
     path('hr/leave/', vp2.leave_request, name='leave_request'),
     path('hr/leave/<int:pk>/decide/', vp2.leave_decide, name='leave_decide'),
     path('hr/target/', vp2.target_save, name='target_save'),
+    path('hr/calendar/', vp2.hr_calendar, name='hr_calendar'),
+    path('hr/attendance/manual/', vp2.attendance_manual, name='attendance_manual'),
+    path('hr/salary/', vp2.hr_salary, name='hr_salary'),
+    path('hr/salary/save/', vp2.hr_salary_save, name='hr_salary_save'),
+    path('hr/payroll/run/', vp2.payroll_run, name='payroll_run'),
+    path('hr/payslip/<int:pk>/', vp2.payslip_view, name='payslip_view'),
+    path('hr/employees/', vp2.hr_employees, name='hr_employees'),
+    path('hr/employees/save/', vp2.employee_save, name='employee_save'),
+    path('hr/leave-balance/save/', vp2.leave_balance_save, name='leave_balance_save'),
     # ---- Phase 2: Compliance/Admin depth ----
     path('settings/retention/', vp2.retention_save, name='retention_save'),
     path('custom-fields/', vp2.custom_fields_page, name='custom_fields_page'),
@@ -46,6 +56,22 @@ urlpatterns = [
     path('templates/', vp2.template_studio, name='template_studio'),
     path('templates/save/', vp2.template_save, name='template_save'),
     path('access-review/', vp2.access_review, name='access_review'),
+    path('call-lists/', vp2.call_lists, name='call_lists'),
+    path('call-lists/sample/', vp2.call_list_sample, name='call_list_sample'),
+    path('call-lists/upload/', vp2.call_list_upload, name='call_list_upload'),
+    path('call-lists/assign/', vp2.call_list_assign, name='call_list_assign'),
+    path('my-calls/', vp2.my_calls, name='my_calls'),
+    path('my-calls/<int:pk>/log/', vp2.call_item_log, name='call_item_log'),
+    # ---- Outlook / Microsoft 365 integration ----
+    path('mailbox/', vo.mailbox, name='mailbox'),
+    path('mailbox/send/', vo.mail_send, name='mail_send'),
+    path('outlook/connect/', vo.outlook_connect, name='outlook_connect'),
+    path('outlook/callback/', vo.outlook_callback, name='outlook_callback'),
+    path('outlook/disconnect/', vo.outlook_disconnect, name='outlook_disconnect'),
+    path('outlook/settings/', vo.outlook_settings_save, name='outlook_settings_save'),
+    path('outlook/calendar/', vo.outlook_calendar, name='outlook_calendar'),
+    path('outlook/event/', vo.outlook_event_create, name='outlook_event_create'),
+
     path('leads/<int:pk>/ubo/', vp2.ubo_add, name='ubo_add'),
     path('leads/<int:pk>/referral/', vp2.client_referral_add, name='client_referral_add'),
     path('leads/<int:pk>/dsr/export/', vp2.dsr_export, name='dsr_export'),

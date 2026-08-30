@@ -1,0 +1,58 @@
+{% extends 'crm/base_p2.html' %}
+{% block title %}BITAR CRM — Salary & Payroll{% endblock %}
+{% block page_title %}Salary & Payroll{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Salary &amp; Payroll — {{ month_name }} {{ year }}</h1>
+    <p>Net auto-computed: (gross ÷ working days) × paid days − deductions. Paid days come from attendance.</p></div>
+  <div class="actions" style="display:flex;gap:8px;align-items:center">
+    <a class="btn btn-ghost" href="?m={{ prev_m }}">← Prev</a>
+    <a class="btn btn-ghost" href="?m={{ next_m }}">Next →</a>
+    <form method="post" action="{% url 'payroll_run' %}" onsubmit="return confirm('Generate payslips for {{ period }}?')">{% csrf_token %}
+      <input type="hidden" name="period" value="{{ period }}">
+      <button class="btn btn-primary" type="submit">Generate payslips</button></form>
+  </div>
+</div>
+{% if generated %}<div class="card" style="padding:10px 14px;margin-bottom:14px;background:#DCFCE7;color:#166534;font-size:12.5px;font-weight:600">✔ {{ generated }} payslip(s) generated for {{ period }}.</div>{% endif %}
+
+<div class="card" style="padding:0;overflow:auto">
+  <table style="width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap">
+    <thead><tr style="text-align:left;border-bottom:1px solid var(--border)">
+      <th style="padding:10px">Employee</th><th>Basic</th><th>Allow.</th><th>Gross</th>
+      <th>Work days</th><th>Paid days</th><th>Earned</th><th>Deduct.</th><th>Net</th><th></th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr style="border-bottom:1px solid var(--border-soft)">
+        <td style="padding:10px;font-weight:600">{{ r.user.get_full_name|default:r.user.username }}</td>
+        {% if r.configured %}
+          <td>{{ r.basic }}</td><td>{{ r.allowances }}</td><td>{{ r.gross }}</td>
+          <td>{{ r.working_days }}</td><td>{{ r.paid_days }}</td><td>{{ r.earned }}</td>
+          <td>{{ r.deductions }}</td><td style="font-weight:700">{{ r.net }}</td>
+          <td style="display:flex;gap:6px">
+            {% if r.slip %}<a class="btn btn-ghost" href="{% url 'payslip_view' r.slip.pk %}" target="_blank">Payslip</a>{% endif %}
+            <button class="btn btn-ghost" type="button" onclick="document.getElementById('edit{{ r.user.pk }}').style.display='table-row'">Edit</button>
+          </td>
+        {% else %}
+          <td colspan="8" style="color:var(--text-3)">Not configured</td>
+          <td><button class="btn btn-primary" type="button" onclick="document.getElementById('edit{{ r.user.pk }}').style.display='table-row'">Set up</button></td>
+        {% endif %}
+      </tr>
+      <tr id="edit{{ r.user.pk }}" style="display:none;background:var(--bg-soft,#F8FAFC)">
+        <td colspan="10" style="padding:12px 16px">
+          <form method="post" action="{% url 'hr_salary_save' %}" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end">{% csrf_token %}
+            <input type="hidden" name="user" value="{{ r.user.pk }}">
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <div><label style="font-size:11px;color:var(--text-3);display:block">Basic</label><input name="basic" value="{{ r.basic|default:'' }}" style="width:110px;padding:7px;border:1px solid var(--border);border-radius:8px"></div>
+            <div><label style="font-size:11px;color:var(--text-3);display:block">Allowances</label><input name="allowances" value="{{ r.allowances|default:'' }}" style="width:110px;padding:7px;border:1px solid var(--border);border-radius:8px"></div>
+            <div><label style="font-size:11px;color:var(--text-3);display:block">Deductions</label><input name="deductions" value="{{ r.deductions|default:'' }}" style="width:110px;padding:7px;border:1px solid var(--border);border-radius:8px"></div>
+            <div><label style="font-size:11px;color:var(--text-3);display:block">Working days</label><input name="working_days" value="{{ r.working_days|default:26 }}" style="width:80px;padding:7px;border:1px solid var(--border);border-radius:8px"></div>
+            <button class="btn btn-primary" type="submit">Save</button>
+          </form>
+        </td>
+      </tr>
+    {% empty %}<tr><td colspan="10" style="padding:20px;color:var(--text-3)">No staff.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+<p style="font-size:12px;color:var(--text-3);margin-top:10px">Gross = Basic + Allowances. Earned prorates gross by paid days; Net = Earned − Deductions.</p>
+{% endblock %}

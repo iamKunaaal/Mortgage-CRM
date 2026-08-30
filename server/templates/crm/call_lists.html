@@ -1,0 +1,56 @@
+{% extends 'crm/base_p2.html' %}
+{% block title %}BITAR CRM — Call Lists{% endblock %}
+{% block page_title %}Call Lists{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Call Lists</h1>
+  <p>Upload a call list (CSV), then assign contacts to advisors. Each advisor works their own list.</p></div></div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:18px">
+  <div class="card" style="padding:16px"><div style="font-size:12px;color:var(--text-3)">Total contacts</div><div style="font-size:26px;font-weight:800">{{ total_items }}</div></div>
+  <div class="card" style="padding:16px"><div style="font-size:12px;color:var(--text-3)">Unassigned</div><div style="font-size:26px;font-weight:800;color:#B45309">{{ unassigned }}</div></div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px">
+  <div class="card" style="padding:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <b>1 · Upload call list (CSV)</b>
+      <a href="{% url 'call_list_sample' %}" style="font-size:12px;font-weight:600;color:var(--primary)">⬇ Sample CSV</a>
+    </div>
+    <p style="font-size:12px;color:var(--text-3);margin:6px 0 12px">Columns detected automatically: <b>name</b>, <b>phone/mobile</b>, email, notes.</p>
+    <form method="post" action="{% url 'call_list_upload' %}" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:10px">{% csrf_token %}
+      <input name="batch" placeholder="Batch name (e.g. Aug Facebook List)" style="padding:9px;border:1px solid var(--border);border-radius:9px">
+      <input type="file" name="file" accept=".csv" required style="padding:8px;border:1px solid var(--border);border-radius:9px">
+      <button class="btn btn-primary" type="submit">Upload</button>
+    </form>
+  </div>
+  <div class="card" style="padding:16px">
+    <b>2 · Assign contacts to an advisor</b>
+    <p style="font-size:12px;color:var(--text-3);margin:6px 0 12px">Give any number — the oldest unassigned contacts go to that advisor.</p>
+    <form method="post" action="{% url 'call_list_assign' %}" style="display:flex;flex-direction:column;gap:10px">{% csrf_token %}
+      <select name="advisor" required style="padding:9px;border:1px solid var(--border);border-radius:9px">
+        <option value="">Choose advisor…</option>
+        {% for a in prog %}<option value="{{ a.id }}">{{ a.name }}</option>{% endfor %}
+      </select>
+      <input name="count" type="number" min="1" placeholder="How many calls? (e.g. 150)" required style="padding:9px;border:1px solid var(--border);border-radius:9px">
+      <button class="btn btn-primary" type="submit">Assign</button>
+    </form>
+  </div>
+</div>
+
+<div class="card" style="padding:0;overflow:auto">
+  <div style="padding:14px 16px;font-weight:700;border-bottom:1px solid var(--border)">Advisor progress</div>
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr style="text-align:left;border-bottom:1px solid var(--border)">
+      <th style="padding:10px">Advisor</th><th>Assigned</th><th>Pending</th><th>Done</th><th style="width:30%">Progress</th></tr></thead>
+    <tbody>
+    {% for a in prog %}
+      <tr style="border-bottom:1px solid var(--border-soft)">
+        <td style="padding:10px;font-weight:600">{{ a.name }}</td>
+        <td>{{ a.total }}</td><td style="color:#B45309;font-weight:600">{{ a.pending }}</td><td style="color:#16A34A;font-weight:600">{{ a.done }}</td>
+        <td><div style="background:var(--border-soft);height:8px;border-radius:6px;overflow:hidden"><div style="height:8px;background:#16A34A;width:{% if a.total %}{% widthratio a.done a.total 100 %}{% else %}0{% endif %}%"></div></div></td>
+      </tr>
+    {% empty %}<tr><td colspan="5" style="padding:20px;color:var(--text-3)">No active advisors.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

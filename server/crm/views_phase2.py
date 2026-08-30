@@ -13,7 +13,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
-from django.db.models import Sum
+from django.db.models import Sum, Count, Q
 
 from . import permissions as perm
 from .models import (User, Role, Lead, Bank, ReferralPartner, AppSetting, ApprovalRequest,
@@ -22,7 +22,8 @@ from .models import (User, Role, Lead, Bank, ReferralPartner, AppSetting, Approv
                      TransferBooking, PartnerCommissionModel, PartnerStatement,
                      AutomationRule, AutomationRun, Attendance, LeaveType, LeaveRequest,
                      Target, RetentionPolicy, CustomField,
-                     MessageTemplate, UBO, ClientReferral, UploadToken)
+                     MessageTemplate, UBO, ClientReferral, UploadToken,
+                     CallItem, EmployeeProfile, EmployeeSalary, LeaveBalance, Payslip, CallLog)
 from .views import _notify, _audit, _audit_event, visible_leads, _f
 
 
@@ -92,9 +93,18 @@ def finance_hub(request):
     schemes = IncentiveScheme.objects.all()
     locks = MonthLock.objects.all()[:12]
     can_edit = perm.can_edit(request.user, 'Finance')
+    # Compliance filter: accountants see money, not full client identity (PII).
+    mask_pii = request.user.role == Role.ACCOUNTANT
+
+    def _client(i):
+        name = i.client_name or (i.lead.name if i.lead else '—')
+        if mask_pii and name and name != '—':
+            parts = name.split()
+            return ' '.join(p[0].upper() + '·' for p in parts[:3])  # e.g. "Lea Domingo" -> "L· D·"
+        return name
     rows = [{
         'id': i.pk, 'number': i.number or f'INV#{i.pk}',
-        'client': i.client_name or (i.lead.name if i.lead else '—'),
+        'client': _client(i),
         'total': _f(i.total), 'paid': _f(i.paid_amount), 'balance': _f(i.balance),
         'status': i.status, 'issued': i.issued_at.strftime('%d %b %Y') if i.issued_at else '—',
     } for i in invoices]
@@ -102,7 +112,7 @@ def finance_hub(request):
         'rows': rows, 'payouts': payouts, 'schemes': schemes, 'locks': locks,
         'kpis': {'invoiced': _f(total_inv), 'received': _f(receipts_total), 'outstanding': outstanding},
         'leads': Lead.objects.filter(is_deleted=False).order_by('-created_at')[:500],
-        'cfg': finance_config(), 'can_edit': can_edit,
+        'cfg': finance_config(), 'can_edit': can_edit, 'mask_pii': mask_pii,
         'active_nav': 'Finance', 'active_sub': 'finance_hub',
     })
 
@@ -596,10 +606,16 @@ def hr_home(request):
               if is_mgr else LeaveRequest.objects.filter(user=request.user))
     targets = Target.objects.filter(period=today.strftime('%Y-%m')).select_related('user') \
         if is_mgr else Target.objects.filter(user=request.user, period=today.strftime('%Y-%m'))
+    yr = today.year
+    my_balances = LeaveBalance.objects.filter(user=request.user, year=yr).select_related('leave_type')
+    pending_leaves = LeaveRequest.objects.filter(status='Pending').count() if is_mgr else 0
     return render(request, 'crm/hr_home.html', {
         'my_att': my_att, 'att_rows': att_rows, 'leaves': leaves[:100], 'targets': targets,
         'leave_types': LeaveType.objects.filter(active=True), 'is_mgr': is_mgr,
         'staff': User.objects.filter(status='Active') if is_mgr else [],
+        'my_profile': getattr(request.user, 'profile', None),
+        'my_balances': my_balances, 'my_payslips': Payslip.objects.filter(user=request.user)[:6],
+        'pending_leaves': pending_leaves, 'staff_count': User.objects.filter(status='Active').count(),
         'active_nav': 'HR', 'active_sub': 'hr_home',
     })
 
@@ -687,6 +703,245 @@ def target_save(request):
             period=request.POST.get('period') or timezone.localdate().strftime('%Y-%m'),
             defaults={'target_value': _num(request.POST.get('target_value'))})
         messages.success(request, 'Target saved.')
+    return redirect('hr_home')
+
+
+def _hr_mgr(user):
+    return user.is_authenticated and user.role in (Role.HR_EXECUTIVE, Role.CEO, Role.SUPER_ADMIN)
+
+
+@login_required
+@require_POST
+def attendance_manual(request):
+    """Manager marks/overrides attendance status for any user & date (self-update cut-off bypass)."""
+    if not _hr_mgr(request.user):
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied
+    u = User.objects.filter(pk=request.POST.get('user') or 0).first()
+    d = _pdate(request.POST.get('date'))
+    status = request.POST.get('status', '')
+    if u and d:
+        att, _ = Attendance.objects.get_or_create(user=u, date=d)
+        att.status = status if status in dict(Attendance.STATUS) else ''
+        att.note = (request.POST.get('note', '') or att.note).strip()[:255]
+        att.save(update_fields=['status', 'note'])
+        _audit_event(request, 'Attendance updated', f'{u.username} {d} -> {att.effective_status}')
+        messages.success(request, f'Attendance set: {u.get_full_name() or u.username} — {d} = {att.effective_status}.')
+    return redirect(request.POST.get('next') or 'hr_calendar')
+
+
+@login_required
+def hr_calendar(request):
+    """Monthly attendance calendar grid. Manager sees all staff; others see self."""
+    import calendar as _cal
+    if not _hr_allowed(request.user):
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied
+    today = timezone.localdate()
+    try:
+        ym = request.GET.get('m') or today.strftime('%Y-%m')
+        yr, mo = int(ym[:4]), int(ym[5:7])
+    except (ValueError, IndexError):
+        yr, mo = today.year, today.month
+    ndays = _cal.monthrange(yr, mo)[1]
+    days = list(range(1, ndays + 1))
+    is_mgr = _hr_mgr(request.user)
+    staff = (User.objects.filter(status='Active').order_by('first_name', 'username')
+             if is_mgr else User.objects.filter(pk=request.user.pk))
+    att = {(a.user_id, a.date.day): a for a in
+           Attendance.objects.filter(date__year=yr, date__month=mo,
+                                     user__in=staff)}
+    CODE = {'Present': 'P', 'Absent': 'A', 'Half Day': 'H', 'Leave': 'L', 'Holiday': 'O'}
+    rows = []
+    for u in staff:
+        cells = []
+        for d in days:
+            a = att.get((u.pk, d))
+            es = a.effective_status if a else ''
+            cells.append({'day': d, 'code': CODE.get(es, ''), 'status': es})
+        worked = sum(att[(u.pk, d)].pay_weight for d in days
+                     if (u.pk, d) in att and att[(u.pk, d)].effective_status not in ('Leave', 'Holiday'))
+        paid = sum(att[(u.pk, d)].pay_weight for d in days if (u.pk, d) in att)
+        rows.append({'user': u, 'cells': cells, 'worked': round(worked, 1), 'paid': round(paid, 1)})
+    # prev/next month links
+    pm = (mo - 1) or 12
+    py = yr - 1 if mo == 1 else yr
+    nm = 1 if mo == 12 else mo + 1
+    ny = yr + 1 if mo == 12 else yr
+    return render(request, 'crm/hr_calendar.html', {
+        'rows': rows, 'days': days, 'year': yr, 'month': mo,
+        'month_name': _cal.month_name[mo], 'is_mgr': is_mgr,
+        'prev_m': f'{py}-{pm:02d}', 'next_m': f'{ny}-{nm:02d}',
+        'staff': staff if is_mgr else [], 'statuses': [c[0] for c in Attendance.STATUS if c[0]],
+        'active_nav': 'HR', 'active_sub': 'hr_calendar',
+    })
+
+
+@login_required
+def hr_salary(request):
+    """Auto-computed monthly salary sheet from attendance + EmployeeSalary config."""
+    import calendar as _cal
+    if not _hr_mgr(request.user):
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied
+    today = timezone.localdate()
+    try:
+        ym = request.GET.get('m') or today.strftime('%Y-%m')
+        yr, mo = int(ym[:4]), int(ym[5:7])
+    except (ValueError, IndexError):
+        yr, mo = today.year, today.month
+    ndays = _cal.monthrange(yr, mo)[1]
+    period = f'{yr}-{mo:02d}'
+    staff = User.objects.filter(status='Active').order_by('first_name', 'username')
+    rows = [_salary_row(u, yr, mo, period) for u in staff]
+    generated = Payslip.objects.filter(period=period).count()
+    pm = (mo - 1) or 12
+    py = yr - 1 if mo == 1 else yr
+    nm = 1 if mo == 12 else mo + 1
+    ny = yr + 1 if mo == 12 else yr
+    return render(request, 'crm/hr_salary.html', {
+        'rows': rows, 'year': yr, 'month': mo, 'month_name': _cal.month_name[mo],
+        'period': period, 'generated': generated, 'ndays': ndays,
+        'prev_m': f'{py}-{pm:02d}', 'next_m': f'{ny}-{nm:02d}',
+        'active_nav': 'HR', 'active_sub': 'hr_salary',
+    })
+
+
+def _salary_row(u, yr, mo, period):
+    """Compute one employee's monthly pay from attendance + salary structure."""
+    cfg = getattr(u, 'salary', None)
+    if not cfg:
+        return {'user': u, 'configured': False}
+    wdays = cfg.working_days or 26
+    paid_days = sum(a.pay_weight for a in
+                    Attendance.objects.filter(user=u, date__year=yr, date__month=mo))
+    gross = float(cfg.gross)
+    per_day = gross / wdays if wdays else 0
+    earned = round(per_day * min(paid_days, wdays), 2)          # gross prorated by attendance
+    ded = float(cfg.deductions or 0)
+    net = round(earned - ded, 2)
+    return {'user': u, 'configured': True, 'gross': round(gross, 2),
+            'basic': cfg.basic, 'allowances': cfg.allowances, 'deductions': cfg.deductions,
+            'working_days': wdays, 'paid_days': round(paid_days, 1),
+            'per_day': round(per_day, 2), 'earned': earned, 'net': net,
+            'slip': Payslip.objects.filter(user=u, period=period).first()}
+
+
+@login_required
+@require_POST
+def hr_salary_save(request):
+    """Set per-employee salary structure (basic/allowances/deductions/working days)."""
+    if not _hr_mgr(request.user):
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied
+    u = User.objects.filter(pk=request.POST.get('user') or 0).first()
+    if u:
+        basic = _num(request.POST.get('basic'))
+        allow = _num(request.POST.get('allowances'))
+        EmployeeSalary.objects.update_or_create(user=u, defaults={
+            'basic': basic, 'allowances': allow,
+            'monthly_salary': (basic + allow) or _num(request.POST.get('monthly_salary')),
+            'deductions': _num(request.POST.get('deductions')),
+            'working_days': int(request.POST.get('working_days') or 26)})
+        messages.success(request, f'Salary saved for {u.get_full_name() or u.username}.')
+    return redirect(request.POST.get('next') or 'hr_salary')
+
+
+@login_required
+@require_POST
+def payroll_run(request):
+    """Generate/refresh payslips for a month from current attendance + structures."""
+    if not _hr_mgr(request.user):
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied
+    period = request.POST.get('period') or timezone.localdate().strftime('%Y-%m')
+    try:
+        yr, mo = int(period[:4]), int(period[5:7])
+    except (ValueError, IndexError):
+        messages.error(request, 'Bad period.')
+        return redirect('hr_salary')
+    n = 0
+    for u in User.objects.filter(status='Active'):
+        r = _salary_row(u, yr, mo, period)
+        if not r.get('configured'):
+            continue
+        Payslip.objects.update_or_create(user=u, period=period, defaults={
+            'paid_days': r['paid_days'], 'working_days': r['working_days'],
+            'gross': r['gross'], 'allowances': r['allowances'] or 0,
+            'deductions': r['deductions'] or 0, 'net': r['net'],
+            'generated_by': request.user})
+        n += 1
+    _audit_event(request, 'Payroll generated', f'{period}: {n} payslips')
+    messages.success(request, f'{n} payslip(s) generated for {period}.')
+    return redirect(f'/hr/salary/?m={period}')
+
+
+@login_required
+def payslip_view(request, pk):
+    """A single printable payslip. Owner or HR manager only."""
+    slip = get_object_or_404(Payslip.objects.select_related('user'), pk=pk)
+    if slip.user_id != request.user.pk and not _hr_mgr(request.user):
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied
+    prof = getattr(slip.user, 'profile', None)
+    earned = float(slip.net) + float(slip.deductions or 0)
+    return render(request, 'crm/payslip.html', {
+        'slip': slip, 'prof': prof, 'earned': round(earned, 2)})
+
+
+# ---- Employee directory + profiles ----------------------------------------
+@login_required
+def hr_employees(request):
+    if not _hr_mgr(request.user):
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied
+    q = request.GET.get('q', '').strip()
+    staff = User.objects.filter(status='Active').select_related('profile').order_by('first_name', 'username')
+    if q:
+        staff = staff.filter(Q(first_name__icontains=q) | Q(last_name__icontains=q) |
+                             Q(username__icontains=q))
+    return render(request, 'crm/hr_employees.html', {
+        'staff': staff, 'q': q, 'managers': User.objects.filter(status='Active'),
+        'roles': Role.choices, 'active_nav': 'HR', 'active_sub': 'hr_employees'})
+
+
+@login_required
+@require_POST
+def employee_save(request):
+    if not _hr_mgr(request.user):
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied
+    u = User.objects.filter(pk=request.POST.get('user') or 0).first()
+    if u:
+        mgr = User.objects.filter(pk=request.POST.get('reporting_manager') or 0).first()
+        EmployeeProfile.objects.update_or_create(user=u, defaults={
+            'employee_code': request.POST.get('employee_code', '').strip()[:30],
+            'designation': request.POST.get('designation', '').strip()[:80],
+            'department': request.POST.get('department', '').strip()[:80],
+            'joining_date': _pdate(request.POST.get('joining_date')),
+            'dob': _pdate(request.POST.get('dob')),
+            'reporting_manager': mgr,
+            'phone': request.POST.get('phone', '').strip()[:30],
+            'emergency_contact': request.POST.get('emergency_contact', '').strip()[:120],
+            'address': request.POST.get('address', '').strip()[:255]})
+        messages.success(request, f'Profile saved for {u.get_full_name() or u.username}.')
+    return redirect('hr_employees')
+
+
+@login_required
+@require_POST
+def leave_balance_save(request):
+    if not _hr_mgr(request.user):
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied
+    u = User.objects.filter(pk=request.POST.get('user') or 0).first()
+    lt = LeaveType.objects.filter(pk=request.POST.get('leave_type') or 0).first()
+    yr = int(request.POST.get('year') or timezone.localdate().year)
+    if u and lt:
+        LeaveBalance.objects.update_or_create(user=u, leave_type=lt, year=yr, defaults={
+            'allocated': _num(request.POST.get('allocated')),
+            'used': _num(request.POST.get('used'))})
+        messages.success(request, 'Leave balance saved.')
     return redirect('hr_home')
 
 
@@ -1060,3 +1315,162 @@ def report_builder(request):
         'entity': entity, 'field': field, 'rows': rows,
         'fields': ['stage', 'source', 'priority', 'kyc_status'], 'active_nav': 'Reports'})
 
+
+
+# ==========================================================================
+# CALL LISTS — CEO uploads a CSV of people to call, assigns N to advisors;
+#              each advisor works their own call list, logging outcomes.
+# ==========================================================================
+import csv as _csv
+import io as _io
+
+
+@login_required
+@perm.module_required('Users')
+def call_lists(request):
+    """CEO/admin panel: upload call list CSV, see per-advisor progress, assign contacts."""
+    advisors = User.objects.filter(role=Role.ADVISOR, status='Active').order_by('first_name', 'username')
+    prog = []
+    for u in advisors:
+        items = CallItem.objects.filter(advisor=u)
+        total = items.count()
+        done = items.exclude(status='Pending').count()
+        prog.append({'id': u.pk, 'name': u.get_full_name() or u.username,
+                     'total': total, 'pending': total - done, 'done': done})
+    unassigned = CallItem.objects.filter(advisor__isnull=True).count()
+    batches = (CallItem.objects.values('batch')
+               .annotate(n=Count('id')).order_by('-batch')[:20])
+    return render(request, 'crm/call_lists.html', {
+        'prog': prog, 'unassigned': unassigned, 'batches': batches,
+        'total_items': CallItem.objects.count(), 'active_nav': 'Users'})
+
+
+@login_required
+@perm.module_required('Users')
+def call_list_sample(request):
+    """Download a sample CSV showing the expected columns."""
+    resp = HttpResponse(content_type='text/csv')
+    resp['Content-Disposition'] = 'attachment; filename="call_list_sample.csv"'
+    w = _csv.writer(resp)
+    w.writerow(['Name', 'Phone', 'Email', 'Notes'])
+    w.writerow(['Ali Hassan', '0501112233', 'ali@example.com', 'Warm lead — wants villa loan'])
+    w.writerow(['Sara Khan', '0504445566', '', 'Call back after 6pm'])
+    w.writerow(['Omar Yousuf', '0507778899', 'omar@example.com', ''])
+    return resp
+
+
+@login_required
+@perm.module_required('Users')
+@require_POST
+def call_list_upload(request):
+    """Import a CSV of contacts. Flexible headers: name, phone/mobile, email, notes."""
+    f = request.FILES.get('file')
+    if not f:
+        messages.error(request, 'Choose a CSV file.')
+        return redirect('call_lists')
+    batch = (request.POST.get('batch') or f.name).strip()[:120]
+    try:
+        text = f.read().decode('utf-8-sig', errors='ignore')
+    except Exception:
+        messages.error(request, 'Could not read the file.')
+        return redirect('call_lists')
+    reader = _csv.DictReader(_io.StringIO(text))
+    if not reader.fieldnames:
+        messages.error(request, 'CSV has no header row.')
+        return redirect('call_lists')
+    hmap = {(h or '').strip().lower(): h for h in reader.fieldnames}
+
+    def pick(row, *keys):
+        for k in keys:
+            if k in hmap:
+                return (row.get(hmap[k]) or '').strip()
+        return ''
+    created = 0
+    objs = []
+    for row in reader:
+        name = pick(row, 'name', 'full name', 'full_name', 'customer', 'contact')
+        phone = pick(row, 'phone', 'mobile', 'number', 'contact number', 'phone number')
+        if not name and not phone:
+            continue
+        objs.append(CallItem(batch=batch, name=name[:120], phone=phone[:30],
+                             email=pick(row, 'email', 'e-mail')[:254],
+                             notes=pick(row, 'notes', 'note', 'remark', 'remarks')[:255],
+                             uploaded_by=request.user))
+        if len(objs) >= 500:
+            CallItem.objects.bulk_create(objs); created += len(objs); objs = []
+    if objs:
+        CallItem.objects.bulk_create(objs); created += len(objs)
+    _audit_event(request, 'Call list uploaded', f'{batch}: {created} contacts')
+    messages.success(request, f'{created} contact(s) imported into "{batch}".')
+    return redirect('call_lists')
+
+
+@login_required
+@perm.module_required('Users')
+@require_POST
+def call_list_assign(request):
+    """Assign N unassigned contacts to an advisor (flexible count, no cap)."""
+    u = User.objects.filter(pk=request.POST.get('advisor') or 0, role=Role.ADVISOR).first()
+    try:
+        count = int(request.POST.get('count') or 0)
+    except ValueError:
+        count = 0
+    if not u or count <= 0:
+        messages.error(request, 'Pick an advisor and a valid count.')
+        return redirect('call_lists')
+    ids = list(CallItem.objects.filter(advisor__isnull=True)
+               .order_by('created_at').values_list('pk', flat=True)[:count])
+    n = CallItem.objects.filter(pk__in=ids).update(advisor=u)
+    if n:
+        _notify(u, f'{n} new calls assigned to you.', '/my-calls/', 'lead')
+    _audit_event(request, 'Calls assigned', f'{n} to {u.username}')
+    messages.success(request, f'{n} call(s) assigned to {u.get_full_name() or u.username}.')
+    return redirect('call_lists')
+
+
+@login_required
+def my_calls(request):
+    """Advisor's own call list — work through pending calls, log outcomes."""
+    items = CallItem.objects.filter(advisor=request.user).select_related('lead')
+    status = request.GET.get('status', 'Pending')
+    if status and status != 'all':
+        items = items.filter(status=status)
+    base = CallItem.objects.filter(advisor=request.user)
+    by = {r['status']: r['n'] for r in base.values('status').annotate(n=Count('id'))}
+    chips = [{'key': s, 'count': by.get(s, 0)} for s, _ in CallItem.STATUS]
+    return render(request, 'crm/my_calls.html', {
+        'items': items[:500], 'status': status, 'chips': chips,
+        'statuses': [s for s, _ in CallItem.STATUS],
+        'total': base.count(), 'active_nav': 'MyCalls'})
+
+
+@login_required
+@require_POST
+def call_item_log(request, pk):
+    """Advisor logs the outcome of a call-list contact (also writes a CallLog)."""
+    item = get_object_or_404(CallItem, pk=pk, advisor=request.user)
+    status = request.POST.get('status', '')
+    if status in dict(CallItem.STATUS):
+        item.status = status
+    item.remarks = request.POST.get('remarks', '').strip()
+    item.follow_up_date = _pdate(request.POST.get('follow_up_date'))
+    item.called_at = timezone.now()
+    item.save(update_fields=['status', 'remarks', 'follow_up_date', 'called_at'])
+    # mirror into CallLog so it counts toward calling activity
+    omap = {'Interested': 'Interested', 'Not Interested': 'Not Interested',
+            'No Answer': 'No Answer', 'Callback': 'Callback'}
+    CallLog.objects.create(advisor=request.user, name=item.name, phone=item.phone,
+                           outcome=omap.get(item.status, 'No Answer'),
+                           note=item.remarks, lead=item.lead,
+                           follow_up_date=item.follow_up_date)
+    # convert to a real lead on request (or when interested)
+    if request.POST.get('create_lead') and not item.lead and perm.can_create(request.user, 'Leads'):
+        lead = Lead.objects.create(name=item.name or 'Call lead', mobile=item.phone,
+                                   email=item.email, advisor=request.user,
+                                   source='Cold Calling', stage='Lead Received')
+        item.lead = lead
+        item.save(update_fields=['lead'])
+        messages.success(request, f'Call logged and lead "{lead.name}" created.')
+    else:
+        messages.success(request, 'Call logged.')
+    return redirect(request.POST.get('next') or 'my_calls')

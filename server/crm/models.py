@@ -1216,10 +1216,25 @@ class Attendance(models.Model):
     geo = models.CharField(max_length=120, blank=True)       # "lat,lng"
     selfie = models.CharField(max_length=255, blank=True)
     note = models.CharField(max_length=255, blank=True)
+    STATUS = [('', 'Auto'), ('Present', 'Present'), ('Absent', 'Absent'),
+              ('Half Day', 'Half Day'), ('Leave', 'Leave'), ('Holiday', 'Holiday')]
+    status = models.CharField(max_length=12, choices=STATUS, blank=True)  # blank = derive from check_in
 
     class Meta:
         unique_together = ('user', 'date')
         ordering = ['-date']
+
+    @property
+    def effective_status(self):
+        if self.status:
+            return self.status
+        return 'Present' if self.check_in else 'Absent'
+
+    @property
+    def pay_weight(self):
+        s = self.effective_status
+        return {'Present': 1.0, 'Half Day': 0.5, 'Leave': 1.0, 'Holiday': 1.0,
+                'Absent': 0.0}.get(s, 0.0)
 
     def __str__(self):
         return f'{self.user} {self.date}'
@@ -1362,3 +1377,119 @@ class UploadToken(models.Model):
 
     def __str__(self):
         return f'UploadToken for {self.lead_id}'
+
+
+# ==========================================================================
+# MEETING FEATURES (2026-08-26): lead quota/allocation + HRMS salary
+# ==========================================================================
+class CallItem(models.Model):
+    """A contact from a CEO-uploaded call list, assigned to an advisor to call through."""
+    STATUS = [('Pending', 'Pending'), ('Called', 'Called'), ('No Answer', 'No Answer'),
+              ('Callback', 'Callback'), ('Interested', 'Interested'),
+              ('Not Interested', 'Not Interested'), ('Wrong Number', 'Wrong Number')]
+    batch = models.CharField(max_length=120, blank=True, db_index=True)   # upload label
+    name = models.CharField(max_length=120, blank=True)
+    phone = models.CharField(max_length=30, blank=True)
+    email = models.CharField(max_length=254, blank=True)
+    notes = models.CharField(max_length=255, blank=True)                  # from CSV
+    advisor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='call_items', db_index=True)
+    status = models.CharField(max_length=16, choices=STATUS, default='Pending', db_index=True)
+    remarks = models.TextField(blank=True)                               # advisor's call note
+    follow_up_date = models.DateField(null=True, blank=True)
+    called_at = models.DateTimeField(null=True, blank=True)
+    lead = models.ForeignKey(Lead, on_delete=models.SET_NULL, null=True, blank=True,
+                             related_name='call_items')                  # if converted to a lead
+    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='+')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.name or self.phone} → {self.advisor or "unassigned"}'
+
+
+class EmployeeProfile(models.Model):
+    """HRMS: full employee record."""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    employee_code = models.CharField(max_length=30, blank=True)
+    designation = models.CharField(max_length=80, blank=True)
+    department = models.CharField(max_length=80, blank=True)
+    joining_date = models.DateField(null=True, blank=True)
+    reporting_manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                          related_name='hr_reports')
+    phone = models.CharField(max_length=30, blank=True)
+    dob = models.DateField(null=True, blank=True)
+    emergency_contact = models.CharField(max_length=120, blank=True)
+    address = models.CharField(max_length=255, blank=True)
+    photo = models.CharField(max_length=255, blank=True)
+
+    def __str__(self):
+        return f'{self.user} · {self.designation}'
+
+
+class EmployeeSalary(models.Model):
+    """HRMS: monthly salary structure; net auto-computed from attendance."""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='salary')
+    monthly_salary = models.DecimalField(max_digits=12, decimal_places=2, default=0)  # gross
+    basic = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    allowances = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    deductions = models.DecimalField(max_digits=12, decimal_places=2, default=0)      # fixed monthly
+    working_days = models.PositiveIntegerField(default=26)   # basis days in a month
+
+    @property
+    def gross(self):
+        g = (self.basic or 0) + (self.allowances or 0)
+        return g if g else (self.monthly_salary or 0)
+
+    def __str__(self):
+        return f'{self.user}: {self.monthly_salary}'
+
+
+class LeaveBalance(models.Model):
+    """HRMS: per-user leave balance for a type in a year."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='leave_balances')
+    leave_type = models.ForeignKey('LeaveType', on_delete=models.CASCADE)
+    year = models.PositiveIntegerField()
+    allocated = models.DecimalField(max_digits=6, decimal_places=1, default=0)
+    used = models.DecimalField(max_digits=6, decimal_places=1, default=0)
+
+    class Meta:
+        unique_together = ('user', 'leave_type', 'year')
+
+    @property
+    def remaining(self):
+        return (self.allocated or 0) - (self.used or 0)
+
+
+class Payslip(models.Model):
+    """HRMS: generated monthly payslip snapshot."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payslips')
+    period = models.CharField(max_length=7, db_index=True)   # 'YYYY-MM'
+    paid_days = models.DecimalField(max_digits=5, decimal_places=1, default=0)
+    working_days = models.PositiveIntegerField(default=26)
+    gross = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    allowances = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    deductions = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    net = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    generated_at = models.DateTimeField(auto_now_add=True)
+    generated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='+')
+
+    class Meta:
+        unique_together = ('user', 'period')
+        ordering = ['-period']
+
+
+class OutlookAccount(models.Model):
+    """Per-user Microsoft 365 (Outlook) connection via Graph OAuth — tokens for CRM-side mail/calendar."""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='outlook')
+    ms_email = models.CharField(max_length=254, blank=True)
+    access_token = models.TextField(blank=True)
+    refresh_token = models.TextField(blank=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    connected_at = models.DateTimeField(auto_now_add=True)
+    last_sync = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f'Outlook<{self.user}: {self.ms_email}>'
