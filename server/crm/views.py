@@ -2263,12 +2263,13 @@ def dsr_update(request, pk):
 def lead_stage_update(request, pk):
     lead = get_object_or_404(visible_leads(request.user), pk=pk)
     stage = request.POST.get('stage', '')
+    nxt = request.POST.get('next', '')
     # KYC hard gate: block moving to bank-submission stages until KYC Passed
     submit_idx = STAGES.index('Logged In')
     if stage in dict(Lead.STAGE_CHOICES) and STAGES.index(stage) >= submit_idx \
             and lead.kyc_status != 'Passed':
         messages.error(request, 'KYC must be Passed before submitting this lead to a bank.')
-        return redirect('lead_detail', pk=pk)
+        return redirect(nxt) if nxt else redirect('lead_detail', pk=pk)
     if stage in dict(Lead.STAGE_CHOICES):
         old = lead.stage
         lead.stage = stage
@@ -2291,7 +2292,7 @@ def lead_stage_update(request, pk):
         messages.success(request, f'Stage updated to "{stage}".')
     else:
         messages.error(request, 'Invalid stage.')
-    return redirect('lead_detail', pk=pk)
+    return redirect(nxt) if nxt else redirect('lead_detail', pk=pk)
 
 
 @login_required
@@ -2685,8 +2686,28 @@ def ops_queue(request):
         })
     order = {'escalate': 0, 'warn': 1, 'active': 2, 'closed': 3}
     rows.sort(key=lambda r: (order.get(r['silence'], 9), -r['days']))
+
+    # ---- Board (pipeline-style) grouped by operations stage ----
+    OPS_STAGES = ['Logged In', 'Under Review', 'Pre-Approved', 'Valuation',
+                  'Valuation Received', 'FOL Initiated', 'FOL Issued', 'FOL Signing Fixed',
+                  'FOL Signed', 'Under Disbursement', 'Disbursed',
+                  'Property Transfer Scheduled', 'Property Transfer', 'Property Transferred']
+    card_by_stage = {s: [] for s in OPS_STAGES}
+    for l in leads:
+        if l.stage not in card_by_stage:
+            continue
+        card_by_stage[l.stage].append({
+            'pk': l.pk, 'case': l.case_number or f'#{l.pk}', 'name': l.name,
+            'advisor': (l.advisor.get_full_name() or l.advisor.username) if l.advisor else 'Unassigned',
+            'silence': l.silence_status,
+            'days': (timezone.now() - l.last_activity_at).days})
+    for s in card_by_stage:
+        card_by_stage[s].sort(key=lambda c: (order.get(c['silence'], 9), -c['days']))
+    board = [{'stage': s, 'cards': card_by_stage[s]} for s in OPS_STAGES]
+    view = request.GET.get('view', 'board')
     return render(request, 'crm/ops_queue.html', {
-        'rows': rows, 'warn': warn, 'esc': esc, 'flt': flt,
+        'rows': rows, 'warn': warn, 'esc': esc, 'flt': flt, 'view': view,
+        'board': board, 'ops_stages': OPS_STAGES,
         'queues': [{'key': k, 'label': lbl, 'count': counts[k]} for k, lbl in QUEUES],
         'total': len(rows), 'active_nav': 'Ops'})
 
