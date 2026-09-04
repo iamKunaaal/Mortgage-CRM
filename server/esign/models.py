@@ -36,7 +36,34 @@ class SignRequest(models.Model):
 
     @property
     def placed(self):
-        return bool(self.fields)
+        return bool(self.fields) or any(d.fields for d in self.docs.all())
+
+    @property
+    def all_docs(self):
+        """Every document in this request as SignDocument rows. Falls back to the
+        legacy single `document` field for old requests created before multi-doc."""
+        rows = list(self.docs.all())
+        if rows:
+            return rows
+        if self.document:
+            return [SignDocument(request=self, document=self.document,
+                                 name=self.title, fields=self.fields, order=0)]
+        return []
 
     def __str__(self):
         return f'{self.title} · {self.status}'
+
+
+class SignDocument(models.Model):
+    """One document within a SignRequest (a request can bundle several PDFs)."""
+    request = models.ForeignKey(SignRequest, on_delete=models.CASCADE, related_name='docs')
+    document = models.FileField(upload_to='esign/')
+    name = models.CharField(max_length=200, blank=True)
+    fields = models.JSONField(default=list, blank=True)   # sig boxes for THIS document
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    def __str__(self):
+        return self.name or self.document.name

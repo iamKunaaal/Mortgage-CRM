@@ -695,6 +695,7 @@ function presetMulti(id,val){
   presetCombo('cPropType',I.property_type);
   presetCombo('cArea',I.preferred_area);
   presetMulti('cBank',I.bank_name);
+  presetMulti('cPartners',I.referral_partner_name);   // preselect saved referral partner on edit
   if(I.priority){$$('#prPills .pill').forEach(p=>p.classList.toggle('on',p.textContent.trim()===I.priority));}
 })();
 

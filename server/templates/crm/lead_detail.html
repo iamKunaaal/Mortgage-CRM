@@ -551,7 +551,7 @@ a{color:inherit;text-decoration:none}
                 {% if lead.ops_hold %}
                   <input type="hidden" name="release" value="1"><button type="submit" class="btn btn-ghost">Release from hold</button>
                 {% else %}
-                  <input name="reason" placeholder="Hold reason" style="padding:7px;border:1px solid var(--border);border-radius:8px">
+                  <input name="reason" placeholder="Hold reason (required)" required style="padding:7px;border:1px solid var(--border);border-radius:8px">
                   <input type="date" name="review_date" style="padding:7px;border:1px solid var(--border);border-radius:8px">
                   <button type="submit" class="btn btn-ghost">Put on hold</button>
                 {% endif %}
@@ -866,8 +866,8 @@ a{color:inherit;text-decoration:none}
           {% for s in data.stageOrder %}<option value="{{ s }}" {% if s == lead.stage %}selected{% endif %}>{{ s }}</option>{% endfor %}
         </select>
         <div id="lostReasonWrap" style="display:none;margin-top:12px">
-          <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px">Reason (for Declined)</label>
-          <input type="text" name="lost_reason" class="fld-input" style="width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:9px" placeholder="e.g. Low eligibility">
+          <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px">Reason <span style="color:var(--warning)">*</span></label>
+          <input type="text" name="lost_reason" id="lostReasonInput" class="fld-input" style="width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:9px" placeholder="Why was it Rejected / Declined / Not Proceeding?">
         </div>
       </div>
       <div class="td-foot">
@@ -1056,11 +1056,16 @@ function escValidate(){if(!document.querySelectorAll('#escList input[name=recipi
 const D=JSON.parse(document.getElementById('page-data').textContent);
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 
-/* stage modal: show lost-reason field only when Declined */
+/* stage modal: show mandatory reason field for Declined / Rejected / Not Proceeding */
 (function(){
+  const LOST=['Declined','Rejected','Not Proceeding'];
   const sel=document.querySelector('#stageModal select[name=stage]');
   const wrap=document.getElementById('lostReasonWrap');
-  if(sel&&wrap){const t=()=>wrap.style.display=sel.value==='Declined'?'block':'none';sel.addEventListener('change',t);t();}
+  const inp=document.getElementById('lostReasonInput');
+  if(sel&&wrap){
+    const t=()=>{const on=LOST.includes(sel.value);wrap.style.display=on?'block':'none';if(inp)inp.required=on;};
+    sel.addEventListener('change',t);t();
+  }
 })();
 
 /* sidebar */
@@ -1081,7 +1086,7 @@ const STAGES={
  'FOL Issued':['#CCFBF1','#0F766E'],'FOL Signing Fixed':['#D1FAE5','#047857'],'FOL Signed':['#DCFCE7','#15803D'],
  'Under Disbursement':['#ECFCCB','#4D7C0F'],'Disbursed':['#EDFAF1','#16A34A'],
  'Property Transfer Scheduled':['#E0F2FE','#0369A1'],'Property Transfer':['#FEF3E2','#B45309'],'Property Transferred':['#DCFCE7','#15803D'],
- 'Declined':['#FEE2E2','#DC2626']
+ 'Declined':['#FEE2E2','#DC2626'],'Rejected':['#FEE2E2','#B91C1C'],'Not Proceeding':['#F3F4F6','#6B7280']
 };
 const STAGE_ORDER=D.stageOrder;
 const L=D.lead;

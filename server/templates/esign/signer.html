@@ -74,16 +74,14 @@ body{font-family:var(--font);background:#525659;color:var(--text)}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
-const DOC_URL="{{ sr.document.url }}";
+const DOCS={{ docs_json|safe }};
 const STATUS="{{ sr.status }}";
-const FIELDS={{ sr.fields|default:'[]'|safe }};
 const SIG_IMG="{{ sr.signature_data|escapejs }}";
-const isPDF=DOC_URL.toLowerCase().split('?')[0].endsWith('.pdf');
 const canvas=document.getElementById('canvas');
 const sigBoxes=[]; let captured=null;
 
-function addBoxes(pgEl,pageNum){
-  FIELDS.filter(f=>f.page===pageNum).forEach(f=>{
+function addBoxes(pgEl,pageNum,fields){
+  (fields||[]).filter(f=>f.page===pageNum).forEach(f=>{
     const b=document.createElement('div');b.className='sigbox';
     b.style.left=f.x+'%';b.style.top=f.y+'%';b.style.width=f.w+'%';b.style.height=f.h+'%';
     if(STATUS==='Signed'&&SIG_IMG){b.innerHTML='<img src="'+SIG_IMG+'">';b.style.cursor='default';b.style.animation='none';}
@@ -91,9 +89,17 @@ function addBoxes(pgEl,pageNum){
     pgEl.appendChild(b);sigBoxes.push(b);
   });
 }
-if(isPDF){
-  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  pdfjsLib.getDocument(DOC_URL).promise.then(async pdf=>{
+function docHeader(name,idx){
+  const h=document.createElement('div');
+  h.style.cssText='align-self:flex-start;color:#fff;font-size:12.5px;font-weight:700;margin:4px 0 0';
+  h.textContent=`Document ${idx+1}: ${name}`;canvas.appendChild(h);
+}
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+async function renderDoc(doc,idx){
+  const isPDF=doc.url.toLowerCase().split('?')[0].endsWith('.pdf');
+  docHeader(doc.name,idx);
+  if(isPDF){
+    const pdf=await pdfjsLib.getDocument(doc.url).promise;
     const dpr=window.devicePixelRatio||1, SCALE=1.4;
     for(let n=1;n<=pdf.numPages;n++){
       const page=await pdf.getPage(n);const vp=page.getViewport({scale:SCALE});
@@ -104,13 +110,17 @@ if(isPDF){
       const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);
       pg.appendChild(cv);canvas.appendChild(pg);
       await page.render({canvasContext:ctx,viewport:vp}).promise;
-      addBoxes(pg,n);
+      addBoxes(pg,n,doc.fields);
     }
-  });
-}else{
-  const pg=document.createElement('div');pg.className='pg';const im=new Image();im.src=DOC_URL;im.style.display='block';im.style.maxWidth='820px';
-  im.onload=()=>{pg.style.width=im.width+'px';pg.style.height=im.height+'px';addBoxes(pg,1);};pg.appendChild(im);canvas.appendChild(pg);
+  }else{
+    await new Promise(res=>{
+      const pg=document.createElement('div');pg.className='pg';const im=new Image();im.src=doc.url;im.style.display='block';im.style.maxWidth='820px';
+      im.onload=()=>{pg.style.width=im.width+'px';pg.style.height=im.height+'px';addBoxes(pg,1,doc.fields);res();};
+      im.onerror=res;pg.appendChild(im);canvas.appendChild(pg);
+    });
+  }
 }
+(async()=>{ for(let i=0;i<DOCS.length;i++){ try{await renderDoc(DOCS[i],i);}catch(e){} } })();
 
 /* signature pad */
 const modal=document.getElementById('sigModal'),pad=document.getElementById('pad'),ctx=pad.getContext('2d');

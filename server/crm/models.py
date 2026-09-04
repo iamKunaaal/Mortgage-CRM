@@ -97,8 +97,10 @@ STAGES = [
     'FOL Initiated', 'FOL Issued', 'FOL Signing Fixed', 'FOL Signed',
     'Under Disbursement', 'Disbursed',
     'Property Transfer Scheduled', 'Property Transfer', 'Property Transferred',
-    'Declined',
+    'Declined', 'Rejected', 'Not Proceeding',
 ]
+# Terminal "lost/closed" stages that require a reason
+CLOSED_LOST_STAGES = ['Declined', 'Rejected', 'Not Proceeding']
 SOURCES = ['Google Ads', 'Meta Ads', 'Referral Partner', 'Website', 'Walk-in', 'Cold Calling']
 
 
@@ -398,8 +400,11 @@ class Lead(models.Model):
 
     @property
     def last_activity_at(self):
-        """Most recent touch: last follow-up, else lead update time."""
+        """Most recent touch: the later of the last follow-up and the last lead update
+        (a stage change bumps updated_at, so it counts as activity and clears silence)."""
         fu = self.followups.first()  # ordered -created_at
+        if fu and self.updated_at:
+            return max(fu.created_at, self.updated_at)
         return fu.created_at if fu else self.updated_at
 
     @property
@@ -407,7 +412,8 @@ class Lead(models.Model):
         """Ops silence rule: warn after 3 days, escalate after 7 days of no activity.
         Only applies to open cases (not Disbursed / Declined / drafts)."""
         if self.is_draft or self.stage in ('Disbursed', 'Property Transfer Scheduled',
-                                            'Property Transfer', 'Property Transferred', 'Declined'):
+                                            'Property Transfer', 'Property Transferred',
+                                            'Declined', 'Rejected', 'Not Proceeding'):
             return 'closed'
         if self.ops_hold:
             return 'closed'          # PRD §17.4 — clock pauses while On Hold
@@ -1208,6 +1214,18 @@ class AutomationRun(models.Model):
 
 
 # ---- HR (HR-02..09) --------------------------------------------------------
+def hr_config():
+    """HR attendance tunables. Override via AppSetting key 'hr'."""
+    cfg = {'full_day_hours': 8.0, 'half_day_hours': 4.0}
+    try:
+        s = AppSetting.objects.filter(key='hr').first()
+        if s and isinstance(s.value, dict):
+            cfg.update({k: float(v) for k, v in s.value.items() if k in cfg})
+    except Exception:
+        pass
+    return cfg
+
+
 class Attendance(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='attendances')
     date = models.DateField(db_index=True)
@@ -1225,10 +1243,31 @@ class Attendance(models.Model):
         ordering = ['-date']
 
     @property
+    def worked_hours(self):
+        """Hours between check-in and check-out (0 if either missing)."""
+        if self.check_in and self.check_out and self.check_out > self.check_in:
+            return (self.check_out - self.check_in).total_seconds() / 3600.0
+        return 0.0
+
+    @property
     def effective_status(self):
+        # A manual status always wins.
         if self.status:
             return self.status
-        return 'Present' if self.check_in else 'Absent'
+        if not self.check_in:
+            return 'Absent'
+        # Still on the clock (checked in, not out) — treat as Present for the day.
+        if not self.check_out:
+            return 'Present'
+        # Completed day: a full day needs the required hours; short days are Half Day / Absent.
+        from .models import hr_config
+        cfg = hr_config()
+        h = self.worked_hours
+        if h >= cfg['full_day_hours']:
+            return 'Present'
+        if h >= cfg['half_day_hours']:
+            return 'Half Day'
+        return 'Absent'
 
     @property
     def pay_weight(self):

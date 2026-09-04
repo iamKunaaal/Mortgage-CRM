@@ -70,8 +70,9 @@ tbody tr:last-child td{border-bottom:none}
         {% csrf_token %}
         <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:5px">Document Title *</label>
         <input type="text" name="title" required placeholder="e.g. Channel Partner Agreement" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:9px;font:inherit;font-size:13.5px;margin-bottom:16px">
-        <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:5px">Document (PDF / image) *</label>
-        <input type="file" name="document" accept=".pdf,.jpg,.jpeg,.png" required style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:9px;font:inherit;font-size:13px;margin-bottom:16px">
+        <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:5px">Documents (PDF / image) — select one or more *</label>
+        <input type="file" name="document" accept=".pdf,.jpg,.jpeg,.png" multiple required style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:9px;font:inherit;font-size:13px;margin-bottom:16px">
+        <p style="font-size:11.5px;color:var(--text-3);margin:-8px 0 16px">You can select multiple files — the signer will sign them all in one list.</p>
         <div style="display:flex;gap:10px">
           <a class="btn btn-ghost" href="{% url 'esign_list' %}">Cancel</a>
           <button class="btn btn-primary" type="submit">Upload & Place Signature</button>

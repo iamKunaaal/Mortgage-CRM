@@ -61,12 +61,31 @@ h1{font-size:21px;font-weight:700}
       <b style="font-size:14px">Customer Signature</b>
       {% if sr.signature_data %}
         <div class="sigbox"><img src="{{ sr.signature_data }}" alt="Customer signature"></div>
-        <a class="btn" href="{% url 'esign_download' sr.token %}">Download signed PDF</a>
-        <a class="btn ghost" href="{{ sr.document.url }}" target="_blank">Original document</a>
       {% else %}
         <p style="color:var(--text-3);margin-top:8px">Not signed yet — no signature captured.</p>
       {% endif %}
     </div>
+
+    {% if sr.status == 'Signed' and sr.signature_data %}
+    <div class="card" style="margin-top:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer" onclick="var b=document.getElementById('docDl');b.style.display=b.style.display=='none'?'block':'none';this.querySelector('.chev').style.transform=b.style.display=='none'?'':'rotate(90deg)'">
+        <b style="font-size:14px">📁 {{ sr.title }} — signed documents ({{ sr.all_docs|length }})</b>
+        <span class="chev" style="transition:transform .2s;color:var(--text-3);transform:rotate(90deg)">▶</span>
+      </div>
+      <div id="docDl" style="margin-top:12px">
+        {% for d in sr.all_docs %}
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--border)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--text-3)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+            <span style="flex:1;font-size:13px">{{ forloop.counter }}. {{ d.name }}</span>
+            {% if d.pk %}<a class="lnk" href="{% url 'esign_download_doc' sr.token d.pk %}" style="font-weight:600;color:var(--primary)">Download signed</a>{% endif %}
+          </div>
+        {% endfor %}
+        <div style="padding-top:12px;border-top:1px solid var(--border);margin-top:4px">
+          <a class="btn" href="{% url 'esign_download' sr.token %}">Download all (merged)</a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
   </main>
 </div>
 </div>

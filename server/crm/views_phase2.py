@@ -92,14 +92,45 @@ def _next_number(fmt, seq):
 # ==========================================================================
 # 2.1 FINANCE DEPTH
 # ==========================================================================
+def _period_range(period, ym):
+    """Return (start, end, label) for a period filter, or (None, None, 'All time')."""
+    from datetime import date as _d
+    import calendar as _cal
+    today = timezone.localdate()
+    try:
+        yr = int(ym[:4]) if ym else today.year
+        mo = int(ym[5:7]) if (ym and len(ym) >= 7) else today.month
+    except (ValueError, IndexError):
+        yr, mo = today.year, today.month
+    if period == 'month':
+        end = _d(yr, mo, _cal.monthrange(yr, mo)[1])
+        return _d(yr, mo, 1), end, _d(yr, mo, 1).strftime('%B %Y')
+    if period == 'quarter':
+        q = (mo - 1) // 3
+        sm = q * 3 + 1
+        em = sm + 2
+        return _d(yr, sm, 1), _d(yr, em, _cal.monthrange(yr, em)[1]), f'Q{q+1} {yr}'
+    if period == 'year':
+        return _d(yr, 1, 1), _d(yr, 12, 31), str(yr)
+    return None, None, 'All time'
+
+
 @login_required
 @perm.module_required('Finance')
 def finance_hub(request):
     """Finance depth hub: invoices, receivables, payouts, incentives, month-end."""
-    invoices = Invoice.objects.select_related('lead').all()[:200]
-    total_inv = invoices.aggregate(s=Sum('total'))['s'] or 0
-    receipts_total = Receipt.objects.aggregate(s=Sum('amount'))['s'] or 0
-    outstanding = sum(_f(i.balance) for i in Invoice.objects.exclude(status__in=['Paid', 'Void', 'Credited']))
+    period = request.GET.get('period', 'all')      # all | month | quarter | year
+    ym = request.GET.get('m', '')
+    start, end, period_label = _period_range(period, ym)
+    inv_qs = Invoice.objects.select_related('lead').all()
+    rcpt_qs = Receipt.objects.all()
+    if start:                                       # scope by date only when a period is chosen
+        inv_qs = inv_qs.filter(issued_at__gte=start, issued_at__lte=end)
+        rcpt_qs = rcpt_qs.filter(received_at__gte=start, received_at__lte=end)
+    invoices = inv_qs[:200]
+    total_inv = inv_qs.aggregate(s=Sum('total'))['s'] or 0
+    receipts_total = rcpt_qs.aggregate(s=Sum('amount'))['s'] or 0
+    outstanding = sum(_f(i.balance) for i in inv_qs.exclude(status__in=['Paid', 'Void', 'Credited']))
     payouts = PayoutRun.objects.all()[:50]
     schemes = IncentiveScheme.objects.all()
     locks = MonthLock.objects.all()[:12]
@@ -124,6 +155,8 @@ def finance_hub(request):
         'kpis': {'invoiced': _f(total_inv), 'received': _f(receipts_total), 'outstanding': outstanding},
         'leads': Lead.objects.filter(is_deleted=False).order_by('-created_at')[:500],
         'cfg': finance_config(), 'can_edit': can_edit, 'mask_pii': mask_pii,
+        'period': period, 'period_label': period_label,
+        'ym': ym or timezone.localdate().strftime('%Y-%m'),
         'active_nav': 'Finance', 'active_sub': 'finance_hub',
     })
 

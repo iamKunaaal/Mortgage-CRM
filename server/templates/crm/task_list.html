@@ -568,8 +568,11 @@ $('#rowMenu').addEventListener('click',e=>{
   const id=$('#rowMenu').dataset.id,t=TASKS.find(x=>x.id===id);
   if(b.dataset.act==='viewlead'){if(t&&t.leadId)location.href=`/leads/${t.leadId}/`;else toast('No linked lead');return;}
   if(b.dataset.act==='complete'){
-    const outcome=prompt('Outcome / note for completing this task (optional):','');
+    let outcome=prompt('Completion remark (mandatory — at least 30 words describing what was done):','');
     if(outcome===null)return;   // cancelled
+    outcome=outcome.trim();
+    const words=outcome?outcome.split(/\s+/).length:0;
+    if(words<30){toast(`Remark must be at least 30 words (you wrote ${words}).`);return;}
     const f=document.createElement('form');f.method='post';f.action=`/tasks/${id}/complete/`;
     f.innerHTML=`<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"><input type="hidden" name="outcome" value="${outcome.replace(/"/g,'&quot;')}">`;
     document.body.appendChild(f);f.submit();return;

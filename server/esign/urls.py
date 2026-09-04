@@ -12,4 +12,5 @@ urlpatterns = [
     path('s/<uuid:token>/', views.esign_public_sign, name='esign_public_sign'),
     path('s/<uuid:token>/submit/', views.esign_public_submit, name='esign_public_submit'),
     path('s/<uuid:token>/download/', views.esign_download, name='esign_download'),
+    path('s/<uuid:token>/download/<int:doc_id>/', views.esign_download_doc, name='esign_download_doc'),
 ]

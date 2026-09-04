@@ -561,10 +561,11 @@ function render(){
 }
 function renderTotals(rows){
   rows=rows||filtered();
-  let actual=0,final=0,payout=0;
-  rows.forEach(r=>{const c=calc(r);actual+=c.actual;final+=c.finalRev;payout+=c.brokerPayout;});
+  let loan=0,actual=0,final=0,payout=0;
+  rows.forEach(r=>{const c=calc(r);loan+=(+r.loan||0);actual+=c.actual;final+=c.finalRev;payout+=c.brokerPayout;});
   $('#totbar').innerHTML=`
     <div><div class="t">Entries</div><div class="v">${rows.length}</div></div>
+    <div><div class="t">Total Loan Disbursed</div><div class="v">AED ${fmt2(loan)}</div></div>
     <div><div class="t">Total Actual Revenue</div><div class="v">AED ${fmt2(actual)}</div></div>
     <div><div class="t">Total Final Revenue</div><div class="v">AED ${fmt2(final)}</div></div>
     <div><div class="t">Total Broker Payout</div><div class="v">AED ${fmt2(payout)}</div></div>`;

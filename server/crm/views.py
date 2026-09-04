@@ -1492,13 +1492,23 @@ def _auto_assign_advisor(lead=None):
     return _round_robin_advisor()
 
 
+def _form_partners(include_pk=None):
+    """Active referral partners for the lead form, plus the lead's current partner
+    even if it is inactive (so editing never drops a saved referral partner)."""
+    from django.db.models import Q as _Q
+    q = _Q(status='Active')
+    if include_pk:
+        q |= _Q(pk=include_pk)
+    return [{'pk': p.pk, 'name': p.name} for p in ReferralPartner.objects.filter(q).distinct()]
+
+
 def _lead_form_data(form, init=None):
     return {
         'advisors': [{'pk': a.pk, 'name': a.get_full_name() or a.username}
                      for a in form.fields['advisor'].queryset],
         'banks': [{'pk': b.pk, 'name': b.name} for b in form.fields['bank'].queryset],
         'sources': SOURCES,
-        'partners': [{'pk': p.pk, 'name': p.name} for p in ReferralPartner.objects.filter(status='Active')],
+        'partners': _form_partners(),
         'init': init or {},
     }
 
@@ -1602,9 +1612,13 @@ def lead_import(request):
         except UnicodeDecodeError:
             text = f.read().decode('latin-1')
         reader = _csv.DictReader(_io.StringIO(text))
+        _alias = {'phone': 'mobile', 'phone_number': 'mobile', 'mobile_number': 'mobile',
+                  'contact': 'mobile', 'contact_number': 'mobile', 'full_name': 'name',
+                  'e-mail': 'email'}
         norm = {}
         for col in (reader.fieldnames or []):
-            norm[col] = col.strip().lower().replace(' ', '_')
+            key = col.strip().lower().replace(' ', '_')
+            norm[col] = _alias.get(key, key)
         created = skipped = dup = 0
         errors = []
         dup_names = []
@@ -2270,11 +2284,15 @@ def lead_stage_update(request, pk):
             and lead.kyc_status != 'Passed':
         messages.error(request, 'KYC must be Passed before submitting this lead to a bank.')
         return redirect(nxt) if nxt else redirect('lead_detail', pk=pk)
+    from .models import CLOSED_LOST_STAGES
+    if stage in CLOSED_LOST_STAGES and not (request.POST.get('lost_reason', '').strip() or lead.lost_reason):
+        messages.error(request, f'Please add a reason when marking a case "{stage}".')
+        return redirect(nxt) if nxt else redirect('lead_detail', pk=pk)
     if stage in dict(Lead.STAGE_CHOICES):
         old = lead.stage
         lead.stage = stage
-        if stage == 'Declined':
-            lead.lost_reason = request.POST.get('lost_reason', '') or lead.lost_reason
+        if stage in CLOSED_LOST_STAGES:
+            lead.lost_reason = request.POST.get('lost_reason', '').strip() or lead.lost_reason
         _apply_disbursed(lead, request.user)
         lead.save()
         if old != stage:
@@ -2543,8 +2561,12 @@ def ops_hold(request, pk):
         _audit(lead, request.user, 'Case released from hold', 'Hold', 'On Hold', 'Active')
         messages.success(request, 'Case released from hold.')
     else:
+        reason = request.POST.get('reason', '').strip()
+        if not reason:
+            messages.error(request, 'A reason is required to put a case on hold.')
+            return redirect('lead_detail', pk=pk)
         lead.ops_hold = True
-        lead.hold_reason = request.POST.get('reason', '').strip()
+        lead.hold_reason = reason
         lead.hold_review_date = _parse_date(request.POST.get('review_date', ''))
         lead.save(update_fields=['ops_hold', 'hold_reason', 'hold_review_date'])
         _audit(lead, request.user, 'Case put on hold', 'Hold', '', lead.hold_reason[:80])
@@ -2699,15 +2721,17 @@ def ops_queue(request):
         card_by_stage[l.stage].append({
             'pk': l.pk, 'case': l.case_number or f'#{l.pk}', 'name': l.name,
             'advisor': (l.advisor.get_full_name() or l.advisor.username) if l.advisor else 'Unassigned',
-            'silence': l.silence_status,
+            'silence': l.silence_status, 'hold': l.ops_hold,
             'days': (timezone.now() - l.last_activity_at).days})
     for s in card_by_stage:
         card_by_stage[s].sort(key=lambda c: (order.get(c['silence'], 9), -c['days']))
     board = [{'stage': s, 'cards': card_by_stage[s]} for s in OPS_STAGES]
+    board_max = max((len(card_by_stage[s]) for s in OPS_STAGES), default=0) or 1
+    chart = [{'stage': s, 'count': len(card_by_stage[s])} for s in OPS_STAGES if card_by_stage[s]]
     view = request.GET.get('view', 'board')
     return render(request, 'crm/ops_queue.html', {
         'rows': rows, 'warn': warn, 'esc': esc, 'flt': flt, 'view': view,
-        'board': board, 'ops_stages': OPS_STAGES,
+        'board': board, 'ops_stages': OPS_STAGES, 'chart': chart, 'board_max': board_max,
         'queues': [{'key': k, 'label': lbl, 'count': counts[k]} for k, lbl in QUEUES],
         'total': len(rows), 'active_nav': 'Ops'})
 
@@ -3136,20 +3160,24 @@ def finance(request):
     leads = Lead.objects.filter(is_deleted=False)
     disbursed = leads.filter(stage__in=DISBURSED_STAGES)
     rates = finance_rates()
+    # Disbursed volume = total loan amount actually disbursed
+    disbursed_volume = _f(disbursed.aggregate(v=Sum('loan_amount'))['v'])
     # Revenue = real commission revenue from the Monthly Disbursed Pipeline (Customization) sheet
     _cz = list(Customization.objects.filter(lead__is_deleted=False).select_related('lead'))
     revenue = sum(c.actual_revenue for c in _cz)
     net_profit = sum(c.final_revenue for c in _cz)
     vat = sum(c.vat for c in _cz)
     kpis = {
-        'revenue': revenue,
-        'commission': revenue * rates['adv_comm_pct'] / 100,
-        'referral': revenue * rates['ref_comm_pct'] / 100,
+        'disbursed_volume': disbursed_volume,
+        'revenue': revenue,                                     # gross commission revenue
+        'commission': revenue * rates['adv_comm_pct'] / 100,    # advisor commission
+        'referral': revenue * rates['ref_comm_pct'] / 100,      # referral commission
         'vat': vat,
         'net': net_profit,
         'disbursed_loans': disbursed.count(),
     }
-    return render(request, 'crm/finance.html', {'kpis': kpis, 'active_nav': 'Finance'})
+    return render(request, 'crm/finance.html', {
+        'kpis': kpis, 'rates': rates, 'active_nav': 'Finance'})
 
 
 # ---- report catalogue ----
@@ -3371,12 +3399,13 @@ def lead_edit(request, pk):
         'banks': [{'pk': b.pk, 'name': b.name}
                   for b in form.fields['bank'].queryset],
         'sources': SOURCES,
-        'partners': [{'pk': p.pk, 'name': p.name} for p in ReferralPartner.objects.filter(status='Active')],
+        'partners': _form_partners(lead.referral_partner_id),
         'init': {
             'nationality': lead.nationality or '',
             'advisor_name': (lead.advisor.get_full_name() or lead.advisor.username) if lead.advisor else '',
             'bank_name': lead.bank.name if lead.bank else '',
             'source': lead.source, 'priority': lead.priority,
+            'referral_partner_name': lead.referral_partner.name if lead.referral_partner else '',
             'employment_type': lead.employment_type or '',
             'industry': lead.industry or '',
             'property_type': lead.property_type or '',
@@ -3485,8 +3514,12 @@ def task_create(request):
 @perm.module_required('Tasks', 'edit')
 def task_complete(request, pk):
     t = get_object_or_404(Task, pk=pk)
+    outcome = (request.POST.get('outcome', '') or '').strip()
+    if len(outcome.split()) < 30:
+        messages.error(request, 'A completion remark of at least 30 words is required to close a task.')
+        return redirect(request.POST.get('next') or 'task_list')
     t.status = 'Completed'
-    t.outcome = (request.POST.get('outcome', '') or '').strip()
+    t.outcome = outcome
     t.completed_at = timezone.now()
     t.save()
     if t.lead_id:
@@ -4633,6 +4666,7 @@ def customization_list(request):
     rows = [_cz_row(c) for c in Customization.objects.select_related('lead', 'lead__advisor', 'lead__bank')]
     totals = {
         'count': len(rows),
+        'loan': sum(r['loan'] for r in rows),          # total loan / disbursement amount
         'actual': sum(r['actualRevenue'] for r in rows),
         'final': sum(r['finalRevenue'] for r in rows),
         'payout': sum(r['brokerPayout'] for r in rows),
@@ -4641,8 +4675,9 @@ def customization_list(request):
     months = sorted({(r['disbursedMonthKey'], r['disbursedMonth'])
                      for r in rows if r['disbursedMonthKey']}, reverse=True)
     disbursed_months = [{'key': k, 'label': lbl} for k, lbl in months]
+    banks = sorted({r['bank'] for r in rows if r['bank'] and r['bank'] != '—'})
     return render(request, 'crm/customization.html', {
-        'data': {'rows': rows, 'totals': totals, 'months': disbursed_months},
+        'data': {'rows': rows, 'totals': totals, 'months': disbursed_months, 'banks': banks},
         'active_nav': 'Leads', 'active_sub': 'customization',
     })
 
