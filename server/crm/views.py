@@ -2275,16 +2275,18 @@ def dsr_update(request, pk):
 @perm.module_required('Leads', 'edit')
 @require_POST
 def lead_stage_update(request, pk):
+    from .models import CLOSED_LOST_STAGES
     lead = get_object_or_404(visible_leads(request.user), pk=pk)
     stage = request.POST.get('stage', '')
     nxt = request.POST.get('next', '')
-    # KYC hard gate: block moving to bank-submission stages until KYC Passed
+    # KYC hard gate: block moving to bank-submission stages until KYC Passed.
+    # Terminal "lost" stages (Declined/Rejected/Not Proceeding) are ALWAYS allowed —
+    # a lead that never passed KYC still needs to be closable.
     submit_idx = STAGES.index('Logged In')
-    if stage in dict(Lead.STAGE_CHOICES) and STAGES.index(stage) >= submit_idx \
-            and lead.kyc_status != 'Passed':
+    if stage in dict(Lead.STAGE_CHOICES) and stage not in CLOSED_LOST_STAGES \
+            and STAGES.index(stage) >= submit_idx and lead.kyc_status != 'Passed':
         messages.error(request, 'KYC must be Passed before submitting this lead to a bank.')
         return redirect(nxt) if nxt else redirect('lead_detail', pk=pk)
-    from .models import CLOSED_LOST_STAGES
     if stage in CLOSED_LOST_STAGES and not (request.POST.get('lost_reason', '').strip() or lead.lost_reason):
         messages.error(request, f'Please add a reason when marking a case "{stage}".')
         return redirect(nxt) if nxt else redirect('lead_detail', pk=pk)

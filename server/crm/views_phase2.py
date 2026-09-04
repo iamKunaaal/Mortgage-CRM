@@ -734,8 +734,18 @@ def leave_decide(request, pk):
         raise PermissionDenied
     lr = get_object_or_404(LeaveRequest, pk=pk)
     decision = request.POST.get('decision')
+    was_approved = lr.status == 'Approved'
     lr.status = 'Approved' if decision == 'approve' else 'Rejected'
     lr.save(update_fields=['status'])
+    # Deduct the leave days from the employee's balance on approval (once).
+    if lr.status == 'Approved' and not was_approved and lr.leave_type and lr.start and lr.end:
+        days = (lr.end - lr.start).days + 1
+        if days > 0:
+            bal, _ = LeaveBalance.objects.get_or_create(
+                user=lr.user, leave_type=lr.leave_type, year=lr.start.year,
+                defaults={'allocated': lr.leave_type.days_per_year or 0})
+            bal.used = (bal.used or 0) + days
+            bal.save(update_fields=['used'])
     if lr.approval:
         lr.approval.status = lr.status
         lr.approval.decided_by = request.user
@@ -1474,9 +1484,11 @@ def call_list_assign(request):
     if not u or count <= 0:
         messages.error(request, 'Pick an advisor and a valid count.')
         return redirect('call_lists')
+    # Re-check advisor__isnull inside the UPDATE so two concurrent assigns can never
+    # hand the same contact to different advisors (the second update matches 0 taken rows).
     ids = list(CallItem.objects.filter(advisor__isnull=True)
                .order_by('created_at').values_list('pk', flat=True)[:count])
-    n = CallItem.objects.filter(pk__in=ids).update(advisor=u)
+    n = CallItem.objects.filter(pk__in=ids, advisor__isnull=True).update(advisor=u)
     if n:
         _notify(u, f'{n} new calls assigned to you.', '/my-calls/', 'lead')
     _audit_event(request, 'Calls assigned', f'{n} to {u.username}')

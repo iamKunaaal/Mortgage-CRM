@@ -1259,6 +1259,10 @@ class Attendance(models.Model):
         # Still on the clock (checked in, not out) — treat as Present for the day.
         if not self.check_out:
             return 'Present'
+        # Invalid / inverted timestamps (checkout at or before checkin): don't penalise —
+        # keep Present so a data error never silently zeroes a day's pay; HR can correct it.
+        if self.check_out <= self.check_in:
+            return 'Present'
         # Completed day: a full day needs the required hours; short days are Half Day / Absent.
         from .models import hr_config
         cfg = hr_config()
