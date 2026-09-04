@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from . import views_phase2 as vp2
 from . import views_outlook as vo
+from . import views_email as ve
 
 urlpatterns = [
     # ---- Phase 2: Finance depth ----
@@ -72,6 +73,15 @@ urlpatterns = [
     path('outlook/settings/', vo.outlook_settings_save, name='outlook_settings_save'),
     path('outlook/calendar/', vo.outlook_calendar, name='outlook_calendar'),
     path('outlook/event/', vo.outlook_event_create, name='outlook_event_create'),
+    # ---- Email (SMTP/IMAP) integration ----
+    path('email/', ve.email_inbox, name='email_inbox'),
+    path('email/message/', ve.email_message, name='email_message'),
+    path('email/flag/', ve.email_flag, name='email_flag'),
+    path('email/delete/', ve.email_delete, name='email_delete'),
+    path('email/settings/', ve.email_settings_save, name='email_settings_save'),
+    path('email/send/', ve.email_send, name='email_send'),
+    path('email/test/', ve.email_test, name='email_test'),
+    path('email/disconnect/', ve.email_disconnect, name='email_disconnect'),
 
     path('leads/<int:pk>/ubo/', vp2.ubo_add, name='ubo_add'),
     path('leads/<int:pk>/referral/', vp2.client_referral_add, name='client_referral_add'),

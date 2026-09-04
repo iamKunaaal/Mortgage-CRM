@@ -1536,3 +1536,42 @@ class OutlookAccount(models.Model):
 
     def __str__(self):
         return f'Outlook<{self.user}: {self.ms_email}>'
+
+
+# ---- Email (IMAP/SMTP) integration — GoDaddy / generic mailbox, per user -----
+def _email_fernet():
+    """A stable Fernet key derived from the Django SECRET_KEY (set a strong one in prod)."""
+    import base64, hashlib
+    from django.conf import settings
+    from cryptography.fernet import Fernet
+    key = base64.urlsafe_b64encode(hashlib.sha256(settings.SECRET_KEY.encode()).digest())
+    return Fernet(key)
+
+
+class EmailAccount(models.Model):
+    """Per-user mailbox connection over SMTP (send) + IMAP (receive).
+    The password is stored encrypted, never in plain text."""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='email_account')
+    email = models.CharField(max_length=254)
+    smtp_host = models.CharField(max_length=120, default='smtpout.secureserver.net')
+    smtp_port = models.PositiveIntegerField(default=465)
+    imap_host = models.CharField(max_length=120, default='imap.secureserver.net')
+    imap_port = models.PositiveIntegerField(default=993)
+    password_enc = models.TextField(blank=True)
+    active = models.BooleanField(default=True)
+    last_sync = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def set_password(self, raw):
+        self.password_enc = _email_fernet().encrypt((raw or '').encode()).decode()
+
+    def get_password(self):
+        if not self.password_enc:
+            return ''
+        try:
+            return _email_fernet().decrypt(self.password_enc.encode()).decode()
+        except Exception:
+            return ''
+
+    def __str__(self):
+        return f'Email<{self.user}: {self.email}>'

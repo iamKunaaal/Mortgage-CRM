@@ -1,0 +1,243 @@
+{% extends 'crm/base_p2.html' %}
+{% block title %}BITAR CRM — Email{% endblock %}
+{% block page_title %}Email{% endblock %}
+{% block content %}
+<style>
+.mail{display:flex;height:calc(100vh - 128px);min-height:540px;border:1px solid var(--border);border-radius:16px;overflow:hidden;background:#fff;box-shadow:var(--sh-xs)}
+/* left rail */
+.mrail{width:216px;flex-shrink:0;border-right:1px solid var(--border);padding:16px 12px;display:flex;flex-direction:column;gap:4px;background:var(--bg-soft,#F9FAFB)}
+.compose-btn{display:inline-flex;align-items:center;gap:10px;align-self:flex-start;background:var(--primary);color:#fff;border:none;border-radius:26px;padding:12px 22px 12px 18px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(5,68,139,.25);margin-bottom:14px}
+.compose-btn:hover{filter:brightness(1.07)}.compose-btn svg{width:18px;height:18px}
+.mfold{display:flex;align-items:center;gap:12px;padding:9px 16px;border-radius:0 22px 22px 0;font-size:13.5px;color:var(--text-2);text-decoration:none;font-weight:500;position:relative}
+.mfold svg{width:17px;height:17px}.mfold:hover{background:var(--border-soft)}
+.mfold.active{background:#FCE8E6;color:#C5221F;font-weight:700}.mfold.active svg{color:#C5221F}
+.mfold .cnt{margin-left:auto;font-size:11px;font-weight:700;background:var(--primary);color:#fff;border-radius:20px;padding:1px 8px}
+/* main = list OR full-screen read (Gmail-style) */
+.mmain{flex:1;min-width:0;display:flex;flex-direction:column}
+/* list */
+.mlist{flex:1;min-width:0;display:flex;flex-direction:column}
+.mlist.hide{display:none}
+.msearch{padding:12px 14px;border-bottom:1px solid var(--border-soft)}
+.msearch input{width:100%;padding:10px 14px;border:1px solid transparent;border-radius:10px;font:inherit;font-size:13px;background:var(--border-soft)}
+.msearch input:focus{outline:none;background:#fff;border-color:var(--primary)}
+.mrows{overflow-y:auto;flex:1}
+.mrow{display:flex;gap:12px;align-items:flex-start;padding:12px 15px;border-bottom:1px solid var(--border-soft);cursor:pointer;position:relative}
+.mrow:hover{background:#F8FAFC}
+.mrow.active{background:#EAF3FF;box-shadow:inset 3px 0 0 var(--primary)}
+.mrow.unseen{background:#fff}
+.mrow.unseen .mr-from,.mrow.unseen .mr-sub{font-weight:700;color:var(--text)}
+.mrow.unseen::before{content:"";position:absolute;left:6px;top:50%;width:6px;height:6px;border-radius:50%;background:var(--primary);transform:translateY(-50%)}
+.mav{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;color:#fff;font-size:14px;font-weight:700}
+.mr-main{flex:1;min-width:0}
+.mr-top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.mr-from{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.mr-date{font-size:11px;color:var(--text-3);white-space:nowrap}
+.mr-sub{font-size:12.75px;color:var(--text);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.mr-snip{font-size:12px;color:var(--text-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* reading view (full screen) */
+.mread{flex:1;display:none;flex-direction:column;min-width:0}
+.mread.show{display:flex}
+.mread-bar{display:flex;gap:6px;padding:12px 18px;border-bottom:1px solid var(--border-soft);align-items:center}
+.mback{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border:1px solid var(--border);border-radius:9px;background:#fff;font-size:12.5px;font-weight:600;color:var(--text-2);cursor:pointer;margin-right:6px}
+.mback:hover{background:var(--bg-soft,#F8FAFC)}.mback svg{width:15px;height:15px}
+.mread-head{max-width:900px}
+.tbtn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border:1px solid var(--border);border-radius:9px;background:#fff;font-size:12.5px;font-weight:600;color:var(--text-2);cursor:pointer}
+.tbtn:hover{background:var(--bg-soft,#F8FAFC);color:var(--text)}.tbtn svg{width:14px;height:14px}
+.tbtn.danger:hover{color:var(--danger);border-color:#F5C4C0}
+.mread-head{padding:20px 22px 14px}
+.mread-head h2{font-size:19px;font-weight:700;margin:0 0 12px}
+.mread-from{display:flex;gap:12px;align-items:center}
+.mread-from .mav{width:42px;height:42px;font-size:15px}
+.mread-from .nm{font-size:13.5px;font-weight:700}.mread-from .ad{font-size:12px;color:var(--text-3)}
+.mread-from .dt{margin-left:auto;font-size:12px;color:var(--text-3)}
+.mread-body{flex:1;overflow:auto;border-top:1px solid var(--border-soft)}
+.mread-body iframe{width:100%;height:100%;border:0}
+.mread-body .txt{padding:22px;font-size:13.5px;line-height:1.65;color:var(--text)}
+/* compose — full-screen centered modal */
+.cmp{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.45);padding:20px}
+.cmp.open{display:flex}
+.cmp-card{background:#fff;width:820px;max-width:100%;height:82vh;max-height:760px;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.3);display:flex;flex-direction:column;overflow:hidden}
+.cmp-h{background:#0F172A;color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600}
+.cmp-h button{background:none;border:none;color:#fff;cursor:pointer;font-size:18px}
+.cmp form{padding:8px 20px 16px;display:flex;flex-direction:column;flex:1;min-height:0}
+.cmp input{border:none;border-bottom:1px solid var(--border-soft);padding:12px 2px;font:inherit;font-size:14px;outline:none}
+.cmp textarea{border:none;padding:16px 2px;font:inherit;font-size:14px;outline:none;flex:1;resize:none}
+.cmp-foot{padding:12px 0 2px;display:flex;gap:10px;align-items:center;border-top:1px solid var(--border-soft)}
+@media(max-width:860px){.mlist{width:48%}.mrail{width:66px}.compose-btn{padding:12px}.compose-btn span,.mfold span,.mfold .cnt{display:none}}
+</style>
+
+{% if not connected %}
+  <div class="card" style="padding:22px;max-width:680px">
+    <b>Connect your email</b>
+    <p style="font-size:12.5px;color:var(--text-2);margin:6px 0 14px">Enter your mailbox login. Your password is stored encrypted and never shown again.</p>
+    <form method="post" action="{% url 'email_settings_save' %}" style="display:grid;gap:10px">{% csrf_token %}
+      <input name="email" placeholder="Email address (e.g. name@markerfinance.com)" value="{{ acct.email|default:'' }}" required style="padding:9px;border:1px solid var(--border);border-radius:9px">
+      <input name="password" type="password" placeholder="Email password" required style="padding:9px;border:1px solid var(--border);border-radius:9px">
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px">
+        <input name="smtp_host" value="{{ acct.smtp_host|default:'smtpout.secureserver.net' }}" placeholder="SMTP host" style="padding:9px;border:1px solid var(--border);border-radius:9px">
+        <input name="smtp_port" value="{{ acct.smtp_port|default:'465' }}" placeholder="SMTP port" style="padding:9px;border:1px solid var(--border);border-radius:9px">
+      </div>
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px">
+        <input name="imap_host" value="{{ acct.imap_host|default:'imap.secureserver.net' }}" placeholder="IMAP host" style="padding:9px;border:1px solid var(--border);border-radius:9px">
+        <input name="imap_port" value="{{ acct.imap_port|default:'993' }}" placeholder="IMAP port" style="padding:9px;border:1px solid var(--border);border-radius:9px">
+      </div>
+      <button class="btn btn-primary" type="submit">Connect</button>
+      <p style="font-size:11.5px;color:var(--text-3)">GoDaddy defaults pre-filled — SMTP 465 (SSL) / IMAP 993 (SSL).</p>
+    </form>
+  </div>
+{% else %}
+  {% if error %}<div class="card" style="padding:12px 16px;margin-bottom:12px;background:#FEE2E2;color:#DC2626;font-size:13px">{{ error }} — <a href="?" style="font-weight:700">retry</a></div>{% endif %}
+
+  <div id="emCfg" style="display:none;margin-bottom:12px" class="card">
+    <div style="padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <b>Email settings — {{ acct.email }}</b>
+        <button type="button" onclick="document.getElementById('emCfg').style.display='none'" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-3);line-height:1">✕</button>
+      </div>
+      <form method="post" action="{% url 'email_settings_save' %}" style="display:grid;gap:8px;margin-top:10px;max-width:560px">{% csrf_token %}
+        <input name="email" value="{{ acct.email }}" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+        <input name="password" type="password" placeholder="New password (leave blank to keep current)" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px"><input name="smtp_host" value="{{ acct.smtp_host }}" style="padding:8px;border:1px solid var(--border);border-radius:8px"><input name="smtp_port" value="{{ acct.smtp_port }}" style="padding:8px;border:1px solid var(--border);border-radius:8px"></div>
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px"><input name="imap_host" value="{{ acct.imap_host }}" style="padding:8px;border:1px solid var(--border);border-radius:8px"><input name="imap_port" value="{{ acct.imap_port }}" style="padding:8px;border:1px solid var(--border);border-radius:8px"></div>
+        <div style="display:flex;gap:8px"><button class="btn btn-primary" type="submit">Save</button>
+        <button class="btn btn-ghost" formaction="{% url 'email_test' %}" type="submit">Send test</button>
+        <span style="flex:1"></span>
+        <button class="btn btn-ghost" formaction="{% url 'email_disconnect' %}" type="submit" style="color:var(--danger)" onclick="return confirm('Disconnect this email?')">Disconnect</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="mail">
+    <div class="mrail">
+      <button class="compose-btn" onclick="document.getElementById('cmp').classList.add('open');cmpReset()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span>Compose</span></button>
+      <a class="mfold {% if folder != 'sent' %}active{% endif %}" href="?folder=inbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.5 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.5A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.74 1.5z"/></svg><span>Inbox</span>{% if unseen_count %}<span class="cnt">{{ unseen_count }}</span>{% endif %}</a>
+      <a class="mfold {% if folder == 'sent' %}active{% endif %}" href="?folder=sent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg><span>Sent</span></a>
+      <a class="mfold" href="?folder={{ folder }}&refresh=1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg><span>Refresh</span></a>
+      <div style="flex:1"></div>
+      <a class="mfold" href="#" onclick="document.getElementById('emCfg').style.display='block';return false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Settings</span></a>
+      <div style="font-size:11px;color:var(--text-3);padding:6px 16px 0">{{ acct.email }}</div>
+    </div>
+
+    <div class="mmain">
+    <div class="mlist" id="listView">
+      <div class="msearch"><input id="mSearch" placeholder="Search {{ folder }}…" autocomplete="off"></div>
+      <div class="mrows" id="mRows">
+        {% for m in messages_list %}
+          <div class="mrow {% if not m.seen %}unseen{% endif %}" data-uid="{{ m.uid }}" data-search="{{ m.from_name|lower }} {{ m.from_addr|lower }} {{ m.subject|lower }}">
+            <div class="mav" style="background:{{ m.color }}">{{ m.initial }}</div>
+            <div class="mr-main">
+              <div class="mr-top"><span class="mr-from">{{ m.from_name }}</span><span class="mr-date" data-raw="{{ m.date }}">{{ m.date }}</span></div>
+              <div class="mr-sub">{{ m.subject }}</div>
+            </div>
+          </div>
+        {% empty %}
+          <div style="padding:34px;text-align:center;color:var(--text-3);font-size:13px">No messages in {{ folder }}.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="mread" id="mRead">
+      <div class="mread-bar" id="mBar">
+        <button class="mback" id="mBack" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back</button>
+        <button class="tbtn" data-act="reply"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 17l-5-5 5-5M4 12h11a4 4 0 0 1 4 4v2"/></svg>Reply</button>
+        <button class="tbtn" data-act="forward"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 17l5-5-5-5M20 12H9a4 4 0 0 0-4 4v2"/></svg>Forward</button>
+        <button class="tbtn" data-act="unread"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg>Mark unread</button>
+        <span style="flex:1"></span>
+        <form method="post" action="{% url 'email_delete' %}" id="delForm" onsubmit="return confirm('Delete this message?')">{% csrf_token %}<input type="hidden" name="uid" id="delUid"><button class="tbtn danger" type="submit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>Delete</button></form>
+      </div>
+      <div id="mReadInner" style="flex:1;display:flex;flex-direction:column;min-height:0">
+        <div class="mread-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg>
+          <div>Select a message to read</div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- Compose (full-screen) -->
+  <div class="cmp" id="cmp" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="cmp-card">
+      <div class="cmp-h"><span id="cmpTitle">New Message</span><button type="button" onclick="document.getElementById('cmp').classList.remove('open')">✕</button></div>
+      <form method="post" action="{% url 'email_send' %}">{% csrf_token %}
+        <input type="hidden" name="next" value="{% url 'email_inbox' %}">
+        <input name="to" id="cmpTo" placeholder="To (comma-separated)" required>
+        <input name="subject" id="cmpSubject" placeholder="Subject">
+        <textarea name="body" id="cmpBody" placeholder="Write your message…"></textarea>
+        <div class="cmp-foot"><button class="btn btn-primary" type="submit">Send</button></div>
+      </form>
+    </div>
+  </div>
+
+<script>
+(function(){
+  var rows=document.getElementById('mRows'), inner=document.getElementById('mReadInner'), bar=document.getElementById('mBar');
+  var listView=document.getElementById('listView'), readView=document.getElementById('mRead');
+  var folder="{{ folder }}", cur=null;
+  function showList(){readView.classList.remove('show');listView.classList.remove('hide');document.querySelectorAll('.mrow.active').forEach(r=>r.classList.remove('active'));}
+  var back=document.getElementById('mBack'); if(back) back.addEventListener('click',showList);
+  function esc(s){var t=document.createElement('div');t.textContent=s||'';return t.innerHTML;}
+  function initial(s){s=(s||'?').trim();return (s[0]||'?').toUpperCase();}
+  function colorFor(s){var h=0;for(var i=0;i<(s||'').length;i++)h=(h*31+s.charCodeAt(i))%360;return 'hsl('+h+',52%,45%)';}
+  // smart dates on list
+  document.querySelectorAll('.mr-date').forEach(function(el){
+    var d=new Date(el.dataset.raw); if(isNaN(d))return;
+    var now=new Date(), sameDay=d.toDateString()===now.toDateString();
+    var y=new Date(now); y.setDate(y.getDate()-1);
+    el.textContent = sameDay ? d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})
+       : (d.toDateString()===y.toDateString() ? 'Yesterday'
+       : d.toLocaleDateString([], {day:'numeric',month:'short'}));
+  });
+  function openMsg(row){
+    row.classList.remove('unseen');
+    listView.classList.add('hide'); readView.classList.add('show');   // full-screen read (Gmail-style)
+    document.getElementById('delUid').value=row.dataset.uid;
+    inner.innerHTML='<div class="mread-empty">Loading…</div>';
+    fetch('{% url "email_message" %}?folder='+encodeURIComponent(folder)+'&uid='+encodeURIComponent(row.dataset.uid))
+      .then(r=>r.json()).then(function(d){
+        if(!d.ok){inner.innerHTML='<div class="mread-empty">Could not open this message.</div>';return;}
+        cur=d; cur.uid=row.dataset.uid;
+        var body=d.is_html?'<iframe sandbox srcdoc="'+d.body.replace(/"/g,'&quot;')+'"></iframe>':'<div class="txt">'+d.body+'</div>';
+        inner.innerHTML='<div class="mread-head"><h2>'+esc(d.subject)+'</h2>'
+          +'<div class="mread-from"><div class="mav" style="background:'+colorFor(d.from_name||d.from_addr)+'">'+initial(d.from_name||d.from_addr)+'</div>'
+          +'<div><div class="nm">'+esc(d.from_name)+'</div><div class="ad">'+esc(d.from_addr)+'</div></div>'
+          +'<div class="dt">'+esc(d.date)+'</div></div></div>'
+          +'<div class="mread-body">'+body+'</div>';
+      }).catch(function(){inner.innerHTML='<div class="mread-empty">Could not open this message.</div>';});
+  }
+  if(rows) rows.addEventListener('click',function(e){var row=e.target.closest('.mrow');if(row)openMsg(row);});
+
+  // toolbar: reply / forward / mark unread
+  bar.addEventListener('click',function(e){
+    var b=e.target.closest('.tbtn'); if(!b||!b.dataset.act||!cur)return;
+    var act=b.dataset.act;
+    if(act==='reply'||act==='forward'){
+      document.getElementById('cmp').classList.add('open');
+      document.getElementById('cmpTitle').textContent=act==='reply'?'Reply':'Forward';
+      document.getElementById('cmpTo').value=act==='reply'?cur.from_addr:'';
+      var pre=act==='reply'?'Re: ':'Fwd: ';
+      document.getElementById('cmpSubject').value=pre+(cur.subject||'').replace(/^(Re|Fwd):\s*/i,'');
+      var quote='\n\n----- Original message -----\nFrom: '+cur.from_name+' <'+cur.from_addr+'>\nDate: '+cur.date+'\nSubject: '+cur.subject+'\n\n';
+      document.getElementById('cmpBody').value=quote;
+      document.getElementById('cmpBody').focus();
+    }else if(act==='unread'){
+      var f=new FormData();f.append('uid',cur.uid);f.append('seen','0');
+      f.append('csrfmiddlewaretoken','{{ csrf_token }}');
+      fetch('{% url "email_flag" %}',{method:'POST',body:f}).then(()=>{
+        var r=document.querySelector('.mrow[data-uid="'+cur.uid+'"]'); if(r){r.classList.add('unseen');}
+        showList();
+      });
+    }
+  });
+
+  var s=document.getElementById('mSearch');
+  if(s) s.addEventListener('input',function(){
+    var q=this.value.toLowerCase();
+    document.querySelectorAll('.mrow').forEach(function(r){r.style.display=r.dataset.search.indexOf(q)>=0?'':'none';});
+  });
+  window.cmpReset=function(){document.getElementById('cmpTitle').textContent='New Message';
+    document.getElementById('cmpTo').value='';document.getElementById('cmpSubject').value='';document.getElementById('cmpBody').value='';};
+})();
+</script>
+{% endif %}
+{% endblock %}
