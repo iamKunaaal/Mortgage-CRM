@@ -61,20 +61,20 @@
     {% if 'Finance' in allowed %}<a class="nav-item {% if active_sub == 'finance_hub' %}active{% endif %}" href="{% url 'finance_hub' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg>Finance Hub</a>{% endif %}
     {% if 'Reports' in allowed %}<a class="nav-item {% if active_nav == 'Reports' %}active{% endif %}" href="{% url 'reports' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 3 5-6"/></svg>Reports &amp; Analytics</a>{% endif %}
     {% if 'Reports' in allowed %}<a class="nav-item {% if active_nav == 'Reports' and active_sub == 'forecast' %}active{% endif %}" href="{% url 'forecast' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>Forecast</a>{% endif %}
-    <div class="nav-group {% if active_nav == 'HR' %}open{% endif %}">
+    {% if hr_allowed %}<div class="nav-group {% if active_nav == 'HR' %}open{% endif %}">
       <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>HR &amp; Attendance<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
       <div class="nav-sub">
         <a class="nav-item {% if active_sub == 'hr_home' %}active{% endif %}" href="{% url 'hr_home' %}">My HR</a>
         <a class="nav-item {% if active_sub == 'hr_calendar' %}active{% endif %}" href="{% url 'hr_calendar' %}">Attendance Calendar</a>
-        {% if request.user.role == 'HR_EXECUTIVE' or request.user.role == 'CEO' or request.user.role == 'SUPER_ADMIN' %}<a class="nav-item {% if active_sub == 'hr_employees' %}active{% endif %}" href="{% url 'hr_employees' %}">Employees</a>
+        {% if hr_manager %}<a class="nav-item {% if active_sub == 'hr_employees' %}active{% endif %}" href="{% url 'hr_employees' %}">Employees</a>
         <a class="nav-item {% if active_sub == 'hr_salary' %}active{% endif %}" href="{% url 'hr_salary' %}">Salary &amp; Payroll</a>{% endif %}
       </div>
-    </div>
+    </div>{% endif %}
 
     {% if 'Users' in allowed or 'Settings' in allowed or can_view_audit %}<div class="nav-label">Administration</div>{% endif %}
     {% if 'Users' in allowed %}<div class="nav-group {% if active_nav == 'Users' or active_nav == 'Settings' %}open{% endif %}">
       <button class="nav-item" data-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>User Management<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
-      <div class="nav-sub"><a class="nav-item {% if active_nav == 'Users' %}active{% endif %}" href="{% url 'user_list' %}">Users</a><a class="nav-item {% if active_nav == 'Settings' %}active{% endif %}" href="{% url 'role_list' %}">Roles &amp; Permissions</a></div>
+      <div class="nav-sub"><a class="nav-item {% if active_nav == 'Users' %}active{% endif %}" href="{% url 'user_list' %}">Users</a>{% if 'Settings' in allowed %}<a class="nav-item {% if active_nav == 'Settings' %}active{% endif %}" href="{% url 'role_list' %}">Roles &amp; Permissions</a>{% endif %}</div>
     </div>{% endif %}
     {% if can_view_audit %}<a class="nav-item {% if active_nav == 'Settings' and active_sub == 'audit' %}active{% endif %}" href="{% url 'audit_log' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg>Audit Log</a>{% endif %}
     {% if 'Settings' in allowed %}<a class="nav-item" href="{% url 'assignment_rules' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>Assignment Rules</a>{% endif %}

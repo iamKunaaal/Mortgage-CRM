@@ -15,6 +15,14 @@ def crm_globals(request):
         lead_count = leads.count()
     is_ceo = bool(user and user.is_authenticated and user.role == Role.CEO)
     can_view_audit = perm.can_view_audit(user) if (user and user.is_authenticated) else False
+    # who may see the HR & Attendance nav group (mirror views_phase2._hr_allowed)
+    hr_allowed = bool(user and user.is_authenticated and user.role in (
+        Role.HR_EXECUTIVE, Role.CEO, Role.SUPER_ADMIN, Role.ADVISOR, Role.TELECALLER,
+        Role.OPS_EXECUTIVE, Role.OPS_MANAGER, Role.TEAM_LEADER, Role.SALES_DIRECTOR,
+        Role.ACCOUNTANT, Role.COMPLIANCE, Role.MARKETING))
+    hr_manager = bool(user and user.is_authenticated and user.role in (
+        Role.HR_EXECUTIVE, Role.CEO, Role.SUPER_ADMIN))
+    can_create_leads = bool(user and user.is_authenticated and perm.can_create(user, 'Leads'))
     pending_approvals = 0
     if user and user.is_authenticated:
         try:
@@ -38,4 +46,5 @@ def crm_globals(request):
     return {'allowed': allowed, 'lead_count': lead_count, 'is_ceo': is_ceo,
             'can_view_audit': can_view_audit, 'pending_approvals': pending_approvals,
             'esign_enabled': esign_enabled, 'unread_notifications': unread_notifications,
-            'company_name': company_name}
+            'company_name': company_name, 'hr_allowed': hr_allowed, 'hr_manager': hr_manager,
+            'can_create_leads': can_create_leads}
