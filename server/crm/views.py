@@ -3367,6 +3367,13 @@ def lead_edit(request, pk):
     # snapshot BEFORE the form binds/validates (is_valid() mutates the instance)
     before = _snapshot(lead)
     is_draft = bool(request.POST.get('draft'))
+    # Safety net: on a Referral-Partner lead, if the form arrives without a partner
+    # (e.g. the picker didn't re-send it) keep the one already saved — so editing a
+    # referral lead never wipes / forces re-selecting the partner.
+    if request.method == 'POST' and request.POST.get('source') == 'Referral Partner' \
+            and not request.POST.get('referral_partner') and lead.referral_partner_id:
+        request.POST = request.POST.copy()
+        request.POST['referral_partner'] = str(lead.referral_partner_id)
     form = LeadForm(request.POST or None, request.FILES or None, instance=lead)
     if is_draft:
         for f in form.fields.values():
