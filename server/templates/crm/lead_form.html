@@ -441,7 +441,7 @@ a{color:inherit;text-decoration:none}
             {% if not own_scope %}<div class="combo" id="cAdvisor" data-label="Assign Advisor" data-avatars data-sum="advisor"></div>{% endif %}
             <div class="combo" id="cSource" data-label="Lead Source" data-sum="source"></div>
             <div class="full" id="partnerField" style="display:none">
-              <div class="combo multi" id="cPartners" data-label="Referral Partner(s)"></div>
+              <div class="combo multi" id="cPartners" data-label="Referral Partner"></div>
             </div>
             <div class="pill-wrap full">
               <label class="t">Priority</label>
@@ -631,7 +631,7 @@ buildCombo('cSource',SOURCES);
 const PARTNERS=(D.partners||[]).map(p=>p.name);
 const PARTNER_MAP={};(D.partners||[]).forEach(p=>PARTNER_MAP[p.name]=p.pk);
 const multiState={cPartners:[],cBank:[]};
-function buildMultiCombo(id,opts){
+function buildMultiCombo(id,opts,single){
   const c=document.getElementById(id),label=c.dataset.label;
   c.innerHTML=`<button type="button" class="combo-btn"><span class="ms-chips"><span class="val ph">·</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></button>
     <label>${label}</label>
@@ -651,7 +651,8 @@ function buildMultiCombo(id,opts){
     list.innerHTML=f.length?f.map(o=>`<button type="button" data-v="${o}" class="${sel.includes(o)?'sel':''}">${o}${sel.includes(o)?'<svg class="ms-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>':''}</button>`).join(''):`<div class="combo-empty">No results for “${q}”</div>`;
     list.querySelectorAll('button').forEach(b=>b.addEventListener('click',e=>{
       e.stopPropagation();const v=b.dataset.v;
-      if(multiState[id].includes(v))multiState[id]=multiState[id].filter(x=>x!==v);else multiState[id].push(v);
+      if(single){multiState[id]=multiState[id].includes(v)?[]:[v];c.classList.remove('open');}
+      else if(multiState[id].includes(v))multiState[id]=multiState[id].filter(x=>x!==v);else multiState[id].push(v);
       refreshBtn();renderList(si.value);update();
     }));
   }
@@ -665,7 +666,7 @@ function buildMultiCombo(id,opts){
   si.addEventListener('click',e=>e.stopPropagation());
   refreshBtn();renderList();
 }
-buildMultiCombo('cPartners',PARTNERS);
+buildMultiCombo('cPartners',PARTNERS,true);   // one lead = one referral partner
 buildMultiCombo('cBank',BANKS);
 document.addEventListener('click',()=>$$('.combo.open').forEach(o=>o.classList.remove('open')));
 
